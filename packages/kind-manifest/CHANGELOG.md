@@ -1,5 +1,15 @@
 # @galaxy-foundry/kind-manifest
 
+## 0.2.1
+
+### Patch Changes
+
+- [`1224f6b`](https://github.com/jmchilton/foundry-lib/commit/1224f6b6528c05fd22a326eba87ed7ce24cc9db5) Thanks [@jmchilton](https://github.com/jmchilton)! - Emit `doc` before `fields`, matching the declared `ManifestKind` shape.
+
+  Key order is load-bearing here: the manifest is a committed artifact, so appending `doc`
+  after `fields` rewrote a multi-KB line in every instance's diff for no change in meaning.
+  Caught while wiring the first producer.
+
 ## 0.2.0
 
 ### Minor Changes
