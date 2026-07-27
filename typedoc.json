@@ -1,6 +1,11 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["packages/license-policy", "packages/kind-manifest"],
+  "entryPoints": [
+    "packages/license-policy",
+    "packages/kind-manifest",
+    "packages/reference-contract",
+    "packages/tag-registry"
+  ],
   "entryPointStrategy": "packages",
   "packageOptions": {
     "entryPoints": ["src/index.ts"],

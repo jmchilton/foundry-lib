@@ -1,6 +1,6 @@
 # Getting started
 
-Install only the contract your Foundry needs. The two packages are independent and have
+Install only the contracts your Foundry needs. The packages are independent and have
 different responsibilities.
 
 > New to the architecture? Read

@@ -1,7 +1,7 @@
 # API reference
 
-The generated reference documents the public exports of both packages directly from their
-TypeScript entry points and package READMEs.
+The generated reference documents the public exports of every package directly from its
+TypeScript entry point and package README.
 
 [Open the TypeDoc reference](api/typedoc/index.html ':ignore')
 
@@ -32,6 +32,27 @@ The public surface includes:
 
 Start with [Produce a kind manifest](guides/producing-kind-manifests.md) or
 [Consume a kind manifest](guides/consuming-kind-manifests.md).
+
+## `@galaxy-foundry/reference-contract`
+
+The public surface includes:
+
+- composition: `buildReferenceContract` and the `Narrowing` option type;
+- the instance's half: `loadInstanceKinds` and `findReferenceContractPath`;
+- the inherited half: `bundledVocabularies`, `bundledContractText`, `bundledContractPath`,
+  and `parseInheritedVocabularies`;
+- reading a composed contract: `contractKeys`; and
+- constants and types: `CONTRACT_GROUPS`, `INHERITED_GROUPS`, `REFERENCE_CONTRACT_FILE`,
+  `ReferenceContract`, `InheritedVocabularies`, `ContractTerm`, `KindTerm`, and `RefShape`.
+
+## `@galaxy-foundry/tag-registry`
+
+The public surface includes:
+
+- loading: `loadTagRegistry`, `findTagRegistryPath`, and `parseTagRegistry`;
+- accessors: `tagRegistry` and `buildTagIndex`;
+- the format constant: `TAG_REGISTRY_FILE`; and
+- registry, file, facet, and entry types.
 
 ## Source and package documentation
 

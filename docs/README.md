@@ -59,12 +59,14 @@ removes duplicated maintenance without erasing a real local decision.
 
 ## Packages
 
-| Package                                                                                          | Use it when you need to…                                          |
-| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
-| [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy) | interpret a note's license as an allowed redistribution posture   |
-| [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)   | publish or consume a validated description of an instance's kinds |
+| Package                                                                                                  | Use it when you need to…                                          |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy)         | interpret a note's license as an allowed redistribution posture   |
+| [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds |
+| [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them  |
+| [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet |
 
-Both packages are ES modules, support Node.js 20 and later, and publish from CI with npm
+Every package is an ES module, supports Node.js 20 and later, and publishes from CI with npm
 provenance.
 
 ## Design rule
