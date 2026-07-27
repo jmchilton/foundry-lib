@@ -1,0 +1,52 @@
+{
+  "name": "@galaxy-foundry/kind-manifest",
+  "version": "0.0.0",
+  "description": "The shared kind-manifest format for Foundry-pattern instances: types, zod validator, and the zod-shape-to-manifest deriver.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmchilton/foundry-lib.git",
+    "directory": "packages/kind-manifest"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "foundry",
+    "manifest",
+    "zod",
+    "schema",
+    "catalog"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.4",
+    "zod": "^3.25.76"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

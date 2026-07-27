@@ -9,6 +9,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -27,6 +28,31 @@ const SMOKE = {
     if (ids.length < 20) throw new Error(`only ${ids.length} licenses in the packed table`);
     if (mod.resolveLicenseRow(policy, 'no-such-id').defect !== true) {
       throw new Error('unknown id did not resolve to the defect row');
+    }
+  },
+  '@galaxy-foundry/kind-manifest': async (mod, peer) => {
+    // zod is a peer dependency, so the packed tarball does not carry it. Resolving it
+    // from beside the unpacked package is exactly what a consumer's install does — and
+    // resolving it from this script instead would test the workspace, not the tarball.
+    const { z } = await peer('zod');
+    const manifest = mod.buildKindManifest({
+      instance: 'smoke',
+      kinds: [
+        {
+          kind: 'mold',
+          title: 'Mold',
+          layer: 'substrate',
+          summary: 's',
+          shape: { tags: z.array(z.string()), note: z.string().optional() },
+        },
+      ],
+    });
+    const fields = manifest.kinds[0]?.fields;
+    if (fields?.[0]?.type !== 'string[]') {
+      throw new Error(`packed deriver rendered ${JSON.stringify(fields)}`);
+    }
+    if (mod.parseKindManifest(JSON.parse(JSON.stringify(manifest))).instance !== 'smoke') {
+      throw new Error('packed reader did not round-trip the manifest');
     }
   },
 };
@@ -64,9 +90,14 @@ for (const name of readdirSync(packagesDir)) {
     const entry = path.join(unpacked, 'dist', 'index.js');
     if (!existsSync(entry)) throw new Error('tarball has no dist/index.js');
 
+    // Resolves a peer dependency the way a consumer would: from beside the installed
+    // package, not from this script's own tree.
+    const peerRequire = createRequire(path.join(unpacked, 'noop.js'));
+    const peer = (name) => import(pathToFileURL(peerRequire.resolve(name)).href);
+
     const mod = await import(pathToFileURL(entry).href);
-    await SMOKE[pkgName]?.(mod);
     if (!SMOKE[pkgName]) throw new Error(`no smoke check registered for ${pkgName}`);
+    await SMOKE[pkgName](mod, peer);
 
     console.log(`✓ ${pkgName}: packed, unpacked, imported, exercised`);
   } catch (error) {

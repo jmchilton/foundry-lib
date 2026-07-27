@@ -15,9 +15,10 @@ This repo holds the parts that transfer. Neither instance can host them: an inst
 on a sibling instance would contradict the pattern's central claim and couple two unrelated
 release cadences.
 
-| Package                                                     | Status                                                           |
-| ----------------------------------------------------------- | ---------------------------------------------------------------- |
-| [`@galaxy-foundry/license-policy`](packages/license-policy) | The shared license → redistribution-policy table, and its loader |
+| Package                                                     | What it carries                                                                  |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [`@galaxy-foundry/license-policy`](packages/license-policy) | The shared license → redistribution-policy table, and its loader                 |
+| [`@galaxy-foundry/kind-manifest`](packages/kind-manifest)   | The kind-manifest format: types, zod reader, and the zod-shape-to-fields deriver |
 
 ## What does not live here
 
