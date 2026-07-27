@@ -66,6 +66,17 @@ the workflow without updating every package's entry here breaks the publish.
 Add a `.changeset/*.md` naming the package. Merge; the Version Packages PR opens; merge
 that; it publishes.
 
+### A 404 right after the first publish is expected
+
+For a few minutes to an hour after a package's first real publish, `npm view` and
+`npm install` will 404 on it while the version endpoint
+(`registry.npmjs.org/<pkg>/<version>`) returns full metadata. The publish worked.
+
+Changesets runs `npm info <pkg>` immediately before publishing to decide whether the
+version is new; for a package that doesn't exist yet that 404s, and the CDN caches the
+404. Nothing to do but wait for it to expire. Check `npm dist-tag ls <pkg>` — it hits a
+different endpoint and answers truthfully.
+
 ## Repository settings this depends on
 
 - **Settings → Actions → General → Workflow permissions → "Allow GitHub Actions to
