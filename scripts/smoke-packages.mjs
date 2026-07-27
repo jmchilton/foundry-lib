@@ -42,6 +42,27 @@ const SMOKE = {
       throw new Error('packed vocabulary did not carry the three cast modes');
     }
   },
+  '@galaxy-foundry/tag-registry': (mod) => {
+    // No bundled data here — the facet vocabulary is per-instance — so what this proves is
+    // that the format rules survive packing, not that an asset shipped.
+    const registry = mod.tagRegistry(
+      mod.parseTagRegistry(
+        'facets:\n  meta:\n    label: Meta\n    description: d\n    values:\n      meta: g\n',
+      ),
+    );
+    // Membership is declared, not parsed off the `/` prefix — both halves of the rule.
+    if (!registry.isValidTag('meta')) throw new Error('a bare key was not a valid tag');
+    if (registry.isValidTag('meta/anything')) throw new Error('a tag was accepted by prefix');
+    let refused = false;
+    try {
+      mod.parseTagRegistry(
+        'facets:\n  a:\n    label: A\n    description: d\n    values:\n      x:\n',
+      );
+    } catch {
+      refused = true;
+    }
+    if (!refused) throw new Error('packed parser accepted a tag with no gloss');
+  },
   '@galaxy-foundry/kind-manifest': async (mod, peer) => {
     // zod is a peer dependency, so the packed tarball does not carry it. Resolving it
     // from beside the unpacked package is exactly what a consumer's install does — and
