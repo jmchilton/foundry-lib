@@ -89,21 +89,35 @@ describe('table invariants — what makes a row meaningful', () => {
   const policy = bundledPolicy();
   const rows = Object.entries(policy.licenses);
 
-  it('never lets an own-words-only row permit verbatim carry', () => {
+  it('never lets an own-words-only row permit a carry that copies text', () => {
     // The whole point of the policy column. A row breaking this would silently
-    // authorize the redistribution the table exists to prevent.
+    // authorize the redistribution the table exists to prevent. `sidecar` counts:
+    // it copies the source verbatim into its own file rather than into the note,
+    // which is a different location, not a different amount of copying.
     for (const [id, row] of rows) {
       if (row.policy === 'own-words-only') {
         expect(allowsMode(row, 'verbatim'), `${id} is own-words-only`).toBe(false);
+        expect(allowsMode(row, 'sidecar'), `${id} is own-words-only`).toBe(false);
       }
     }
   });
 
-  it('always lets a verbatim-ok row permit verbatim carry', () => {
+  it('always lets a verbatim-ok row permit verbatim carry, and demands its notice', () => {
+    // Permission and obligation travel together: a row may authorize copying the
+    // text only if it also requires the licence text to travel with it.
     for (const [id, row] of rows) {
       if (row.policy === 'verbatim-ok') {
         expect(allowsMode(row, 'verbatim'), `${id} is verbatim-ok`).toBe(true);
+        expect(row.license_file, `${id} is verbatim-ok`).toBe(true);
       }
+    }
+  });
+
+  it('gives every row at least one mode it permits', () => {
+    // An empty `allowed_modes` denies every carry, which no row in a curated table
+    // means to say — it reads as a row someone started and did not finish.
+    for (const [id, row] of rows) {
+      expect(row.allowed_modes.length, `${id} permits no mode at all`).toBeGreaterThan(0);
     }
   });
 
