@@ -24,6 +24,7 @@ release cadences.
 | [`@galaxy-foundry/kind-manifest`](packages/kind-manifest)           | The kind-manifest format: types, zod reader, and the zod-shape-to-fields deriver                          |
 | [`@galaxy-foundry/reference-contract`](packages/reference-contract) | The four typed-reference vocabularies every instance inherits, and the composer that adds its own `kinds` |
 | [`@galaxy-foundry/tag-registry`](packages/tag-registry)             | The `meta_tags.yml` format and its accessors — the rules, not the facets                                  |
+| [`@galaxy-foundry/wiki-links`](packages/wiki-links)                 | The `[[Target]]` grammar, the exact resolver, and a dependency-free remark transform                      |
 
 ## What does not live here
 

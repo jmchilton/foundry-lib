@@ -1,0 +1,52 @@
+{
+  "name": "@galaxy-foundry/wiki-links",
+  "version": "0.0.0",
+  "description": "The shared [[Target]] wiki-link grammar for Foundry-pattern instances — slug, parser, exact resolver, and a dependency-free remark transform. The link map stays per-instance.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./remark": {
+      "types": "./dist/remark.d.ts",
+      "import": "./dist/remark.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmchilton/foundry-lib.git",
+    "directory": "packages/wiki-links"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "foundry",
+    "wiki-links",
+    "obsidian",
+    "remark",
+    "markdown"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

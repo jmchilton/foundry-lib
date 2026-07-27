@@ -3,14 +3,14 @@
 The packages solve adjacent but separate cross-instance problems. Install one without
 bringing in the other.
 
-|                        | `license-policy`                                | `kind-manifest`                              | `reference-contract`                        | `tag-registry`                      |
-| ---------------------- | ----------------------------------------------- | -------------------------------------------- | ------------------------------------------- | ----------------------------------- |
-| **Question answered**  | What may this license allow us to redistribute? | What kinds does this instance publish?       | What may a Mold's `references[]` entry say? | What may a note's `tags:` say?      |
-| **Primary input**      | License ID or policy YAML                       | Resolved Zod object shapes or untrusted JSON | The instance's `kinds`                      | The instance's `meta_tags.yml`      |
-| **Primary output**     | Policy row and allowed modes                    | Validated, deterministic manifest            | The composed five-vocabulary contract       | Accessors over a validated registry |
-| **Ships vocabulary?**  | Yes — the whole table                           | No — format only                             | Four of the five vocabularies               | No — format only                    |
-| **Runtime dependency** | `js-yaml`                                       | Peer dependency on `zod@^3.25`               | `js-yaml`                                   | `js-yaml`                           |
-| **Default posture**    | Unknown license is a defect                     | Unsupported manifest version is rejected     | An unknown term is refused, never ignored   | An undeclared tag is not a tag      |
+|                        | `license-policy`                                | `kind-manifest`                              | `reference-contract`                        | `tag-registry`                      | `wiki-links`                         |
+| ---------------------- | ----------------------------------------------- | -------------------------------------------- | ------------------------------------------- | ----------------------------------- | ------------------------------------ |
+| **Question answered**  | What may this license allow us to redistribute? | What kinds does this instance publish?       | What may a Mold's `references[]` entry say? | What may a note's `tags:` say?      | Where does this `[[Target]]` point?  |
+| **Primary input**      | License ID or policy YAML                       | Resolved Zod object shapes or untrusted JSON | The instance's `kinds`                      | The instance's `meta_tags.yml`      | A `[[...]]` payload and the link map |
+| **Primary output**     | Policy row and allowed modes                    | Validated, deterministic manifest            | The composed five-vocabulary contract       | Accessors over a validated registry | The matched target, or nothing       |
+| **Ships vocabulary?**  | Yes — the whole table                           | No — format only                             | Four of the five vocabularies               | No — format only                    | No — grammar only                    |
+| **Runtime dependency** | `js-yaml`                                       | Peer dependency on `zod@^3.25`               | `js-yaml`                                   | `js-yaml`                           | None                                 |
+| **Default posture**    | Unknown license is a defect                     | Unsupported manifest version is rejected     | An unknown term is refused, never ignored   | An undeclared tag is not a tag      | An inexact link does not resolve     |
 
 **Ships vocabulary?** is the row that matters most. A package that ships data makes two
 instances agree on content; a package that ships only a format makes them agree on rules
@@ -80,6 +80,22 @@ required, or that note-kind is never copied into one — and it cannot check the
 against a corpus, because only an instance can see its own notes.
 
 [Follow the adoption guide](guides/adopting-tag-registry.md) or inspect the
+[generated API](api/typedoc/index.html ':ignore').
+
+## `@galaxy-foundry/wiki-links`
+
+Choose this package for:
+
+- resolving `[[Target]]` in note bodies or typed frontmatter fields;
+- rewriting wiki links in a markdown pipeline; or
+- checking links from a validator, using the same rule the renderer uses.
+
+The package ships no link map. Which notes exist, and what each is addressable by, is the
+instance's alone — one Foundry keys on a Mold's `name` field, another on a dashed collection
+id. Two rules do transfer, and the package enforces both: resolution is exact, and a
+backtick means the syntax rather than a link.
+
+[Follow the adoption guide](guides/adopting-wiki-links.md) or inspect the
 [generated API](api/typedoc/index.html ':ignore').
 
 ## Versioning

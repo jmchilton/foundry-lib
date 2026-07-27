@@ -1,0 +1,8 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts", "src/remark.ts"],
+  "readme": "README.md",
+  "excludeInternal": true,
+  "excludePrivate": true,
+  "gitRevision": "main"
+}
