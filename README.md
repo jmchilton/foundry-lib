@@ -3,6 +3,8 @@
 Shared substrate packages for [Foundry-pattern](https://github.com/galaxyproject/foundry-pattern)
 instances, published under the `@galaxy-foundry` npm scope.
 
+**[Documentation](https://jmchilton.github.io/foundry-lib/)**
+
 ## What lives here
 
 A Foundry instance is a knowledge base with a frontmatter contract, a set of controlled
@@ -58,8 +60,8 @@ pnpm changeset          # describe your change
 ```
 
 There is no npm token — CI authenticates to npm via OIDC trusted publishing. See
-[docs/publication.md](docs/publication.md), including the one-time laptop stub publish a
-brand-new package needs before trusted publishing can be configured for it.
+[the publication guide](docs/development/publication.md), including the one-time laptop stub
+publish a brand-new package needs before trusted publishing can be configured for it.
 
 ## License
 

@@ -9,7 +9,7 @@ name: Release
 #
 # There is no npm token. Authentication is OIDC trusted publishing — npm trusts this
 # repo/workflow/environment triple directly, so there is no long-lived credential to
-# leak or rotate. See docs/publication.md for the one-time per-package setup.
+# leak or rotate. See docs/development/publication.md for the one-time per-package setup.
 
 on:
   push:

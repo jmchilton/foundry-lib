@@ -1,0 +1,74 @@
+# foundry-lib
+
+<p class="doc-lede">
+The shared TypeScript substrate for Foundry-pattern instances: small contracts that have
+earned a common home through use in more than one independent Foundry.
+</p>
+
+`foundry-lib` packages the pieces that genuinely transfer between Foundry instances without
+making either instance depend on the other. Today that means a redistribution-policy table
+and a machine-readable kind-manifest format.
+
+<div class="doc-index">
+  <div>
+    <strong>@galaxy-foundry/license-policy</strong>
+    <p>Resolve a declared license into the redistribution modes and obligations a Foundry permits.</p>
+  </div>
+  <div>
+    <strong>Policy</strong>
+    <p>Deny by default, with explicit escape hatches.</p>
+  </div>
+  <div>
+    <strong>@galaxy-foundry/kind-manifest</strong>
+    <p>Derive, publish, validate, and compare the kinds an instance exposes.</p>
+  </div>
+  <div>
+    <strong>Contract</strong>
+    <p>Producer identity and consumer revision stay separate.</p>
+  </div>
+</div>
+
+## Choose your path
+
+- **Integrating a package?** Start with [Getting started](getting-started.md), then follow
+  the guide for [license policy](guides/adopting-license-policy.md) or
+  [kind manifests](guides/producing-kind-manifests.md).
+- **Deciding whether code belongs here?** Read
+  [The shared substrate](concepts/shared-substrate.md) and
+  [Package boundaries](architecture/package-boundaries.md).
+- **Contributing or releasing?** See [Contributing](development/contributing.md),
+  [Testing and smoke checks](development/testing-and-smoke.md), and
+  [Publication](development/publication.md).
+- **Looking up an export?** Open the [API overview](api/README.md) or the generated
+  [TypeDoc reference](api/typedoc/index.html ':ignore').
+
+## Where this fits
+
+A Foundry instance owns its corpus, registries, kind schemas, validator, and static site.
+This repository owns only the contracts that two or more instances have independently
+converged on.
+
+That boundary is deliberate. Similar-looking code is not automatically shared code. A
+contract moves here only when the instances already agree in behavior and the extraction
+removes duplicated maintenance without erasing a real local decision.
+
+> The governing test is evidence, not aspiration: two instances must already be maintaining
+> the same contract before `foundry-lib` becomes its home.
+
+## Packages
+
+| Package                                                                                          | Use it when you need to…                                          |
+| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy) | interpret a note's license as an allowed redistribution posture   |
+| [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)   | publish or consume a validated description of an instance's kinds |
+
+Both packages are ES modules, support Node.js 20 and later, and publish from CI with npm
+provenance.
+
+## Design rule
+
+The library prefers explicit inputs over hidden state, strict parsing over casts, generated
+metadata over duplicated tables, and conservative defaults over optimistic guesses. Those
+choices make cross-repository contracts inspectable and make drift fail loudly.
+
+Continue with [Getting started](getting-started.md).

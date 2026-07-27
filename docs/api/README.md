@@ -1,0 +1,43 @@
+# API reference
+
+The generated reference documents the public exports of both packages directly from their
+TypeScript entry points and package READMEs.
+
+[Open the TypeDoc reference](api/typedoc/index.html ':ignore')
+
+## `@galaxy-foundry/license-policy`
+
+The public surface includes:
+
+- policy types: `LicensePolicy`, `LicenseRow`, `CastMode`, and `RedistributionPolicy`;
+- bundled data access: `bundledPolicy`, `bundledPolicyText`, and `bundledPolicyPath`;
+- parsing and discovery: `parseLicensePolicy`, `loadLicensePolicy`, and
+  `findLicensePolicyPath`;
+- resolution helpers: `licenseIds`, `isValidLicenseId`, `resolveLicenseRow`, and
+  `allowsMode`; and
+- constants: `LICENSE_POLICY_FILE` and `LICENSE_REF_RE`.
+
+Start with [Adopt the license policy](guides/adopting-license-policy.md) for an integration
+sequence.
+
+## `@galaxy-foundry/kind-manifest`
+
+The public surface includes:
+
+- builders: `buildKindManifest` and `withRevision`;
+- field derivation: `describeFields` and `describeType`;
+- validation: `parseKindManifest` and the exported Zod schemas;
+- the format constant: `KIND_MANIFEST_VERSION`; and
+- manifest, source, field, layer, and builder input types.
+
+Start with [Produce a kind manifest](guides/producing-kind-manifests.md) or
+[Consume a kind manifest](guides/consuming-kind-manifests.md).
+
+## Source and package documentation
+
+TypeDoc links symbols back to the GitHub source and presents each package README at its
+package entry point. Those READMEs remain the canonical npm-facing usage reference; the
+hand-written site explains workflows that cross multiple exports or repositories.
+
+Generated files are not committed. Run `pnpm docs:api` locally or use the version generated
+from `main` on GitHub Pages.

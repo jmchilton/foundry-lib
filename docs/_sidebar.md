@@ -1,0 +1,22 @@
+- [Overview](/)
+- [Getting started](getting-started.md)
+- **Concepts**
+  - [The shared substrate](concepts/shared-substrate.md)
+- **Packages**
+  - [Choose a package](packages/README.md)
+- **Guides**
+  - [Adopt the license policy](guides/adopting-license-policy.md)
+  - [Produce a kind manifest](guides/producing-kind-manifests.md)
+  - [Consume a kind manifest](guides/consuming-kind-manifests.md)
+  - [Migrate a vendored contract](guides/migrating-vendored-contracts.md)
+- **Architecture**
+  - [Package boundaries](architecture/package-boundaries.md)
+  - [Manifest provenance](architecture/manifest-provenance.md)
+- **API**
+  - [API overview](api/README.md)
+  - [TypeDoc reference](api/typedoc/index.html ':ignore')
+- **Development**
+  - [Contributing](development/contributing.md)
+  - [Testing and smoke checks](development/testing-and-smoke.md)
+  - [Adding a package](development/adding-a-package.md)
+  - [Publication](development/publication.md)

@@ -1,0 +1,26 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["packages/license-policy", "packages/kind-manifest"],
+  "entryPointStrategy": "packages",
+  "packageOptions": {
+    "entryPoints": ["src/index.ts"],
+    "readme": "README.md",
+    "excludeInternal": true,
+    "excludePrivate": true,
+    "gitRevision": "main"
+  },
+  "out": "docs/api/typedoc",
+  "json": "docs/api/typedoc.json",
+  "name": "foundry-lib API",
+  "readme": "none",
+  "hostedBaseUrl": "https://jmchilton.github.io/foundry-lib/api/typedoc/",
+  "navigationLinks": {
+    "Guides": "https://jmchilton.github.io/foundry-lib/#/getting-started",
+    "GitHub": "https://github.com/jmchilton/foundry-lib",
+    "npm": "https://www.npmjs.com/org/galaxy-foundry"
+  },
+  "validation": {
+    "invalidLink": true,
+    "notExported": false
+  }
+}
