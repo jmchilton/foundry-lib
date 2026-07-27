@@ -57,6 +57,24 @@ describe('buildKindManifest', () => {
     const manifest = buildKindManifest({ instance: 'gwf', kinds: [MOLD] });
     expect(Object.hasOwn(manifest.kinds[0] as object, 'doc')).toBe(false);
   });
+
+  // Key order is load-bearing: the manifest is a committed artifact, so emitting `doc`
+  // after `fields` rewrites a multi-KB line in every instance's diff for no change in
+  // meaning. It goes where the type declares it.
+  it('emits `doc` before `fields`, matching the declared shape', () => {
+    const manifest = buildKindManifest({
+      instance: 'gwf',
+      kinds: [{ ...MOLD, doc: '# Mold' }],
+    });
+    expect(Object.keys(manifest.kinds[0] as object)).toEqual([
+      'kind',
+      'title',
+      'layer',
+      'summary',
+      'doc',
+      'fields',
+    ]);
+  });
 });
 
 describe('provenance', () => {

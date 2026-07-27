@@ -41,17 +41,15 @@ export function buildKindManifest({
     instance,
     version: KIND_MANIFEST_VERSION,
     kinds: kinds.map(({ kind, title, layer, summary, shape, doc }): ManifestKind => {
-      const entry: ManifestKind = {
-        kind,
-        title,
-        layer,
-        summary,
-        fields: describeFields(shape),
-      };
-      // Set rather than spread: an explicit `doc: undefined` key disappears from the
-      // emitted JSON but not from the in-memory object, so the two stop agreeing.
-      if (doc !== undefined) entry.doc = doc;
-      return entry;
+      const fields = describeFields(shape);
+      // Two branches rather than an assignment or a spread, for two reasons. An explicit
+      // `doc: undefined` key disappears from the emitted JSON but not from the in-memory
+      // object, so the two stop agreeing. And key ORDER is load-bearing here: a manifest
+      // is a committed artifact, so appending `doc` after `fields` rewrites a multi-KB
+      // line in every instance's diff for no change in meaning.
+      return doc === undefined
+        ? { kind, title, layer, summary, fields }
+        : { kind, title, layer, summary, doc, fields };
     }),
   };
   if (source !== undefined) manifest.source = source;
