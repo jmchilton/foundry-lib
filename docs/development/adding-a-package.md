@@ -20,6 +20,7 @@ Use the existing packages as the baseline:
 
 ```text
 packages/<name>/
+├── data/              # optional runtime assets
 ├── src/
 │   └── index.ts
 ├── test/
@@ -36,7 +37,7 @@ The package should:
 - use the `@galaxy-foundry` npm scope;
 - publish ES modules with declarations;
 - export only documented entry points;
-- list every runtime artifact in `files`;
+- list every runtime artifact, including `data/` when present, in `files`;
 - include focused unit tests; and
 - be exercised by `scripts/smoke-packages.mjs`.
 
@@ -47,6 +48,11 @@ dependency when the package must operate on values created by the consumer's cop
 `kind-manifest` does with Zod.
 
 Do not add a dependency on another workspace package without a genuine runtime relationship.
+
+Decide explicitly whether the package ships vocabulary. `license-policy` ships a complete
+table, `reference-contract` ships only the inherited half, and `tag-registry` ships only a
+format. That decision determines the package's data files, migration plan, versioning impact,
+and smoke-test strategy.
 
 ## Documentation
 

@@ -6,8 +6,9 @@ earned a common home through use in more than one independent Foundry.
 </p>
 
 `foundry-lib` packages the pieces that genuinely transfer between Foundry instances without
-making either instance depend on the other. Today that means a redistribution-policy table
-and a machine-readable kind-manifest format.
+making either instance depend on the other. Today that means four focused contracts: two
+ship shared vocabulary or policy, and two standardize a format while leaving domain content
+with each instance.
 
 <div class="doc-index">
   <div>
@@ -15,24 +16,26 @@ and a machine-readable kind-manifest format.
     <p>Resolve a declared license into the redistribution modes and obligations a Foundry permits.</p>
   </div>
   <div>
-    <strong>Policy</strong>
-    <p>Deny by default, with explicit escape hatches.</p>
-  </div>
-  <div>
     <strong>@galaxy-foundry/kind-manifest</strong>
     <p>Derive, publish, validate, and compare the kinds an instance exposes.</p>
   </div>
   <div>
-    <strong>Contract</strong>
-    <p>Producer identity and consumer revision stay separate.</p>
+    <strong>@galaxy-foundry/reference-contract</strong>
+    <p>Compose shared casting vocabularies with the reference kinds an instance owns.</p>
+  </div>
+  <div>
+    <strong>@galaxy-foundry/tag-registry</strong>
+    <p>Validate an instance's tag catalog and drive schemas and browse pages from it.</p>
   </div>
 </div>
 
 ## Choose your path
 
 - **Integrating a package?** Start with [Getting started](getting-started.md), then follow
-  the guide for [license policy](guides/adopting-license-policy.md) or
-  [kind manifests](guides/producing-kind-manifests.md).
+  the guide for [license policy](guides/adopting-license-policy.md),
+  [kind manifests](guides/producing-kind-manifests.md),
+  [reference contracts](guides/composing-reference-contracts.md), or
+  [tag registries](guides/adopting-tag-registry.md).
 - **Deciding whether code belongs here?** Read
   [The shared substrate](concepts/shared-substrate.md) and
   [Package boundaries](architecture/package-boundaries.md).

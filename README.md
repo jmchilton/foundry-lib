@@ -46,6 +46,7 @@ pnpm typecheck   # tsc, sources and tests
 pnpm build       # tsc, topological across the workspace
 pnpm smoke       # pack each package, unpack it, import it, exercise it
 pnpm format      # prettier
+pnpm docs:check  # build TypeDoc and verify the documentation site
 ```
 
 `pnpm smoke` is the one that catches what nothing else does. The `files` field of a

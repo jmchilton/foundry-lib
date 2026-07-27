@@ -45,6 +45,8 @@ The public surface includes:
 - constants and types: `CONTRACT_GROUPS`, `INHERITED_GROUPS`, `REFERENCE_CONTRACT_FILE`,
   `ReferenceContract`, `InheritedVocabularies`, `ContractTerm`, `KindTerm`, and `RefShape`.
 
+Start with [Compose a reference contract](guides/composing-reference-contracts.md).
+
 ## `@galaxy-foundry/tag-registry`
 
 The public surface includes:
@@ -53,6 +55,8 @@ The public surface includes:
 - accessors: `tagRegistry` and `buildTagIndex`;
 - the format constant: `TAG_REGISTRY_FILE`; and
 - registry, file, facet, and entry types.
+
+Start with [Adopt the tag registry](guides/adopting-tag-registry.md).
 
 ## Source and package documentation
 

@@ -33,10 +33,32 @@ Both instances publish their kinds for cross-instance comparison. They share the
 format, validation, and Zod-shape-to-field derivation. They do not share their actual kind
 schemas.
 
+### Typed-reference contract
+
+Every Mold reference names five controlled values. Four describe casting machinery and are
+shared: `used_at`, `load`, `modes`, and `evidence`. The package ships those vocabularies.
+`kinds` describes the domain's reference material, so each instance supplies it when composing
+the complete contract.
+
+This is a split contract rather than an all-or-nothing extraction. It lets instances inherit
+the shared vocabulary without pretending their reference kinds are the same.
+
+### Tag-registry format
+
+Both instances use a `meta_tags.yml` to declare closed, documented facets for validation and
+browsing. They share the format rules and access patterns, but not the vocabulary: their
+facets are different domain axes, and even an identically named facet can mean something
+different.
+
+The package therefore ships a parser and accessors, not a registry. Each instance keeps its
+own YAML and corpus-level drift checks.
+
 ## What stays with an instance
 
 - The base note envelope and its required metadata
 - Kind schemas and registries
+- Reference kinds and cross-field reference coherence
+- Tag facets, tag vocabulary, and corpus drift checks
 - License coherence rules
 - Site rendering and navigation
 - Corpus-specific migrations
@@ -50,6 +72,8 @@ Library functions accept the information only the instance can know:
 
 - `buildKindManifest` accepts already-resolved Zod shapes.
 - Policy helpers accept a policy value instead of reading module state.
+- `buildReferenceContract` accepts the instance's `kinds`.
+- `tagRegistry` accepts an already-parsed instance registry.
 - The producer supplies repository identity.
 - The consumer supplies the fetched revision.
 

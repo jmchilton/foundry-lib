@@ -64,7 +64,8 @@ The package does not enforce the cross-field rules its terms describe — that a
 reference carries a `trigger`, or that a `verbatim` mode is permitted by the reference's
 license. Those live in the instance's validator.
 
-Inspect the [generated API](api/typedoc/index.html ':ignore').
+[Follow the composition guide](guides/composing-reference-contracts.md) or inspect the
+[generated API](api/typedoc/index.html ':ignore').
 
 ## `@galaxy-foundry/tag-registry`
 
@@ -78,7 +79,8 @@ The package ships no facets. It does not decide the schema rules around tags —
 required, or that note-kind is never copied into one — and it cannot check the registry
 against a corpus, because only an instance can see its own notes.
 
-Inspect the [generated API](api/typedoc/index.html ':ignore').
+[Follow the adoption guide](guides/adopting-tag-registry.md) or inspect the
+[generated API](api/typedoc/index.html ':ignore').
 
 ## Versioning
 

@@ -21,6 +21,10 @@ Package tests should focus on observable contract behavior and invariants.
 For `license-policy`, that includes strict YAML parsing, fallback behavior, policy
 relationships, and resolution helpers. For `kind-manifest`, that includes representative Zod
 shapes, deterministic builds, parsing failures, supported versions, and provenance handling.
+For `reference-contract`, test both sides of the inherited/kinds boundary, deterministic
+narrowing, and invariants on the bundled vocabulary. For `tag-registry`, test structural
+validation and declaration-based membership with synthetic registries as well as real
+instance files.
 
 ```sh
 pnpm test
@@ -54,7 +58,12 @@ The smoke script packs each package, extracts it into a clean temporary project,
 public API, and exercises a representative call.
 
 This catches failures source-based checks cannot see, especially an incorrect `files` field
-that omits a runtime asset such as `license-policy.yml`.
+that omits a runtime asset such as `license-policy.yml` or `reference-contract.yml`.
+
+Every publishable package needs an entry in `SMOKE`, including format-only packages that ship
+no data. In that case, exercise a defining invariant through the packed API; `tag-registry`
+proves that declared membership survives packaging and prefix-shaped text does not grant
+membership.
 
 ## Documentation checks
 

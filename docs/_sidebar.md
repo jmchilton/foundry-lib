@@ -8,6 +8,8 @@
   - [Adopt the license policy](guides/adopting-license-policy.md)
   - [Produce a kind manifest](guides/producing-kind-manifests.md)
   - [Consume a kind manifest](guides/consuming-kind-manifests.md)
+  - [Compose a reference contract](guides/composing-reference-contracts.md)
+  - [Adopt the tag registry](guides/adopting-tag-registry.md)
   - [Migrate a vendored contract](guides/migrating-vendored-contracts.md)
 - **Architecture**
   - [Package boundaries](architecture/package-boundaries.md)
