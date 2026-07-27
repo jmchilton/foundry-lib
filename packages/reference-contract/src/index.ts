@@ -166,14 +166,54 @@ export function bundledVocabularies(): InheritedVocabularies {
   return bundled;
 }
 
+/** A subset of an inherited group's terms, keyed by group. */
+export type Narrowing = Partial<Record<InheritedGroup, readonly string[]>>;
+
+export type InheritedGroup = (typeof INHERITED_GROUPS)[number];
+
 export interface BuildReferenceContractOptions {
   /** The reference kinds this instance authors. Its own; never inherited. */
   kinds: Record<string, KindTerm>;
+  /**
+   * Restrict an inherited group to the terms this instance actually supports.
+   *
+   * Inheriting a vocabulary complete is the right default — a term an instance has not used
+   * YET is not drift. But some terms are capacity, not description: `modes.condense` commits
+   * a Foundry to an LLM phase in its caster, with the prompt/model provenance and the loss of
+   * byte-stable output that phase drags in. An instance whose caster is deterministic should
+   * be able to say so, and have its dead-vocabulary check mean something as a result.
+   *
+   * Narrowing is deliberate and reversible: widening again is a one-line edit made when a
+   * Mold first needs the term.
+   */
+  narrow?: Narrowing;
   /**
    * The inherited four. Defaults to the shipped table — pass this only to test against a
    * synthetic vocabulary.
    */
   inherited?: InheritedVocabularies;
+}
+
+function narrowGroup(
+  group: InheritedGroup,
+  terms: Record<string, ContractTerm>,
+  keep: readonly string[],
+): Record<string, ContractTerm> {
+  if (keep.length === 0) {
+    throw new Error(`reference contract: narrowing \`${group}\` to nothing leaves no valid value`);
+  }
+  const unknown = keep.filter((k) => terms[k] === undefined);
+  if (unknown.length > 0) {
+    // A typo here would silently narrow a group to fewer terms than intended, and the
+    // resulting schema would reject notes for a reason nobody could see.
+    throw new Error(
+      `reference contract: cannot narrow \`${group}\` to unknown term(s) ${unknown.join(', ')} ` +
+        `(available: ${Object.keys(terms).join(', ')})`,
+    );
+  }
+  // Rebuilt in the shipped table's order, not the caller's, so two instances narrowing to the
+  // same terms produce byte-identical contracts however they wrote the list.
+  return Object.fromEntries(Object.entries(terms).filter(([k]) => keep.includes(k)));
 }
 
 /**
@@ -184,12 +224,38 @@ export interface BuildReferenceContractOptions {
  */
 export function buildReferenceContract({
   kinds,
+  narrow,
   inherited = bundledVocabularies(),
 }: BuildReferenceContractOptions): ReferenceContract {
   if (Object.keys(kinds).length === 0) {
     throw new Error('reference contract: `kinds` is empty — an instance must declare at least one');
   }
-  return { kinds, ...inherited };
+  if (narrow) {
+    // TypeScript catches a bad group name, but a JS caller — or `kinds`, which is supplied
+    // directly rather than narrowed — would otherwise get a silent no-op.
+    const bad = Object.keys(narrow).filter(
+      (g) => !(INHERITED_GROUPS as readonly string[]).includes(g),
+    );
+    if (bad.length > 0) {
+      throw new Error(
+        `reference contract: cannot narrow \`${bad.join(', ')}\` ` +
+          `(narrowable: ${INHERITED_GROUPS.join(', ')})`,
+      );
+    }
+  }
+  const pick = (group: InheritedGroup): Record<string, ContractTerm> => {
+    const keep = narrow?.[group];
+    return keep === undefined ? inherited[group] : narrowGroup(group, inherited[group], keep);
+  };
+  // Written out rather than assembled, so the key order matches CONTRACT_GROUPS and the
+  // result is typed rather than cast.
+  return {
+    kinds,
+    used_at: pick('used_at'),
+    load: pick('load'),
+    modes: pick('modes'),
+    evidence: pick('evidence'),
+  };
 }
 
 /** Read an instance's `kinds` from a YAML file holding a `kinds:` block. */

@@ -26,6 +26,32 @@ contractKeys(contract, 'modes'); // ['verbatim', 'condense', 'sidecar'] — inhe
 contractKeys(contract, 'kinds'); // whatever your instance declares
 ```
 
+## Narrowing — declining capacity you have not earned
+
+Inheriting a vocabulary complete is the right default: a term an instance has not used _yet_
+is inheritance, not drift, which is why a dead-vocabulary check should skip these groups.
+
+But some terms are **capacity, not description**. `modes.condense` commits a Foundry to an LLM
+phase in its caster — and to the `pending_llm` slots, the `prompt`/`model` provenance needed to
+reproduce a cast, and the loss of byte-stable output that phase drags in. An instance whose
+caster is deterministic should be able to say so:
+
+```ts
+const contract = buildReferenceContract({
+  kinds: loadInstanceKinds('reference_contract.yml'),
+  narrow: { modes: ['verbatim', 'sidecar'] },
+});
+```
+
+Now `condense` is not a value the instance's schema accepts, and its dead-vocabulary check over
+`modes` means something. Widening again is a one-line edit, made when a Mold first needs the
+term — the same discipline instances already apply to `kinds`.
+
+Narrowing rebuilds the group in the **shipped** order rather than the caller's, so two instances
+narrowing to the same terms produce byte-identical contracts however they wrote the list. An
+unknown term is refused rather than ignored: a typo would otherwise narrow further than intended
+and the schema would reject notes for a reason nobody could see.
+
 After adopting this, an instance's `reference_contract.yml` holds **only** `kinds`. The
 loader refuses a file that re-declares an inherited block, and `parseInheritedVocabularies`
 refuses a shared table that declares `kinds` — the boundary is enforced in both directions,

@@ -107,6 +107,53 @@ describe('composing an instance contract', () => {
     expect(() => buildReferenceContract({ kinds: {} })).toThrow(/`kinds` is empty/);
   });
 
+  // Narrowing is how an instance declines capacity it has not earned. `modes.condense`
+  // commits a Foundry to an LLM phase in its caster; a deterministic caster should be able
+  // to say it supports neither that nor the provenance fields it drags in.
+  it('narrows an inherited group to what the instance supports', () => {
+    const contract = buildReferenceContract({ kinds, narrow: { modes: ['verbatim', 'sidecar'] } });
+    expect(contractKeys(contract, 'modes')).toEqual(['verbatim', 'sidecar']);
+    // Untouched groups stay complete — narrowing one is not narrowing all.
+    expect(contractKeys(contract, 'evidence')).toHaveLength(3);
+  });
+
+  it('narrows in the shipped order, not the order the caller listed', () => {
+    // Two instances narrowing to the same terms must produce identical contracts however
+    // they wrote the list, or a committed manifest diffs on nothing.
+    const a = buildReferenceContract({ kinds, narrow: { modes: ['sidecar', 'verbatim'] } });
+    const b = buildReferenceContract({ kinds, narrow: { modes: ['verbatim', 'sidecar'] } });
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+
+  it('refuses narrowing to a term the vocabulary does not have', () => {
+    // A typo would silently narrow further than intended, and the schema would then reject
+    // notes for a reason nobody could see.
+    expect(() => buildReferenceContract({ kinds, narrow: { modes: ['verbatm'] } })).toThrow(
+      /cannot narrow `modes` to unknown term\(s\) verbatm \(available: verbatim, condense, sidecar\)/,
+    );
+  });
+
+  it('refuses narrowing a group to nothing', () => {
+    expect(() => buildReferenceContract({ kinds, narrow: { modes: [] } })).toThrow(
+      /narrowing `modes` to nothing leaves no valid value/,
+    );
+  });
+
+  it('refuses narrowing a group that is not inherited', () => {
+    // `kinds` is supplied directly, so narrowing it is a misunderstanding rather than a
+    // no-op worth tolerating. TypeScript catches this; a JS caller would not be.
+    expect(() =>
+      buildReferenceContract({ kinds, narrow: { kinds: ['pattern'] } as never }),
+    ).toThrow(/cannot narrow `kinds` \(narrowable: used_at, load, modes, evidence\)/);
+  });
+
+  it('leaves every group complete when nothing is narrowed', () => {
+    const contract = buildReferenceContract({ kinds });
+    for (const group of INHERITED_GROUPS) {
+      expect(contract[group], group).toEqual(bundledVocabularies()[group]);
+    }
+  });
+
   it('accepts synthetic inherited vocabularies, so a kind can be tested in isolation', () => {
     const inherited = parseInheritedVocabularies(
       [
