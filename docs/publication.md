@@ -41,8 +41,10 @@ pnpm publish --no-git-checks --no-provenance --tag stub
 
 - `--no-provenance` because provenance needs an OIDC token, which only exists inside
   Actions. It overrides the `publishConfig.provenance: true` in the package.
-- `--tag stub` so this throwaway version never becomes `latest`. The next automated
-  release publishes the real version and takes `latest` with it.
+- `--tag stub` so the throwaway version is reachable by name later. Note it will _also_
+  become `latest` regardless: npm points `latest` at the first version of a package no
+  matter what tag you asked for. The next automated release publishes the real version
+  and takes `latest` back, so the window is however long setup takes.
 - `--no-git-checks` because the working tree at `0.0.0` isn't at a release tag.
 
 Publish in dependency order if one package depends on another via `workspace:*`.
