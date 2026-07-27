@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -13,30 +14,53 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
 
       - run: pnpm format
 
+      - run: pnpm lint
+
+      - run: pnpm lint:unused:ci
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup
+
       - run: pnpm typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup
 
       - run: pnpm build
 
       - run: pnpm test
 
-      # Runs last because it needs the built dist/, and it is the only check that
-      # exercises the tarball rather than the source tree.
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup
+
+      - run: pnpm build
+
+      # Validate package.json exports and the emitted declaration surface before
+      # exercising the tarballs at runtime.
+      - run: pnpm lint:packages
+
+      # The only check that installs exactly what npm would receive.
       - run: pnpm smoke
 
   # A PR that changes a published package without a changeset merges green and then
@@ -53,13 +77,6 @@ jobs:
         with:
           fetch-depth: 0 # `changeset status --since` needs the base branch history
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
 
       - run: pnpm changeset status --since=origin/${{ github.base_ref }}

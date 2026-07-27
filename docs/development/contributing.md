@@ -44,9 +44,12 @@ Avoid reaching across package directories except through declared workspace depe
 
 ```sh
 pnpm format
+pnpm lint
+pnpm lint:unused
 pnpm typecheck
 pnpm build
 pnpm test
+pnpm lint:packages
 pnpm smoke
 pnpm docs:check
 ```

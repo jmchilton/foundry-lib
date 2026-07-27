@@ -49,6 +49,9 @@ jobs:
 
       - run: pnpm build
 
+      # Reject malformed exports or declarations before publishing.
+      - run: pnpm lint:packages
+
       - run: pnpm test
 
       # Gate the publish on the artifact, not the source tree — a tarball missing a
