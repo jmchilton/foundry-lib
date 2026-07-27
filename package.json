@@ -1,0 +1,25 @@
+{
+  "name": "foundry-lib",
+  "private": true,
+  "type": "module",
+  "description": "Shared substrate packages for Foundry-pattern instances.",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
+    "smoke": "node scripts/smoke-packages.mjs",
+    "version-packages": "changeset version"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^0.5.0",
+    "@changesets/cli": "^2.27.9",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,80 @@
+#!/usr/bin/env node
+// Pack each package exactly as `npm publish` would, unpack the tarball somewhere
+// clean, and import it.
+//
+// This exists because the `files` field is the one part of a package that no test
+// and no typecheck exercises. Everything passes locally while `data/` is missing
+// from the tarball; the failure lands on whoever installs it. So the check has to
+// run against the artifact, not the source tree.
+
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const packagesDir = path.join(root, 'packages');
+
+// Each entry names an export the unpacked tarball must actually produce. A tarball
+// that imports but exposes nothing is not a working package.
+const SMOKE = {
+  '@galaxy-foundry/license-policy': (mod) => {
+    const policy = mod.bundledPolicy();
+    if (!policy || policy.version !== 1)
+      throw new Error('bundledPolicy() did not return the table');
+    const ids = mod.licenseIds(policy);
+    if (ids.length < 20) throw new Error(`only ${ids.length} licenses in the packed table`);
+    if (mod.resolveLicenseRow(policy, 'no-such-id').defect !== true) {
+      throw new Error('unknown id did not resolve to the defect row');
+    }
+  },
+};
+
+let failures = 0;
+
+for (const name of readdirSync(packagesDir)) {
+  const dir = path.join(packagesDir, name);
+  const manifest = path.join(dir, 'package.json');
+  if (!existsSync(manifest)) continue;
+
+  const { name: pkgName, private: isPrivate } = JSON.parse(
+    execFileSync('node', ['-p', `JSON.stringify(require(${JSON.stringify(manifest)}))`], {
+      encoding: 'utf8',
+    }),
+  );
+  if (isPrivate) {
+    console.log(`- ${pkgName}: private, skipped`);
+    continue;
+  }
+
+  const work = mkdtempSync(path.join(tmpdir(), 'foundry-smoke-'));
+  try {
+    const packed = execFileSync('npm', ['pack', '--pack-destination', work, '--silent'], {
+      cwd: dir,
+      encoding: 'utf8',
+    }).trim();
+    execFileSync('tar', ['-xzf', path.join(work, packed), '-C', work]);
+    const unpacked = path.join(work, 'package');
+
+    // The tarball carries no dependencies; borrow the workspace's resolved ones so
+    // the import exercises the packed files rather than failing on `js-yaml`.
+    symlinkSync(path.join(dir, 'node_modules'), path.join(unpacked, 'node_modules'), 'dir');
+
+    const entry = path.join(unpacked, 'dist', 'index.js');
+    if (!existsSync(entry)) throw new Error('tarball has no dist/index.js');
+
+    const mod = await import(pathToFileURL(entry).href);
+    await SMOKE[pkgName]?.(mod);
+    if (!SMOKE[pkgName]) throw new Error(`no smoke check registered for ${pkgName}`);
+
+    console.log(`✓ ${pkgName}: packed, unpacked, imported, exercised`);
+  } catch (error) {
+    console.error(`✗ ${pkgName}: ${error.message}`);
+    failures += 1;
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+}
+
+process.exit(failures === 0 ? 0 : 1);

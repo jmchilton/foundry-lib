@@ -1,0 +1,61 @@
+name: Release
+
+# Changesets-driven flow:
+#   1. PRs land carrying `.changeset/*.md` entries describing their package impact.
+#   2. This workflow runs on `main`. With pending changesets it opens (or updates) a
+#      "Version Packages" PR bumping versions and writing CHANGELOG entries.
+#   3. Merging that PR runs this workflow again with versions bumped and no changesets
+#      left, so the publish step ships the changed packages to npm with provenance.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write # npm provenance
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm typecheck
+
+      - run: pnpm build
+
+      - run: pnpm test
+
+      # Gate the publish on the artifact, not the source tree — a tarball missing a
+      # runtime asset passes every other check.
+      - run: pnpm smoke
+
+      - name: Create release PR or publish
+        uses: changesets/action@v1
+        with:
+          version: pnpm run version-packages
+          publish: pnpm changeset publish
+          title: 'chore(release): version packages'
+          commit: 'chore(release): version packages'
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
