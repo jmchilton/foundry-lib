@@ -9,6 +9,7 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'typedoc.json'
+      - '.github/actions/setup/**'
       - '.github/workflows/docs.yml'
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - 'package.json'
       - 'pnpm-lock.yaml'
       - 'typedoc.json'
+      - '.github/actions/setup/**'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
 
@@ -35,14 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
 
       - run: pnpm docs:check
 

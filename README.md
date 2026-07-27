@@ -41,11 +41,14 @@ shared decision nobody has taken.
 
 ```sh
 pnpm install
+pnpm format      # Prettier across source, docs, config, and workflows
+pnpm lint        # ESLint, including type-aware source rules
+pnpm lint:unused # Knip file, dependency, and export analysis
 pnpm test        # per-package vitest
 pnpm typecheck   # tsc, sources and tests
 pnpm build       # tsc, topological across the workspace
+pnpm lint:packages # publint + Are the Types Wrong over built packages
 pnpm smoke       # pack each package, unpack it, import it, exercise it
-pnpm format      # prettier
 pnpm docs:check  # build TypeDoc and verify the documentation site
 ```
 
