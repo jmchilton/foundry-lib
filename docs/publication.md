@@ -73,8 +73,7 @@ For a few minutes to an hour after a package's first real publish, `npm view` an
 (`registry.npmjs.org/<pkg>/<version>`) returns full metadata. The publish worked.
 
 Changesets runs `npm info <pkg>` immediately before publishing to decide whether the
-version is new; for a package that doesn't exist yet that 404s, and the CDN caches the
-404. Nothing to do but wait for it to expire. Check `npm dist-tag ls <pkg>` — it hits a
+version is new; for a package that doesn't exist yet that 404s, and the CDN caches the 404. Nothing to do but wait for it to expire. Check `npm dist-tag ls <pkg>` — it hits a
 different endpoint and answers truthfully.
 
 ## Repository settings this depends on
