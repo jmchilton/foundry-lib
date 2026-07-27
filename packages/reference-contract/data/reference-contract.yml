@@ -1,0 +1,72 @@
+# The INHERITED half of a Foundry's typed-reference vocabulary.
+#
+# A Mold declares its dependencies as `references[]` entries. Each entry draws from five
+# controlled vocabularies: `kinds`, `used_at`, `load`, `modes`, `evidence`. Four of those
+# five are the same in every Foundry, and they are what this file ships.
+#
+# `kinds` is NOT here, deliberately. Which reference kinds exist is the one part of the
+# contract that is genuinely per-domain: one instance authors `cli-tool` and `schema` refs,
+# another authors none of them and would be declaring dead vocabulary by inheriting them.
+# An instance supplies its own `kinds` and gets these four unchanged.
+#
+# THIS FILE IS THE SOURCE OF TRUTH. It ships in @galaxy-foundry/reference-contract;
+# instances consume it rather than each keeping a copy. Changing a row is a cross-instance
+# change: a version bump here, not an edit in two repos.
+#
+# Glosses were reconciled from the two instances that had independently written them. Where
+# they differed, the more specific reading won — three of these descriptions name a rule the
+# validator already enforces (`on-demand` needs a trigger, `hypothesis` needs a verification,
+# `verbatim` needs a permissive license) and were previously documented in only one repo
+# while being enforced in both.
+
+# Where a reader goes to learn what these terms mean. One URL for the whole vocabulary
+# rather than one per term: they are defined together, in one place, and repeating the same
+# link twelve times is noise the loader can supply instead.
+#
+# A repository URL, not a site URL, because foundry-pattern's hosting is not finalized —
+# `astro.config.mjs` still carries placeholder `site`/`base` values. Point this at the
+# rendered page, with a per-term anchor, once that lands.
+spec_url: https://github.com/galaxyproject/foundry-pattern/blob/main/content/pattern/anatomy-of-an-instance.md
+
+used_at:
+  cast-time:
+    label: Cast Time
+    description: Used while building the cast artifact.
+  runtime:
+    label: Runtime
+    description: Consulted by the generated skill while doing work.
+  both:
+    label: Both
+    description: Used during casting and available to the generated skill at runtime.
+
+load:
+  upfront:
+    label: Upfront
+    description: Loaded with the generated skill's initial context or main instructions.
+  on-demand:
+    label: On Demand
+    description: Loaded only when the reference trigger applies. Requires a `trigger`.
+
+modes:
+  verbatim:
+    label: Verbatim
+    description: Copied without LLM rewrite. License must permit verbatim carry.
+  condense:
+    label: Condense
+    description: LLM condensation before final packaging.
+  sidecar:
+    label: Sidecar
+    description: Transformed into a structured runtime artifact beside the generated skill.
+
+evidence:
+  hypothesis:
+    label: Hypothesis
+    description: >-
+      Added because it seems useful; not yet proven by a real cast run. Requires a
+      `verification`.
+  corpus-observed:
+    label: Corpus Observed
+    description: Grounded in survey or research over real sources, upstream, or runtime behavior.
+  cast-validated:
+    label: Cast Validated
+    description: A generated skill used this reference successfully on real data.
