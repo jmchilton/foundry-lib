@@ -30,6 +30,18 @@ const SMOKE = {
       throw new Error('unknown id did not resolve to the defect row');
     }
   },
+  '@galaxy-foundry/reference-contract': (mod) => {
+    // `data/` has to be in `files` for this to resolve at all — the one thing only a packed
+    // tarball can prove.
+    const inherited = mod.bundledVocabularies();
+    if (!inherited.load['on-demand']?.href) throw new Error('spec_url was not applied to terms');
+    const contract = mod.buildReferenceContract({
+      kinds: { pattern: { label: 'Pattern', description: 'd', ref_shape: 'wiki-link' } },
+    });
+    if (mod.contractKeys(contract, 'modes').length !== 3) {
+      throw new Error('packed vocabulary did not carry the three cast modes');
+    }
+  },
   '@galaxy-foundry/kind-manifest': async (mod, peer) => {
     // zod is a peer dependency, so the packed tarball does not carry it. Resolving it
     // from beside the unpacked package is exactly what a consumer's install does — and
