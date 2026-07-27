@@ -19,7 +19,9 @@ Use `license-policy` when a tool needs to decide how licensed source material ma
 into a Foundry. Use `kind-manifest` when an instance needs to publish its kind catalog or a
 consumer needs to validate one. Use `reference-contract` to compose the shared casting
 vocabularies with an instance's reference kinds. Use `tag-registry` to validate and query
-that instance's own tag facets.
+that instance's own tag facets. Use `wiki-links` when a renderer or a validator has to turn
+`[[Target]]` into a destination — and especially when both do, since encoding the rule twice
+is how the two drift apart.
 
 ```sh
 pnpm add @galaxy-foundry/license-policy
@@ -29,6 +31,7 @@ pnpm add @galaxy-foundry/kind-manifest zod@^3.25
 
 pnpm add @galaxy-foundry/reference-contract
 pnpm add @galaxy-foundry/tag-registry
+pnpm add @galaxy-foundry/wiki-links
 ```
 
 `zod` is a peer dependency of `kind-manifest`. The package reflects the same Zod instance
@@ -148,6 +151,25 @@ Membership comes from declaration under a facet, not from parsing the tag's `/` 
 Drive schemas, validation, and browse pages from the same loaded registry.
 
 Continue with [Adopt the tag registry](guides/adopting-tag-registry.md).
+
+## Resolve a wiki link
+
+The package supplies the grammar and the lookup rule; the map is yours. Build it with
+`slugify` so both sides of a lookup agree:
+
+```ts
+import { resolveWikiLink, slugify } from '@galaxy-foundry/wiki-links';
+
+const map = new Map([[slugify('Summarize Nextflow'), { id: 'molds/summarize-nextflow' }]]);
+
+resolveWikiLink('[[Summarize Nextflow]]', map); // the target
+resolveWikiLink('[[summarize-next]]', map); // undefined — resolution is exact
+```
+
+Rewriting a markdown tree uses the same resolver through the `./remark` subpath, so the
+renderer and the validator cannot answer differently.
+
+Continue with [Adopt wiki links](guides/adopting-wiki-links.md).
 
 ## Next steps
 

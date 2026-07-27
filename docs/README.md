@@ -27,6 +27,10 @@ with each instance.
     <strong>@galaxy-foundry/tag-registry</strong>
     <p>Validate an instance's tag catalog and drive schemas and browse pages from it.</p>
   </div>
+  <div>
+    <strong>@galaxy-foundry/wiki-links</strong>
+    <p>Resolve <code>[[Target]]</code> the same way in the renderer and the validator.</p>
+  </div>
 </div>
 
 ## Choose your path
@@ -34,8 +38,9 @@ with each instance.
 - **Integrating a package?** Start with [Getting started](getting-started.md), then follow
   the guide for [license policy](guides/adopting-license-policy.md),
   [kind manifests](guides/producing-kind-manifests.md),
-  [reference contracts](guides/composing-reference-contracts.md), or
-  [tag registries](guides/adopting-tag-registry.md).
+  [reference contracts](guides/composing-reference-contracts.md),
+  [tag registries](guides/adopting-tag-registry.md), or
+  [wiki links](guides/adopting-wiki-links.md).
 - **Deciding whether code belongs here?** Read
   [The shared substrate](concepts/shared-substrate.md) and
   [Package boundaries](architecture/package-boundaries.md).
@@ -68,6 +73,7 @@ removes duplicated maintenance without erasing a real local decision.
 | [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds |
 | [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them  |
 | [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet |
+| [`@galaxy-foundry/wiki-links`](https://www.npmjs.com/package/@galaxy-foundry/wiki-links)                 | resolve `[[Target]]` links in prose and frontmatter, exactly      |
 
 Every package is an ES module, supports Node.js 20 and later, and publishes from CI with npm
 provenance.

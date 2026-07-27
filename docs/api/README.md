@@ -58,6 +58,18 @@ The public surface includes:
 
 Start with [Adopt the tag registry](guides/adopting-tag-registry.md).
 
+## `@galaxy-foundry/wiki-links`
+
+The public surface includes:
+
+- the grammar: `slugify`, `stripBrackets`, `parseWikiLink`, `WIKI_LINK_RE`, and
+  `WIKI_LINK_SCAN_RE`;
+- resolution: `resolveWikiLink`, generic in the instance's target type; and
+- the `./remark` subpath: the default-exported transform plus `MdNode`,
+  `WikiLinkDestination`, and `RemarkWikiLinksOptions`.
+
+Start with [Adopt wiki links](guides/adopting-wiki-links.md).
+
 ## Source and package documentation
 
 TypeDoc links symbols back to the GitHub source and presents each package README at its

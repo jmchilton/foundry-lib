@@ -63,6 +63,39 @@ const SMOKE = {
     }
     if (!refused) throw new Error('packed parser accepted a tag with no gloss');
   },
+  '@galaxy-foundry/wiki-links': async (mod, _peer, unpacked) => {
+    // No bundled data — the link map is per-instance — so what this proves is that the
+    // grammar survives packing, and that BOTH entry points are reachable from the tarball.
+    const map = new Map([[mod.slugify('Summarize Nextflow'), { id: 'molds/summarize-nextflow' }]]);
+    if (mod.resolveWikiLink('[[Summarize Nextflow]]', map)?.id !== 'molds/summarize-nextflow') {
+      throw new Error('packed resolver did not match a slugified name');
+    }
+    // Exact only: the two corpus links prefix matching ever resolved were both bugs.
+    if (mod.resolveWikiLink('[[summarize-next]]', map) !== undefined) {
+      throw new Error('packed resolver fell back to a prefix');
+    }
+    if (mod.resolveWikiLink('[[...]]', map) !== undefined) {
+      throw new Error('packed resolver resolved an empty slug');
+    }
+
+    // `./remark` is a second `exports` entry. Only a packed tarball proves it ships and
+    // resolves — the source tree would import the file directly either way.
+    const remarkEntry = path.join(unpacked, 'dist', 'remark.js');
+    if (!existsSync(remarkEntry)) throw new Error('tarball has no dist/remark.js');
+    const { default: remarkWikiLinks } = await import(pathToFileURL(remarkEntry).href);
+    const tree = {
+      type: 'paragraph',
+      children: [
+        { type: 'text', value: 'see [[foo]]' },
+        { type: 'inlineCode', value: '[[foo]]' },
+      ],
+    };
+    remarkWikiLinks({ resolve: () => ({ href: '/x' }) })(tree);
+    if (tree.children[1]?.type !== 'link') throw new Error('packed transform did not link prose');
+    if (tree.children[2]?.type !== 'inlineCode') {
+      throw new Error('packed transform rewrote code — a backtick means the syntax');
+    }
+  },
   '@galaxy-foundry/kind-manifest': async (mod, peer) => {
     // zod is a peer dependency, so the packed tarball does not carry it. Resolving it
     // from beside the unpacked package is exactly what a consumer's install does — and
@@ -130,7 +163,7 @@ for (const name of readdirSync(packagesDir)) {
 
     const mod = await import(pathToFileURL(entry).href);
     if (!SMOKE[pkgName]) throw new Error(`no smoke check registered for ${pkgName}`);
-    await SMOKE[pkgName](mod, peer);
+    await SMOKE[pkgName](mod, peer, unpacked);
 
     console.log(`✓ ${pkgName}: packed, unpacked, imported, exercised`);
   } catch (error) {

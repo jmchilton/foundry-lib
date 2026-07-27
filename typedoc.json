@@ -4,7 +4,8 @@
     "packages/license-policy",
     "packages/kind-manifest",
     "packages/reference-contract",
-    "packages/tag-registry"
+    "packages/tag-registry",
+    "packages/wiki-links"
   ],
   "entryPointStrategy": "packages",
   "packageOptions": {
