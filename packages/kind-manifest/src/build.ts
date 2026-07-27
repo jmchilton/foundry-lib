@@ -57,3 +57,20 @@ export function buildKindManifest({
   if (source !== undefined) manifest.source = source;
   return manifest;
 }
+
+/**
+ * Record which revision a vendored copy was taken at.
+ *
+ * The producer cannot answer this — see `ManifestSource` — but a consumer reading a
+ * checkout can, and should, so the rendered catalog can say what it is showing. Returns a
+ * new manifest: vendoring reads, it does not edit what it read.
+ *
+ * Throws if the manifest declares no `source`, because a revision with no repo to hang it
+ * on is not provenance, just a string.
+ */
+export function withRevision(manifest: KindManifest, revision: string): KindManifest {
+  if (manifest.source === undefined) {
+    throw new Error(`${manifest.instance}: manifest declares no source to attach a revision to`);
+  }
+  return { ...manifest, source: { ...manifest.source, revision } };
+}

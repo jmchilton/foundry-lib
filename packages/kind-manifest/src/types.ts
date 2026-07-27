@@ -23,16 +23,23 @@ export interface ManifestKind {
 /**
  * Where a manifest came from.
  *
- * Emitted by the producer, which is the only party that knows its own revision. A
- * consumer that stamps this itself is asserting provenance rather than recording it.
+ * Split by who actually knows each fact. `repo` and `path` are the producer's own
+ * identity, so the producer declares them — a consumer that fills them in is asserting
+ * provenance rather than recording it.
+ *
+ * `revision` is not a producer field, and trying to make it one breaks the generator: a
+ * manifest is a COMMITTED artifact whose CI gate regenerates it and string-compares. A
+ * file carrying the revision it was generated at never matches the revision CI regenerates
+ * it at, so `--check` fails on every commit. It is also the wrong party — `revision`
+ * answers "which snapshot is this", which only whoever took the snapshot can say.
  */
 export interface ManifestSource {
-  /** `owner/name` of the instance's repository. */
+  /** `owner/name` of the instance's repository. Declared by the producer. */
   repo: string;
-  /** The commit the manifest was generated at. */
-  revision: string;
-  /** Repo-relative path the manifest was read from. */
+  /** Repo-relative path the manifest lives at. Declared by the producer. */
   path: string;
+  /** The commit this copy was taken at. Recorded by whoever vendored it. */
+  revision?: string;
 }
 
 export interface KindManifest {

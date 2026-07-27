@@ -6,7 +6,7 @@
 // instance's own. That split is why this package carries no kinds, no registries, and no
 // filesystem access — only the format, the deriver, and the reader.
 
-export { KIND_MANIFEST_VERSION, buildKindManifest } from './build.js';
+export { KIND_MANIFEST_VERSION, buildKindManifest, withRevision } from './build.js';
 export type { BuildKindManifestOptions, ManifestKindInput } from './build.js';
 
 export { describeFields, describeType } from './describe.js';

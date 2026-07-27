@@ -49,7 +49,7 @@ const manifest = buildKindManifest({
     shape: d.build(ctx).shape,
     doc: docs[d.kind],
   })),
-  source: { repo: 'galaxyproject/foundry', revision, path: 'types/kinds.generated.json' },
+  source: { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' },
 });
 ```
 
@@ -80,16 +80,26 @@ _newer_ format version is rejected rather than guessed at.
 
 ## Provenance
 
-`source` is emitted by the producer, which is the only party that knows its own revision:
+`source` is split by who actually knows each fact.
 
 ```ts
-source: { repo: 'owner/name', revision: 'abc1234', path: 'types/kinds.generated.json' }
+// the producer declares its own identity
+buildKindManifest({ ..., source: { repo: 'owner/name', path: 'types/kinds.generated.json' } });
+
+// whoever vendors a copy records which snapshot they took
+withRevision(manifest, 'abc1234');
 ```
 
-The pattern site used to bolt this on after reading the file — literally
+The pattern site used to bolt all of this on after reading the file — literally
 `manifest.source = {...}` in its vendoring script. That put the producer's identity in the
-consumer's hands and turned vendoring into a mutation. A consumer can only record where
-it fetched from; it cannot attest to what it fetched.
+consumer's hands and turned vendoring into a mutation.
+
+`revision` stays on the consumer's side for two reasons. It is the wrong party: `revision`
+answers "which snapshot is this", which only whoever took the snapshot can say. And it is
+structurally impossible for the producer — a manifest is a **committed** artifact whose CI
+gate regenerates it and string-compares, so a file carrying the revision it was generated
+at never matches the revision CI regenerates it at, and `--check` fails on every commit.
+A test pins that: two builds of the same kinds are byte-identical.
 
 ## The zod pin
 
@@ -124,6 +134,7 @@ written once per instance.
 | Export                                                                         | Purpose                                                      |
 | ------------------------------------------------------------------------------ | ------------------------------------------------------------ |
 | `buildKindManifest(opts)`                                                      | Derive a manifest from kinds and their built shapes          |
+| `withRevision(manifest, rev)`                                                  | Record the snapshot revision on a vendored copy              |
 | `describeType(schema)`                                                         | Render one zod type as a short readable string               |
 | `describeFields(shape)`                                                        | Walk an object shape into the field table, required first    |
 | `parseKindManifest(data)`                                                      | Validate an untrusted manifest, throwing with the path named |

@@ -21,7 +21,7 @@ const VALID = buildKindManifest({
       shape: { tags: z.array(z.string()) },
     },
   ],
-  source: { repo: 'galaxyproject/foundry', revision: 'abc1234', path: 'x.json' },
+  source: { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' },
 });
 
 describe('parseKindManifest', () => {
@@ -47,7 +47,7 @@ describe('parseKindManifest', () => {
         kinds: [{ ...VALID.kinds[0], fields: [{ name: 'a', required: 'yes', type: 'string' }] }],
       },
     ],
-    ['a partial source envelope', { ...VALID, source: { repo: 'a/b' } }],
+    ['a source envelope with no path', { ...VALID, source: { repo: 'a/b' } }],
     ['not an object at all', 'a manifest'],
   ])('rejects %s', (_label, input) => {
     expect(() => parseKindManifest(input)).toThrow();

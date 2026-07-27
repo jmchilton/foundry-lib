@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { KIND_MANIFEST_VERSION, buildKindManifest } from '../src/index.js';
+import { KIND_MANIFEST_VERSION, buildKindManifest, withRevision } from '../src/index.js';
 
 const MOLD = {
   kind: 'mold',
@@ -60,19 +60,48 @@ describe('buildKindManifest', () => {
 });
 
 describe('provenance', () => {
-  // The consumer used to bolt this on after reading the file — `manifest.source = {...}`
-  // in the pattern site's vendoring script. That put the producer's identity in the
-  // consumer's hands and made vendoring a mutation. A producer that knows its own repo
-  // and revision should say so.
-  const source = { repo: 'galaxyproject/foundry', revision: 'abc1234', path: 'x.json' };
+  // The consumer used to bolt all of this on after reading the file —
+  // `manifest.source = {...}` in the pattern site's vendoring script. That put the
+  // producer's identity in the consumer's hands and made vendoring a mutation.
+  const source = { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' };
 
-  it('emits the source envelope when the producer supplies one', () => {
+  it('emits the source envelope when the producer declares one', () => {
     const manifest = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
     expect(manifest.source).toEqual(source);
   });
 
-  it('omits `source` entirely when the producer does not know it', () => {
+  it('omits `source` entirely when the producer does not declare it', () => {
     const manifest = buildKindManifest({ instance: 'gwf', kinds: [MOLD] });
     expect(Object.hasOwn(manifest, 'source')).toBe(false);
+  });
+
+  // The constraint that put `revision` on the consumer's side. A manifest is a committed
+  // artifact whose CI gate regenerates it and string-compares; anything in it that varies
+  // with the current commit makes that gate fail on every commit. So two builds of the
+  // same kinds must be byte-identical no matter when they run.
+  it('produces byte-identical output across builds, so a --check gate can pass', () => {
+    const a = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
+    const b = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+  });
+});
+
+describe('withRevision', () => {
+  const source = { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' };
+  const base = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
+
+  it('records the snapshot revision alongside the declared source', () => {
+    expect(withRevision(base, 'abc1234').source).toEqual({ ...source, revision: 'abc1234' });
+  });
+
+  it('does not mutate the manifest it was given', () => {
+    withRevision(base, 'abc1234');
+    expect(base.source).toEqual(source);
+    expect(Object.hasOwn(base.source as object, 'revision')).toBe(false);
+  });
+
+  it('refuses a manifest with no declared source', () => {
+    const orphan = buildKindManifest({ instance: 'gwf', kinds: [MOLD] });
+    expect(() => withRevision(orphan, 'abc1234')).toThrow(/no source/);
   });
 });

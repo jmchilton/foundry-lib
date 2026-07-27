@@ -27,8 +27,8 @@ export const manifestKindSchema = z.object({
 
 export const manifestSourceSchema = z.object({
   repo: z.string(),
-  revision: z.string(),
   path: z.string(),
+  revision: z.string().optional(),
 });
 
 export const kindManifestSchema = z.object({
