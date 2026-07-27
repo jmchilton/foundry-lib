@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/reference-contract",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "The shared typed-reference vocabulary for Foundry-pattern instances, and its loader.",
   "type": "module",
   "exports": {
