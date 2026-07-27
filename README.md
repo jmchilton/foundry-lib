@@ -56,6 +56,10 @@ provenance and tags the release.
 pnpm changeset          # describe your change
 ```
 
+There is no npm token — CI authenticates to npm via OIDC trusted publishing. See
+[docs/publication.md](docs/publication.md), including the one-time laptop stub publish a
+brand-new package needs before trusted publishing can be configured for it.
+
 ## License
 
 MIT

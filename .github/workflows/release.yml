@@ -6,6 +6,10 @@ name: Release
 #      "Version Packages" PR bumping versions and writing CHANGELOG entries.
 #   3. Merging that PR runs this workflow again with versions bumped and no changesets
 #      left, so the publish step ships the changed packages to npm with provenance.
+#
+# There is no npm token. Authentication is OIDC trusted publishing — npm trusts this
+# repo/workflow/environment triple directly, so there is no long-lived credential to
+# leak or rotate. See docs/publication.md for the one-time per-package setup.
 
 on:
   push:
@@ -15,7 +19,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write # npm provenance
+  id-token: write # OIDC trusted publishing + provenance
 
 concurrency:
   group: release-${{ github.ref }}
@@ -24,6 +28,10 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    # npm binds each package's trusted publisher to this environment name. Renaming
+    # it here without updating every package's Trusted Publishers entry on npmjs.com
+    # breaks the publish.
+    environment: npm-publish
     steps:
       - uses: actions/checkout@v6
 
@@ -57,5 +65,4 @@ jobs:
           createGithubReleases: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
