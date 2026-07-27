@@ -3,6 +3,10 @@
 Install only the contract your Foundry needs. The two packages are independent and have
 different responsibilities.
 
+> New to the architecture? Read
+> [The Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/) first, then return
+> here for the shared TypeScript contracts used by multiple instances.
+
 ## Prerequisites
 
 - Node.js 20 or later

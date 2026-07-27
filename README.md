@@ -1,7 +1,8 @@
 # foundry-lib
 
-Shared substrate packages for [Foundry-pattern](https://github.com/galaxyproject/foundry-pattern)
-instances, published under the `@galaxy-foundry` npm scope.
+Shared substrate packages for
+[Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/) instances, published
+under the `@galaxy-foundry` npm scope.
 
 **[Documentation](https://jmchilton.github.io/foundry-lib/)**
 

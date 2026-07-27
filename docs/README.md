@@ -44,9 +44,11 @@ and a machine-readable kind-manifest format.
 
 ## Where this fits
 
-A Foundry instance owns its corpus, registries, kind schemas, validator, and static site.
-This repository owns only the contracts that two or more instances have independently
-converged on.
+[The Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/) defines an inspectable
+knowledge base of Molds that can be deterministically cast into frozen, provenance-bearing
+artifacts. Each Foundry instance owns its corpus, registries, kind schemas, validator, and
+static site. This repository owns only the contracts that two or more instances have
+independently converged on.
 
 That boundary is deliberate. Similar-looking code is not automatically shared code. A
 contract moves here only when the instances already agree in behavior and the extraction

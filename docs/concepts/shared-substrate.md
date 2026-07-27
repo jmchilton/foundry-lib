@@ -1,9 +1,10 @@
 # The shared substrate
 
-A Foundry is an instance of a pattern, not a deployment of one centrally owned application.
-Each instance can define different kinds, frontmatter, registries, and coherence rules. The
-shared substrate is the much smaller layer where independent instances have already reached
-the same decision.
+A Foundry is an instance of
+[the Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/), not a deployment of
+one centrally owned application. Each instance can define different kinds, frontmatter,
+registries, and coherence rules. The shared substrate is the much smaller layer where
+independent instances have already reached the same decision.
 
 ## The admission test
 

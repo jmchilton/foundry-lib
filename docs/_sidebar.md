@@ -20,3 +20,6 @@
   - [Testing and smoke checks](development/testing-and-smoke.md)
   - [Adding a package](development/adding-a-package.md)
   - [Publication](development/publication.md)
+- **Foundry ecosystem**
+  - [The Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/)
+  - [Pattern repository](https://github.com/galaxyproject/foundry-pattern)

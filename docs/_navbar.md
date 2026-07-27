@@ -1,4 +1,5 @@
 - [Documentation](/)
+- [The Pattern](https://galaxyproject.github.io/foundry-pattern/)
 - [Packages](packages/README.md)
 - [API](api/README.md)
 - [GitHub](https://github.com/jmchilton/foundry-lib)

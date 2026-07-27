@@ -3,11 +3,11 @@
 # Contracts that transfer.<br />Boundaries that stay honest.
 
 `foundry-lib` publishes the small set of types, policy tables, and derivation tools that
-multiple [Foundry-pattern](https://github.com/galaxyproject/foundry-pattern) instances have
+multiple [Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/) instances have
 independently proven they share.
 
 [Start integrating](getting-started.md)
-[Understand the boundary](concepts/shared-substrate.md)
+[Read the pattern](https://galaxyproject.github.io/foundry-pattern/)
 
 <div class="cover-facts">
   <div><strong>02</strong><span>focused packages</span></div>
