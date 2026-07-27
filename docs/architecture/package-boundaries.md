@@ -12,14 +12,21 @@ already converged across instances.
 | License coherence with note shape | does not own          | owns             |
 | Kind-manifest wire format         | owns                  | consumes         |
 | Field derivation from a Zod shape | owns                  | supplies shape   |
+| Reference casting vocabularies    | owns four shared ones | consumes         |
+| Reference kinds                   | does not own          | declares         |
+| Reference-entry coherence         | documents terms only  | validates        |
+| Tag-registry format               | owns                  | consumes         |
+| Tag facets and values             | does not own          | declares         |
+| Corpus-to-registry drift checks   | cannot observe        | owns             |
 | Registry and schema construction  | does not own          | owns             |
 | Producer repository identity      | validates and carries | declares         |
 | Vendored snapshot revision        | carries               | consumer records |
 
 ## Explicit inputs over ambient context
 
-Shared functions do not discover an instance's application container or registry. The caller
-passes the resolved policy, schema shape, source identity, or revision.
+Shared functions do not discover an instance's application container. The caller passes the
+resolved policy, schema shape, reference kinds, tag-registry contents, source identity, or
+revision.
 
 That makes the package:
 
@@ -35,8 +42,9 @@ YAML and JSON cross repository and package boundaries as `unknown` data. Parsers
 entire contract and report the offending location. A type assertion is not validation.
 
 Unknown license IDs land on a deny-by-default row. Unsupported manifest versions fail rather
-than being interpreted as the current version. Both behaviors prefer a visible defect to
-silent authorization.
+than being interpreted as the current version. Reference-contract loaders reject vocabulary
+on the wrong side of the shared/instance boundary. Tag registries reject undocumented or
+multiply declared tags. All prefer a visible defect to silent authorization or drift.
 
 ## Derived metadata over parallel tables
 
@@ -50,12 +58,15 @@ always described every Zod construct correctly.
 
 ## Data packages remain code packages
 
-`license-policy` ships the policy YAML and a parser together. The parser enforces invariants
-that well-formed YAML alone cannot express, including relationships among redistribution
-policy, allowed modes, copyleft, and license-file obligations.
+`license-policy` ships the policy YAML and a parser together.
+`reference-contract` likewise ships the inherited YAML while accepting instance kinds as an
+input. Their parsers enforce invariants that well-formed YAML alone cannot express, including
+relationships among policy fields and the ownership boundary between shared and local
+vocabulary.
 
-Keeping data and validation in one versioned package makes a policy release an auditable
-contract change.
+Keeping data and validation in one versioned package makes a vocabulary or policy release an
+auditable contract change. `kind-manifest` and `tag-registry` intentionally ship no domain
+data; their product is the format.
 
 ## Dependency posture
 
@@ -63,6 +74,7 @@ Dependencies stay narrow:
 
 - `license-policy` owns YAML parsing through `js-yaml`.
 - `kind-manifest` uses a Zod peer so it reflects the caller's schema instance.
+- `reference-contract` and `tag-registry` own YAML parsing through `js-yaml`.
 - packages do not depend on each other merely because they share a repository.
 
 The monorepo coordinates testing and publication, not runtime coupling.

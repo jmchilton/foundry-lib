@@ -24,6 +24,18 @@ inputs for registries, schemas, file roots, or policy values that only the insta
 Write down what intentionally remains local. That negative boundary is part of the package
 design.
 
+Three extraction shapes now have concrete precedents:
+
+| Shape                               | Shared package owns                        | Instance owns                      | Example              |
+| ----------------------------------- | ------------------------------------------ | ---------------------------------- | -------------------- |
+| Shared data and behavior            | the complete table, parser, and invariants | note-level coherence               | `license-policy`     |
+| Shared core plus local extension    | inherited groups and composition rules     | domain-specific `kinds`            | `reference-contract` |
+| Shared format, no shared vocabulary | parser, invariants, and accessors          | every facet, value, and drift test | `tag-registry`       |
+
+Choose the shape the evidence supports. Do not promote a domain vocabulary merely because
+its file format is shared, and do not leave genuinely identical vocabulary vendored merely
+because one block in the file differs.
+
 ## 3. Publish the narrow package
 
 The shared package should include:
@@ -49,6 +61,10 @@ For each instance:
 A compatibility phase is preferable to deleting the source before every consumer has a
 replacement.
 
+For a split contract, migrate the two halves separately: first compose the package data with
+the local extension and prove the result, then shrink the local file. For a format-only
+package, keep the instance data in place and replace only its parser and accessors.
+
 ## 5. Release and pin intentionally
 
 Add a Changeset for the package change. After publishing, update consumers through normal
@@ -59,6 +75,10 @@ dependency review so the adopted version is visible in each lockfile.
 Search every participating repository for the old filename, copied type names, and comments
 such as “edit both copies.” Update contributor documentation and regeneration scripts along
 with production imports.
+
+Also inspect schema enum builders, page generators, editor completions, drift tests, and
+fixtures. These are common secondary readers of registry data and are easy to miss when the
+primary loader changes.
 
 ## Completion criteria
 
