@@ -16,34 +16,23 @@ on:
     branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: write
-  pull-requests: write
-  id-token: write # OIDC trusted publishing + provenance
+permissions: {}
 
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  release:
+  validate:
     runs-on: ubuntu-latest
-    # npm binds each package's trusted publisher to this environment name. Renaming
-    # it here without updating every package's Trusted Publishers entry on npmjs.com
-    # breaks the publish.
-    environment: npm-publish
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@v7
         with:
-          node-version: 24
-          cache: pnpm
-          registry-url: 'https://registry.npmjs.org'
+          persist-credentials: false
 
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
 
       - run: pnpm typecheck
 
@@ -57,6 +46,46 @@ jobs:
       # Gate the publish on the artifact, not the source tree — a tarball missing a
       # runtime asset passes every other check.
       - run: pnpm smoke
+
+      # Pass only generated package contents into the privileged job. The release job
+      # never runs repository build or test scripts while holding write/OIDC access.
+      - uses: actions/upload-artifact@v7
+        with:
+          name: package-dist
+          path: packages/*/dist
+          if-no-files-found: error
+          retention-days: 1
+
+  release:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      id-token: write # OIDC trusted publishing + provenance
+    # npm binds each package's trusted publisher to this environment name. Renaming
+    # it here without updating every package's Trusted Publishers entry on npmjs.com
+    # breaks the publish.
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: package-dist
+          path: packages
 
       - name: Create release PR or publish
         uses: changesets/action@v1
