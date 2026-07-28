@@ -1,0 +1,59 @@
+{
+  "name": "@galaxy-foundry/kind-schema",
+  "version": "0.0.0",
+  "description": "The shared kind machinery for Foundry-pattern instances — the KindDefinition contract, per-kind and discriminated-union assembly, and path→kind collection routing. The kinds themselves stay per-instance.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./collections": {
+      "types": "./dist/collections.d.ts",
+      "import": "./dist/collections.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmchilton/foundry-lib.git",
+    "directory": "packages/kind-schema"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "foundry",
+    "frontmatter",
+    "zod",
+    "schema",
+    "kind"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "zod": "^3.25.0"
+  },
+  "dependencies": {
+    "@galaxy-foundry/kind-manifest": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.4",
+    "zod": "^3.25.76"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
