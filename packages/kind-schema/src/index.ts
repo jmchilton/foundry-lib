@@ -14,6 +14,7 @@
 import { z } from 'zod';
 
 export type { KindLayer } from '@galaxy-foundry/kind-manifest';
+export { manifestKinds } from './manifest.js';
 
 /**
  * Any shape a kind may have: an object carrying the `type` discriminator.

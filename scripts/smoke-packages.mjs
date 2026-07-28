@@ -145,6 +145,14 @@ const SMOKE = {
       throw new Error('packed assemble dropped the kind refinement');
     }
 
+    // The manifest bridge crosses a package boundary, so the packed tarball has to carry types
+    // it does not own — a `dependencies` entry, not just a devDependency, or a consumer's
+    // `ManifestKindInput` resolves to nothing.
+    const [described] = mod.manifestKinds([kind], { axis: z.string() }, { mold: '# Mold' });
+    if (described?.doc !== '# Mold' || !('axis' in described.shape)) {
+      throw new Error(`packed bridge described the kind as ${JSON.stringify(described)}`);
+    }
+
     // The second entrypoint is declared separately in `exports`, so `files` can ship one and
     // not the other — which is exactly the failure only a packed tarball shows.
     const collections = await import(

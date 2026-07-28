@@ -84,6 +84,26 @@ pages end up with `entry.data: unknown`.
 mixed corpus that does not know a note's kind before reading it. An instance may need only one of
 the two; the union is not required.
 
+## Manifests
+
+`manifestKinds` describes your kinds for
+[`@galaxy-foundry/kind-manifest`](../kind-manifest):
+
+```ts
+buildKindManifest({
+  instance: 'galaxy-workflow-foundry',
+  source: MANIFEST_SOURCE,
+  kinds: manifestKinds(KINDS, ctx, docs),
+});
+```
+
+It lives here rather than in kind-manifest because kind-manifest describes a kind it is _handed_
+and must not learn what a `KindDefinition` is — its reader half has a consumer that only reads
+manifests other Foundries produced and never defines a kind. This package knows both sides.
+
+`instance` and `source` stay with the caller: they are the producer's own identity, and a shared
+helper filling them in would be asserting provenance rather than recording it.
+
 ## Routing
 
 `@galaxy-foundry/kind-schema/collections` decides which collection a path belongs to. The table
