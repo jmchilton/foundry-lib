@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/kind-schema",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "The shared kind machinery for Foundry-pattern instances — the KindDefinition contract, per-kind and discriminated-union assembly, and path→kind collection routing. The kinds themselves stay per-instance.",
   "type": "module",
   "exports": {
