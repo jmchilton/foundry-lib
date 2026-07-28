@@ -121,6 +121,43 @@ const SMOKE = {
       throw new Error('packed reader did not round-trip the manifest');
     }
   },
+  '@galaxy-foundry/kind-schema': async (mod, peer, unpacked) => {
+    const { z } = await peer('zod');
+    const defineKind = mod.kindDefiner();
+    const kind = defineKind({
+      kind: 'mold',
+      title: 'Mold',
+      layer: 'substrate',
+      summary: 's',
+      build: (ctx) => z.object({ type: z.literal('mold'), axis: ctx.axis }).strict(),
+      refine: (data, issues) => {
+        if (data.axis === 'banned') {
+          issues.addIssue({ code: z.ZodIssueCode.custom, path: ['axis'], message: 'no' });
+        }
+      },
+    });
+    const schema = mod.assemble(kind, { axis: z.string() });
+    if (schema.parse({ type: 'mold', axis: 'general' }).axis !== 'general') {
+      throw new Error('packed assemble did not parse the kind');
+    }
+    // The refinement is the half that a tarball missing it would still import cleanly.
+    if (schema.safeParse({ type: 'mold', axis: 'banned' }).success) {
+      throw new Error('packed assemble dropped the kind refinement');
+    }
+
+    // The second entrypoint is declared separately in `exports`, so `files` can ship one and
+    // not the other — which is exactly the failure only a packed tarball shows.
+    const collections = await import(
+      pathToFileURL(path.join(unpacked, 'dist', 'collections.js')).href
+    );
+    const table = { molds: { base: 'content/molds', pattern: ['**/index.md'], kind: 'mold' } };
+    if (collections.collectionOf(table, 'content/molds/a/index.md') !== 'molds') {
+      throw new Error('packed router did not route a note to its collection');
+    }
+    if (collections.collectionOf(table, 'content/molds/a/eval.md') !== undefined) {
+      throw new Error('packed router claimed a file the table does not');
+    }
+  },
 };
 
 let failures = 0;
