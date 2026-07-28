@@ -16,11 +16,17 @@ short-lived credential for that run only. Nothing long-lived exists to leak or r
 3. Merging _that_ PR runs the workflow again — no changesets pending, versions already
    bumped — so it publishes to npm with provenance and cuts GitHub releases.
 
-The workflow gates the publish on `typecheck`, `build`, `test`, and `smoke`. `smoke` is
-the one that matters at this step: it packs each package, unpacks the tarball somewhere
-clean, and imports it. The `files` field is the one part of a package that nothing else
-exercises, so a package can pass everything and still ship a tarball missing an asset it
-reads at runtime.
+An unprivileged `validate` job gates the publish on `typecheck`, `build`,
+`lint:packages`, `test`, and `smoke`, then uploads only the generated `dist`
+directories. `smoke` is the one that matters at this step: it packs each package,
+unpacks the tarball somewhere clean, and imports it. The `files` field is the one part
+of a package that nothing else exercises, so a package can pass everything and still
+ship a tarball missing an asset it reads at runtime.
+
+The dependent `release` job downloads those exact build artifacts and is the only job
+with repository-write and OIDC permissions. It installs locked dependencies so
+Changesets can either update the release PR or publish, but it never runs repository
+build or test scripts while holding privileged credentials.
 
 ## Publishing a package for the first time
 
