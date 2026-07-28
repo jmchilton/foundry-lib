@@ -60,6 +60,25 @@ importers:
         specifier: ^3.25.76
         version: 3.25.76
 
+  packages/kind-schema:
+    dependencies:
+      '@galaxy-foundry/kind-manifest':
+        specifier: workspace:^
+        version: link:../kind-manifest
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.1
+      typescript:
+        specifier: ^5.7.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@22.20.1)(jiti@2.7.0)(yaml@2.9.0)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
+
   packages/license-policy:
     dependencies:
       js-yaml:

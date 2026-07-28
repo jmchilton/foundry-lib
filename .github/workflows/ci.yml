@@ -41,6 +41,11 @@ jobs:
 
       - uses: ./.github/actions/setup
 
+      # A workspace dependency resolves to the dependency's `dist/`, so typechecking a package
+      # that imports a sibling needs that sibling built first. This job was correct only while
+      # no package depended on another; kind-schema is the first that does.
+      - run: pnpm build
+
       - run: pnpm typecheck
 
   test:
