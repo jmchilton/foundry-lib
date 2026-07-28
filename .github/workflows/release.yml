@@ -34,9 +34,9 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      - run: pnpm typecheck
-
       - run: pnpm build
+
+      - run: pnpm typecheck
 
       # Reject malformed exports or declarations before publishing.
       - run: pnpm lint:packages
