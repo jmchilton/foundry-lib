@@ -1,5 +1,23 @@
 # @galaxy-foundry/kind-schema
 
+## 0.3.0
+
+### Minor Changes
+
+- [#22](https://github.com/jmchilton/foundry-lib/pull/22) [`68619d8`](https://github.com/jmchilton/foundry-lib/commit/68619d864d5b03affc87f7a01960c307144e25c6) Thanks [@jmchilton](https://github.com/jmchilton)! - Add `@galaxy-foundry/kind-schema/docs` with `loadKindDocs(kinds, typesDir)`, which reads each
+  kind's `kind.md` and trims it — the input `manifestKinds` already takes as `docs`.
+
+  Both instances wrote this function, with a docstring identical word for word, next to the
+  `manifestKinds` map they also both wrote. It walks the kind list rather than the directory, so a
+  kind with no doc errors naming itself and a stray directory is not mistaken for a kind.
+
+  Its own entry point rather than the barrel: this is the only part of the package that touches a
+  filesystem, and the rest imports nothing from `node:` so that an instance's site can pull
+  `KindDefinition` into browser code without `fs` coming with it.
+
+  It throws where the two copies called `process.exit(1)`. Both callers do want to exit, and both
+  should keep saying so themselves — a library that exits cannot be tested or composed.
+
 ## 0.2.0
 
 ### Minor Changes
