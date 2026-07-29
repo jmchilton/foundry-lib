@@ -40,9 +40,15 @@ export type KindShape = { type: z.ZodTypeAny } & z.ZodRawShape;
  * ```
  *
  * Generic over `T` too, and that is not decoration: a definition annotated `: KindDefinition`
- * widens its shape back to the default, and the erasure travels all the way to the Astro pages
- * as `entry.data` of type `unknown` — one widened annotation costs ~100 `astro check` errors on
- * pages that never mention the kind. Kinds go through `defineKind` so it stays INFERRED.
+ * widens its shape back to the default, and the erasure travels to whatever reads a note's
+ * frontmatter. Kinds go through `defineKind` so it stays INFERRED.
+ *
+ * How loudly that lands is worth stating precisely, because it varies and an instance should not
+ * take its site typecheck for a proof. Measured across the two: widening to the default shape
+ * costs 1 `astro check` error in one instance and fails the package build outright in the other;
+ * widening to an `any` shape costs 8 errors in one and NONE in the other, since an `any`
+ * satisfies every field access rather than failing one. The type-level assertions in this
+ * package's tests are the check that does not vary.
  *
  * A kind is `build` plus an optional `refine`, and nothing else. There is deliberately no hook
  * for assembling an entry out of anything but its own frontmatter: a note that needs a sibling
@@ -137,18 +143,58 @@ export function assemble<Ctx, T extends KindShape>(
 }
 
 /**
+ * What each kind in `K` builds, in order — recovering the per-kind types `.map` erases.
+ *
+ * `infer R extends z.ZodTypeAny` rather than a bare `infer R`, so the result is known to be a
+ * schema and can be fed to `z.infer` below. The fallback is `ZodNever` rather than `never`
+ * because a `never` member would not satisfy that bound either, and the error would surface at
+ * the type alias rather than at whatever passed a non-kind.
+ */
+type BuiltMembers<K extends readonly unknown[]> = {
+  -readonly [I in keyof K]: K[I] extends {
+    build: (...args: never[]) => infer R extends z.ZodTypeAny;
+  }
+    ? R
+    : z.ZodNever;
+};
+
+/**
+ * The union's schema: parses any kind's frontmatter, yields the union of their outputs.
+ *
+ * Stated as one `z.ZodType` over `BuiltMembers<K>[number]` rather than as a `ZodDiscriminatedUnion`
+ * of a reconstructed tuple, for the same reason `Assembled` is: naming zod's wrapper types means
+ * the declared type has to track what `.superRefine` returns, and getting that wrong erases
+ * exactly what this is here to preserve. Distributing `z.infer` over the member union does not.
+ */
+export type AssembledUnion<K extends readonly unknown[]> = z.ZodType<
+  z.infer<BuiltMembers<K>[number]>,
+  z.ZodTypeDef,
+  z.input<BuiltMembers<K>[number]>
+>;
+
+/**
  * Every kind in one schema, dispatching on `type` — for a consumer that validates a mixed
  * corpus and does not know a note's kind before reading it.
  *
- * Per-kind assembly (`assemble`) is the direction that keeps types precise and is what a
- * per-collection loader wants; this is for the validator walking everything at once. An
- * instance may need only one of the two — the union is not required to use this package.
+ * Per-kind assembly (`assemble`) is what a per-collection loader wants; this is for the
+ * validator walking everything at once. An instance may need only one of the two — the union is
+ * not required to use this package.
  *
- * `members` is a cast, and it is the one place a cast is unavoidable: `.map` over the kind list
- * returns an array, and `z.discriminatedUnion` demands a non-empty tuple. The caller keeps the
- * per-kind precision by going through `assemble` instead; nothing reads a field off the union.
+ * Generic over the kind LIST, not just the context, and that is load-bearing rather than
+ * decorative. `.map` over the kinds returns a homogeneous array, so a signature that took
+ * `readonly AnyKindDefinition<Ctx>[]` would hand every caller back a union whose output is
+ * `unknown` with an index signature — every field access compiling and yielding nothing. A
+ * consumer that re-exports this schema's type from its own published API would pass that
+ * erasure on to people who never called this function. Pass a tuple (`[...] as const`) and the
+ * per-member types survive; pass a widened array and the output degrades to `any`, as before.
+ *
+ * The cast on `members` is still unavoidable — `z.discriminatedUnion` demands a non-empty tuple
+ * — but it is now contained: the declared return type reconstructs what the cast threw away.
  */
-export function buildKindUnion<Ctx>(kinds: readonly AnyKindDefinition<Ctx>[], ctx: Ctx) {
+export function buildKindUnion<Ctx, K extends readonly AnyKindDefinition<Ctx>[]>(
+  kinds: K,
+  ctx: Ctx,
+): AssembledUnion<K> {
   if (kinds.length === 0) throw new Error('buildKindUnion needs at least one kind');
 
   const byName = new Map(kinds.map((k) => [k.kind, k]));
@@ -160,5 +206,5 @@ export function buildKindUnion<Ctx>(kinds: readonly AnyKindDefinition<Ctx>[], ct
   return z.discriminatedUnion('type', members).superRefine((d, issues) => {
     const definition = byName.get((d as { type: string }).type);
     definition?.refine?.(d as never, issues, ctx);
-  });
+  }) as unknown as AssembledUnion<K>;
 }

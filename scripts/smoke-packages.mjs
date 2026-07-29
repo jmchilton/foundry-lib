@@ -8,7 +8,7 @@
 // run against the artifact, not the source tree.
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -145,6 +145,14 @@ const SMOKE = {
       throw new Error('packed assemble dropped the kind refinement');
     }
 
+    const union = mod.buildKindUnion([kind], { axis: z.string() });
+    if (union.parse({ type: 'mold', axis: 'general' }).type !== 'mold') {
+      throw new Error('packed union did not dispatch on type');
+    }
+    if (union.safeParse({ type: 'mold', axis: 'banned' }).success) {
+      throw new Error('packed union dropped the matched kind refinement');
+    }
+
     // The manifest bridge crosses a package boundary, so the packed tarball has to carry types
     // it does not own — a `dependencies` entry, not just a devDependency, or a consumer's
     // `ManifestKindInput` resolves to nothing.
@@ -203,8 +211,20 @@ for (const name of readdirSync(packagesDir)) {
 
     // Resolves a peer dependency the way a consumer would: from beside the installed
     // package, not from this script's own tree.
+    //
+    // Through the `import` condition, deliberately. `require.resolve` picks `require`, so a
+    // dual-published peer hands this script the CJS build while the package under test imports
+    // the ESM one — two copies of the library, two sets of classes, and any check that compares
+    // identity across them fails for a reason that has nothing to do with the tarball.
     const peerRequire = createRequire(path.join(unpacked, 'noop.js'));
-    const peer = (name) => import(pathToFileURL(peerRequire.resolve(name)).href);
+    const peer = (name) => {
+      const manifest = peerRequire.resolve(`${name}/package.json`);
+      const { exports: exp, module: esm, main } = JSON.parse(readFileSync(manifest, 'utf8'));
+      const root = typeof exp === 'string' ? exp : exp?.['.'];
+      const entry =
+        (typeof root === 'string' ? root : (root?.import ?? root?.default)) ?? esm ?? main;
+      return import(pathToFileURL(path.resolve(path.dirname(manifest), entry)).href);
+    };
 
     const mod = await import(pathToFileURL(entry).href);
     if (!SMOKE[pkgName]) throw new Error(`no smoke check registered for ${pkgName}`);

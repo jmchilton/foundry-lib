@@ -61,9 +61,12 @@ export const kind = defineKind({
 is applied separately, by `assemble`.
 
 Go through `defineKind` rather than annotating `: KindDefinition`. The annotation widens the
-shape back to the default, and the erasure travels all the way to an Astro page as
-`entry.data: unknown` — one widened annotation can cost ~100 `astro check` errors on pages that
-never mention the kind.
+shape back to the default, and the erasure travels to whatever reads a note's frontmatter.
+
+Don't rely on your site typecheck to catch that. Measured across the two instances, widening to
+the default shape costs 1 `astro check` error in one and fails the package build in the other,
+while widening to an `any` shape costs 8 errors in one and none at all in the other — an `any`
+satisfies every field access rather than failing one. If it matters to you, assert it directly.
 
 ## Assembling
 
@@ -83,6 +86,19 @@ pages end up with `entry.data: unknown`.
 `buildKindUnion` gives all kinds in one schema dispatching on `type`, for a validator walking a
 mixed corpus that does not know a note's kind before reading it. An instance may need only one of
 the two; the union is not required.
+
+Pass a tuple, not a widened array, if you care about the union's type:
+
+```ts
+export const KINDS = [mold, pattern, book] as const; //          ^ this
+export const schema = buildKindUnion(KINDS, ctx);
+```
+
+`z.infer` of that is the discriminated union of the kinds' outputs. Hand it a
+`readonly AnyKindDefinition<Ctx>[]` instead and validation still works exactly the same, but the
+output type degrades to `any` — every field access compiles and yields nothing. That matters most
+if you re-export the union's type from your own published package, where the erasure would reach
+consumers who never called this one.
 
 ## Manifests
 
