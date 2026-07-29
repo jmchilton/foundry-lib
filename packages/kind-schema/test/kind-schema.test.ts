@@ -168,6 +168,14 @@ describe('buildKindUnion', () => {
   it('refuses an empty kind list rather than building a union of nothing', () => {
     expect(() => buildKindUnion([], wideCtx)).toThrow(/at least one kind/);
   });
+
+  it('still builds from a widened kind array, where the types cannot survive', () => {
+    // The escape hatch stays usable: a caller holding `AnyKindDefinition[]` gets a working
+    // schema, just not a typed one. Only the shapes are lost, never the validation.
+    expect(buildKindUnion(kinds, wideCtx).safeParse({ ...validMold, extra: 1 }).success).toBe(
+      false,
+    );
+  });
 });
 
 /**
@@ -186,6 +194,25 @@ type MoldOut = z.infer<ReturnType<typeof mold.build>>;
 export type _AxisIsExact = MustBeTrue<Equals<MoldOut['axis'], 'source-specific' | 'general'>>;
 export type _StatusIsExact = MustBeTrue<Equals<MoldOut['status'], 'draft' | 'reviewed'>>;
 export type _RevisedIsExact = MustBeTrue<Equals<MoldOut['revised'], Date>>;
+
+// The union has to keep its members' types too, and for a reason the per-kind assertions above
+// do not cover: an instance may re-export the union's type from its own published API, and a
+// union that erased to `unknown` would hand that erasure to consumers who never called this
+// package. Discriminating on `type` is the least this must preserve — if `.map`'s homogeneous
+// array reaches the return type, `UnionOut['type']` is `unknown` and this stops compiling.
+type TupleKinds = readonly [typeof mold, typeof pattern];
+type UnionOut = z.infer<ReturnType<typeof buildKindUnion<WideContext, TupleKinds>>>;
+export type _UnionDiscriminantIsExact = MustBeTrue<Equals<UnionOut['type'], 'mold' | 'pattern'>>;
+
+// And the arms stay separable rather than merging into one wide record: `axis` belongs to the
+// mold arm only, so narrowing by `type` is what a consumer walking a mixed corpus actually does.
+type MoldArm = Extract<UnionOut, { type: 'mold' }>;
+export type _UnionMoldAxisIsExact = MustBeTrue<
+  Equals<MoldArm['axis'], 'source-specific' | 'general'>
+>;
+export type _UnionPatternHasNoAxis = MustBeTrue<
+  Equals<'axis' extends keyof Extract<UnionOut, { type: 'pattern' }> ? true : false, false>
+>;
 
 describe('kindDefiner', () => {
   // The reason `defineKind` exists at all. If the shape widened, `entry.data` degrades to
