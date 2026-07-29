@@ -120,6 +120,28 @@ manifests other Foundries produced and never defines a kind. This package knows 
 `instance` and `source` stay with the caller: they are the producer's own identity, and a shared
 helper filling them in would be asserting provenance rather than recording it.
 
+The `docs` it takes are the prose beside each kind's schema, which
+`@galaxy-foundry/kind-schema/docs` will read for you:
+
+```ts
+import { loadKindDocs } from '@galaxy-foundry/kind-schema/docs';
+
+manifestKinds(KINDS, ctx, loadKindDocs(KINDS, 'src/types'));
+```
+
+It reads `<typesDir>/<kind>/kind.md` for every kind in the list and trims each body — trimmed
+because the manifest is byte-compared by your `--check` gate, and a trailing newline that varies
+by editor would fail it on whitespace.
+
+Driven by the kind list rather than by a directory listing, so a kind with no `kind.md` is an
+error naming itself and an unrelated directory under `types/` is not mistaken for a kind. It
+**throws** on a missing doc rather than exiting: whether that means exit 1 is your command's
+call, not this package's.
+
+This is a separate entry point because it is the only part of kind-schema that touches a
+filesystem. Everything else imports nothing from `node:`, which is what lets an instance's site
+pull `KindDefinition` into browser code without dragging `fs` in behind it.
+
 ## Routing
 
 `@galaxy-foundry/kind-schema/collections` decides which collection a path belongs to. The table

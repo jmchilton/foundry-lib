@@ -8,7 +8,16 @@
 // run against the artifact, not the source tree.
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -161,8 +170,8 @@ const SMOKE = {
       throw new Error(`packed bridge described the kind as ${JSON.stringify(described)}`);
     }
 
-    // The second entrypoint is declared separately in `exports`, so `files` can ship one and
-    // not the other — which is exactly the failure only a packed tarball shows.
+    // The further entrypoints are declared separately in `exports`, so `files` can ship one and
+    // not the others — which is exactly the failure only a packed tarball shows.
     const collections = await import(
       pathToFileURL(path.join(unpacked, 'dist', 'collections.js')).href
     );
@@ -172,6 +181,28 @@ const SMOKE = {
     }
     if (collections.collectionOf(table, 'content/molds/a/eval.md') !== undefined) {
       throw new Error('packed router claimed a file the table does not');
+    }
+
+    const docsDir = mkdtempSync(path.join(tmpdir(), 'foundry-smoke-docs-'));
+    try {
+      const { loadKindDocs } = await import(
+        pathToFileURL(path.join(unpacked, 'dist', 'docs.js')).href
+      );
+      mkdirSync(path.join(docsDir, 'mold'), { recursive: true });
+      writeFileSync(path.join(docsDir, 'mold', 'kind.md'), '\n# Mold\n\n');
+      if (loadKindDocs([kind], docsDir).mold !== '# Mold') {
+        throw new Error('packed doc loader did not read and trim the kind body');
+      }
+      // Naming the kind that has no doc is the whole value of walking the kind list.
+      let refused = false;
+      try {
+        loadKindDocs([kind, { ...kind, kind: 'absent' }], docsDir);
+      } catch (e) {
+        refused = /^absent: cannot read /.test(e.message);
+      }
+      if (!refused) throw new Error('packed doc loader did not name the kind with no kind.md');
+    } finally {
+      rmSync(docsDir, { recursive: true, force: true });
     }
   },
 };
