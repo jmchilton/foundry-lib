@@ -200,8 +200,8 @@ export type _RevisedIsExact = MustBeTrue<Equals<MoldOut['revised'], Date>>;
 // union that erased to `unknown` would hand that erasure to consumers who never called this
 // package. Discriminating on `type` is the least this must preserve — if `.map`'s homogeneous
 // array reaches the return type, `UnionOut['type']` is `unknown` and this stops compiling.
-const TUPLE_KINDS = [mold, pattern] as const;
-type UnionOut = z.infer<ReturnType<typeof buildKindUnion<WideContext, typeof TUPLE_KINDS>>>;
+type TupleKinds = readonly [typeof mold, typeof pattern];
+type UnionOut = z.infer<ReturnType<typeof buildKindUnion<WideContext, TupleKinds>>>;
 export type _UnionDiscriminantIsExact = MustBeTrue<Equals<UnionOut['type'], 'mold' | 'pattern'>>;
 
 // And the arms stay separable rather than merging into one wide record: `axis` belongs to the
