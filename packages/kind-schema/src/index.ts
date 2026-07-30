@@ -19,6 +19,7 @@
 // weaker claim than the rest of this file makes. See that module's header for the measurements.
 
 import { z } from 'zod';
+import type * as core from 'zod/v4/core';
 
 import type { CompanionDeclaration } from './companions.js';
 
@@ -105,10 +106,10 @@ export interface KindDefinition<Ctx, T extends KindShape = KindShape> extends Co
    * derive the required-metadata table, so `build` returns the OBJECT — any refinement goes in
    * the slot below.
    */
-  build: (ctx: Ctx) => z.ZodObject<T, 'strict'>;
+  build: (ctx: Ctx) => z.ZodObject<T, core.$strict>;
   /** Cross-field rules over this kind's own fields — the constraints a shape cannot state,
    *  because whether one field is valid depends on another's value. */
-  refine?: (data: z.infer<z.ZodObject<T, 'strict'>>, ctx: z.RefinementCtx, kctx: Ctx) => void;
+  refine?: (data: z.infer<z.ZodObject<T, core.$strict>>, ctx: z.RefinementCtx, kctx: Ctx) => void;
 }
 
 /**
@@ -147,9 +148,8 @@ export function kindDefiner<Ctx>() {
  * field access on a page into an error, since it would have to hold on both arms.
  */
 export type Assembled<T extends KindShape> = z.ZodType<
-  z.infer<z.ZodObject<T, 'strict'>>,
-  z.ZodTypeDef,
-  z.input<z.ZodObject<T, 'strict'>>
+  z.infer<z.ZodObject<T, core.$strict>>,
+  z.input<z.ZodObject<T, core.$strict>>
 >;
 
 /**
@@ -196,7 +196,6 @@ type BuiltMembers<K extends readonly unknown[]> = {
  */
 export type AssembledUnion<K extends readonly unknown[]> = z.ZodType<
   z.infer<BuiltMembers<K>[number]>,
-  z.ZodTypeDef,
   z.input<BuiltMembers<K>[number]>
 >;
 
@@ -227,8 +226,8 @@ export function buildKindUnion<Ctx, K extends readonly AnyKindDefinition<Ctx>[]>
 
   const byName = new Map(kinds.map((k) => [k.kind, k]));
   const members = kinds.map((k) => k.build(ctx)) as unknown as readonly [
-    z.ZodObject<KindShape, 'strict'>,
-    ...z.ZodObject<KindShape, 'strict'>[],
+    z.ZodObject<KindShape, core.$strict>,
+    ...z.ZodObject<KindShape, core.$strict>[],
   ];
 
   return z.discriminatedUnion('type', members).superRefine((d, issues) => {

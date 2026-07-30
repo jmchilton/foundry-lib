@@ -38,13 +38,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "zod": "^3.25.0"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",
     "vitest": "^3.2.4",
-    "zod": "^3.25.76"
+    "zod": "^4.4.3"
   },
   "engines": {
     "node": ">=20"
