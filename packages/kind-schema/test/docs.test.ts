@@ -10,7 +10,7 @@ import { kindDefiner } from '../src/index.js';
 
 const defineKind = kindDefiner<{ base: { title: z.ZodString } }>();
 
-const kindOf = (name: string) =>
+const createKindDefinition = (name: string) =>
   defineKind({
     kind: name,
     title: name,
@@ -18,60 +18,60 @@ const kindOf = (name: string) =>
     summary: 's',
     shape: 'directory',
     companions: [],
-    build: (ctx) => z.object({ type: z.literal(name), ...ctx.base }).strict(),
+    build: (context) => z.object({ type: z.literal(name), ...context.base }).strict(),
   });
 
-const mold = kindOf('mold');
-const pattern = kindOf('pattern');
+const mold = createKindDefinition('mold');
+const pattern = createKindDefinition('pattern');
 
-let typesDir: string;
+let typesDirectory: string;
 
 beforeEach(() => {
-  typesDir = mkdtempSync(path.join(tmpdir(), 'kind-docs-'));
+  typesDirectory = mkdtempSync(path.join(tmpdir(), 'kind-docs-'));
 });
 
 afterEach(() => {
-  rmSync(typesDir, { recursive: true, force: true });
+  rmSync(typesDirectory, { recursive: true, force: true });
 });
 
-function writeDoc(kind: string, body: string): void {
-  mkdirSync(path.join(typesDir, kind), { recursive: true });
-  writeFileSync(path.join(typesDir, kind, 'kind.md'), body);
+function writeKindDoc(kind: string, body: string): void {
+  mkdirSync(path.join(typesDirectory, kind), { recursive: true });
+  writeFileSync(path.join(typesDirectory, kind, 'kind.md'), body);
 }
 
 describe('loadKindDocs', () => {
   it('reads each kind’s kind.md, keyed by kind name', () => {
-    writeDoc('mold', '# Mold\n');
-    writeDoc('pattern', '# Pattern\n');
-    expect(loadKindDocs([mold, pattern], typesDir)).toEqual({
+    writeKindDoc('mold', '# Mold\n');
+    writeKindDoc('pattern', '# Pattern\n');
+    expect(loadKindDocs([mold, pattern], typesDirectory)).toEqual({
       mold: '# Mold',
       pattern: '# Pattern',
     });
   });
 
   it('trims the body', () => {
-    writeDoc('mold', '\n\n# Mold\n\nbody\n\n\n');
-    expect(loadKindDocs([mold], typesDir).mold).toBe('# Mold\n\nbody');
+    writeKindDoc('mold', '\n\n# Mold\n\nbody\n\n\n');
+    expect(loadKindDocs([mold], typesDirectory).mold).toBe('# Mold\n\nbody');
   });
 
   it('ignores a directory no kind declares', () => {
-    writeDoc('mold', '# Mold\n');
-    writeDoc('scratch', '# Not a kind\n');
-    expect(Object.keys(loadKindDocs([mold], typesDir))).toEqual(['mold']);
+    writeKindDoc('mold', '# Mold\n');
+    writeKindDoc('scratch', '# Not a kind\n');
+    expect(Object.keys(loadKindDocs([mold], typesDirectory))).toEqual(['mold']);
   });
 
   it('refuses a kind with no kind.md, naming which one', () => {
-    writeDoc('mold', '# Mold\n');
-    expect(() => loadKindDocs([mold, pattern], typesDir)).toThrow(/^pattern: cannot read /);
+    writeKindDoc('mold', '# Mold\n');
+    expect(() => loadKindDocs([mold, pattern], typesDirectory)).toThrow(/^pattern: cannot read /);
   });
 
   it('throws rather than exiting the process', () => {
-    let threw: unknown;
+    let thrownError: unknown;
     try {
-      loadKindDocs([mold], typesDir);
-    } catch (e) {
-      threw = e;
+      loadKindDocs([mold], typesDirectory);
+    } catch (error) {
+      thrownError = error;
     }
-    expect(threw).toBeInstanceOf(Error);
+    expect(thrownError).toBeInstanceOf(Error);
   });
 });

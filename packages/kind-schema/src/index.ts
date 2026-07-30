@@ -27,13 +27,20 @@ export type KindShape = { type: z.ZodTypeAny } & z.ZodRawShape;
  *
  * Keep `T` inferred through `kindDefiner`; annotating it with the default widens the schema.
  */
-export interface KindDefinition<Ctx, T extends KindShape = KindShape> extends CompanionDeclaration {
+export interface KindDefinition<
+  Context,
+  Shape extends KindShape = KindShape,
+> extends CompanionDeclaration {
   kind: string;
   title: string;
   layer: 'substrate' | 'instance';
   summary: string;
-  build: (ctx: Ctx) => z.ZodObject<T, core.$strict>;
-  refine?: (data: z.infer<z.ZodObject<T, core.$strict>>, ctx: z.RefinementCtx, kctx: Ctx) => void;
+  build: (context: Context) => z.ZodObject<Shape, core.$strict>;
+  refine?: (
+    frontmatter: z.infer<z.ZodObject<Shape, core.$strict>>,
+    refinementContext: z.RefinementCtx,
+    kindContext: Context,
+  ) => void;
 }
 
 /**
@@ -41,55 +48,58 @@ export interface KindDefinition<Ctx, T extends KindShape = KindShape> extends Co
  * `any` is required because zod object shapes are effectively invariant.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnyKindDefinition<Ctx> = KindDefinition<Ctx, any>;
+export type AnyKindDefinition<Context> = KindDefinition<Context, any>;
 
-export function kindDefiner<Ctx>() {
-  return <T extends KindShape>(definition: KindDefinition<Ctx, T>): KindDefinition<Ctx, T> =>
-    definition;
+export function kindDefiner<Context>() {
+  return <Shape extends KindShape>(
+    definition: KindDefinition<Context, Shape>,
+  ): KindDefinition<Context, Shape> => definition;
 }
 
-export type Assembled<T extends KindShape> = z.ZodType<
-  z.infer<z.ZodObject<T, core.$strict>>,
-  z.input<z.ZodObject<T, core.$strict>>
+export type Assembled<Shape extends KindShape> = z.ZodType<
+  z.infer<z.ZodObject<Shape, core.$strict>>,
+  z.input<z.ZodObject<Shape, core.$strict>>
 >;
 
-export function assemble<Ctx, T extends KindShape>(
-  definition: KindDefinition<Ctx, T>,
-  ctx: Ctx,
-): Assembled<T> {
-  const object = definition.build(ctx);
+export function assemble<Context, Shape extends KindShape>(
+  definition: KindDefinition<Context, Shape>,
+  context: Context,
+): Assembled<Shape> {
+  const schema = definition.build(context);
   const { refine } = definition;
-  const refined = refine ? object.superRefine((d, issues) => refine(d, issues, ctx)) : object;
-  return refined as Assembled<T>;
+  const refinedSchema = refine
+    ? schema.superRefine((frontmatter, issues) => refine(frontmatter, issues, context))
+    : schema;
+  return refinedSchema as Assembled<Shape>;
 }
 
-type BuiltMembers<K extends readonly unknown[]> = {
-  -readonly [I in keyof K]: K[I] extends {
-    build: (...args: never[]) => infer R extends z.ZodTypeAny;
+type BuiltMembers<Kinds extends readonly unknown[]> = {
+  -readonly [Index in keyof Kinds]: Kinds[Index] extends {
+    build: (...args: never[]) => infer BuiltSchema extends z.ZodTypeAny;
   }
-    ? R
+    ? BuiltSchema
     : z.ZodNever;
 };
 
-export type AssembledUnion<K extends readonly unknown[]> = z.ZodType<
-  z.infer<BuiltMembers<K>[number]>,
-  z.input<BuiltMembers<K>[number]>
+export type AssembledUnion<Kinds extends readonly unknown[]> = z.ZodType<
+  z.infer<BuiltMembers<Kinds>[number]>,
+  z.input<BuiltMembers<Kinds>[number]>
 >;
 
-export function buildKindUnion<Ctx, K extends readonly AnyKindDefinition<Ctx>[]>(
-  kinds: K,
-  ctx: Ctx,
-): AssembledUnion<K> {
+export function buildKindUnion<Context, Kinds extends readonly AnyKindDefinition<Context>[]>(
+  kinds: Kinds,
+  context: Context,
+): AssembledUnion<Kinds> {
   if (kinds.length === 0) throw new Error('buildKindUnion needs at least one kind');
 
-  const byName = new Map(kinds.map((k) => [k.kind, k]));
-  const members = kinds.map((k) => k.build(ctx)) as unknown as readonly [
+  const definitionsByKind = new Map(kinds.map((kind) => [kind.kind, kind]));
+  const memberSchemas = kinds.map((kind) => kind.build(context)) as unknown as readonly [
     z.ZodObject<KindShape, core.$strict>,
     ...z.ZodObject<KindShape, core.$strict>[],
   ];
 
-  return z.discriminatedUnion('type', members).superRefine((d, issues) => {
-    const definition = byName.get((d as { type: string }).type);
-    definition?.refine?.(d as never, issues, ctx);
-  }) as unknown as AssembledUnion<K>;
+  return z.discriminatedUnion('type', memberSchemas).superRefine((frontmatter, issues) => {
+    const definition = definitionsByKind.get((frontmatter as { type: string }).type);
+    definition?.refine?.(frontmatter as never, issues, context);
+  }) as unknown as AssembledUnion<Kinds>;
 }

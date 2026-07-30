@@ -49,10 +49,10 @@ The remark transform therefore rewrites text nodes only, never `inlineCode`, `co
 import { slugify, parseWikiLink, resolveWikiLink } from '@galaxy-foundry/wiki-links';
 
 // Build your map with slugify; both sides of a lookup must run through it.
-const map = new Map([[slugify('Summarize Nextflow'), { id: 'molds/summarize-nextflow' }]]);
+const targetMap = new Map([[slugify('Summarize Nextflow'), { id: 'molds/summarize-nextflow' }]]);
 
-resolveWikiLink('[[Summarize Nextflow]]', map); // → { id: 'molds/summarize-nextflow' }
-resolveWikiLink('[[summarize-next]]', map); // → undefined (no prefix fallback)
+resolveWikiLink('[[Summarize Nextflow]]', targetMap); // → { id: 'molds/summarize-nextflow' }
+resolveWikiLink('[[summarize-next]]', targetMap); // → undefined (no prefix fallback)
 
 parseWikiLink('[[tests-format#has_text|the assertion]]');
 // → { target: 'tests-format', anchor: '#has_text', display: 'the assertion' }

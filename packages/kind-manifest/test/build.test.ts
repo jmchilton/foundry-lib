@@ -57,7 +57,7 @@ describe('buildKindManifest', () => {
       instance: 'gwf',
       kinds: [MOLD, { ...MOLD, kind: 'pattern', title: 'Pattern' }],
     });
-    expect(manifest.kinds.map((k) => k.kind)).toEqual(['mold', 'pattern']);
+    expect(manifest.kinds.map((kind) => kind.kind)).toEqual(['mold', 'pattern']);
   });
 
   it('carries a doc body through when one is supplied', () => {
@@ -116,11 +116,18 @@ describe('buildKindManifest', () => {
 });
 
 describe('provenance', () => {
-  const source = { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' };
+  const manifestSource = {
+    repo: 'galaxyproject/foundry',
+    path: 'types/kinds.generated.json',
+  };
 
   it('emits the source envelope when the producer declares one', () => {
-    const manifest = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
-    expect(manifest.source).toEqual(source);
+    const manifest = buildKindManifest({
+      instance: 'gwf',
+      kinds: [MOLD],
+      source: manifestSource,
+    });
+    expect(manifest.source).toEqual(manifestSource);
   });
 
   it('omits `source` entirely when the producer does not declare it', () => {
@@ -129,24 +136,42 @@ describe('provenance', () => {
   });
 
   it('produces byte-identical output across builds, so a --check gate can pass', () => {
-    const a = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
-    const b = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
-    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    const firstManifest = buildKindManifest({
+      instance: 'gwf',
+      kinds: [MOLD],
+      source: manifestSource,
+    });
+    const secondManifest = buildKindManifest({
+      instance: 'gwf',
+      kinds: [MOLD],
+      source: manifestSource,
+    });
+    expect(JSON.stringify(firstManifest)).toBe(JSON.stringify(secondManifest));
   });
 });
 
 describe('withRevision', () => {
-  const source = { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' };
-  const base = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
+  const manifestSource = {
+    repo: 'galaxyproject/foundry',
+    path: 'types/kinds.generated.json',
+  };
+  const baseManifest = buildKindManifest({
+    instance: 'gwf',
+    kinds: [MOLD],
+    source: manifestSource,
+  });
 
   it('records the snapshot revision alongside the declared source', () => {
-    expect(withRevision(base, 'abc1234').source).toEqual({ ...source, revision: 'abc1234' });
+    expect(withRevision(baseManifest, 'abc1234').source).toEqual({
+      ...manifestSource,
+      revision: 'abc1234',
+    });
   });
 
   it('does not mutate the manifest it was given', () => {
-    withRevision(base, 'abc1234');
-    expect(base.source).toEqual(source);
-    expect(Object.hasOwn(base.source as object, 'revision')).toBe(false);
+    withRevision(baseManifest, 'abc1234');
+    expect(baseManifest.source).toEqual(manifestSource);
+    expect(Object.hasOwn(baseManifest.source as object, 'revision')).toBe(false);
   });
 
   it('refuses a manifest with no declared source', () => {

@@ -67,33 +67,37 @@ const listing = (...names: string[]): DirectoryEntry[] => names.map((name) => ({
 
 describe('checkCompanions', () => {
   it('passes a directory holding exactly what its kind declares', () => {
-    const result = checkCompanions(
+    const companionCheck = checkCompanions(
       [...listing(NOTE_FILE, 'eval.md', 'scenarios.md'), { name: 'refinements', directory: true }],
       mold,
     );
-    expect(result).toEqual({ missingRequired: [], missingRecommended: [], unknown: [] });
+    expect(companionCheck).toEqual({ missingRequired: [], missingRecommended: [], unknown: [] });
   });
 
   it('flags a missing required companion', () => {
-    const result = checkCompanions(listing(NOTE_FILE), prompt);
-    expect(result.missingRequired.map((c) => c.file)).toEqual(['upstream.prompt']);
-    expect(result.missingRecommended).toEqual([]);
+    const companionCheck = checkCompanions(listing(NOTE_FILE), prompt);
+    expect(companionCheck.missingRequired.map((companion) => companion.file)).toEqual([
+      'upstream.prompt',
+    ]);
+    expect(companionCheck.missingRecommended).toEqual([]);
   });
 
   it('separates a missing recommendation from a missing requirement', () => {
-    const result = checkCompanions(listing(NOTE_FILE, 'eval.md'), mold);
-    expect(result.missingRequired).toEqual([]);
-    expect(result.missingRecommended.map((c) => c.file)).toEqual(['scenarios.md']);
+    const companionCheck = checkCompanions(listing(NOTE_FILE, 'eval.md'), mold);
+    expect(companionCheck.missingRequired).toEqual([]);
+    expect(companionCheck.missingRecommended.map((companion) => companion.file)).toEqual([
+      'scenarios.md',
+    ]);
   });
 
   it('says nothing about a missing optional companion', () => {
-    const result = checkCompanions(listing(NOTE_FILE, 'eval.md', 'scenarios.md'), mold);
-    expect(result).toEqual({ missingRequired: [], missingRecommended: [], unknown: [] });
+    const companionCheck = checkCompanions(listing(NOTE_FILE, 'eval.md', 'scenarios.md'), mold);
+    expect(companionCheck).toEqual({ missingRequired: [], missingRecommended: [], unknown: [] });
   });
 
   it('flags a misnamed companion under the default forbid', () => {
-    const result = checkCompanions(listing(NOTE_FILE, 'eval.md', 'scenario.md'), mold);
-    expect(result.unknown.map((e) => e.name)).toEqual(['scenario.md']);
+    const companionCheck = checkCompanions(listing(NOTE_FILE, 'eval.md', 'scenario.md'), mold);
+    expect(companionCheck.unknown.map((entry) => entry.name)).toEqual(['scenario.md']);
   });
 
   it('accepts the same directory under allow', () => {
@@ -104,11 +108,11 @@ describe('checkCompanions', () => {
   });
 
   it('carries an open set without declaring any of it', () => {
-    const result = checkCompanions(
+    const companionCheck = checkCompanions(
       listing(NOTE_FILE, 'gxformat2.schema.json', 'galaxy.xsd', 'datatypes_conf.xml.sample'),
       research,
     );
-    expect(result).toEqual({ missingRequired: [], missingRecommended: [], unknown: [] });
+    expect(companionCheck).toEqual({ missingRequired: [], missingRecommended: [], unknown: [] });
   });
 
   it("never reports the note's own index.md", () => {
@@ -116,7 +120,7 @@ describe('checkCompanions', () => {
   });
 
   it('ignores sibling notes, which are never companions', () => {
-    const result = checkCompanions(
+    const companionCheck = checkCompanions(
       [
         { name: NOTE_FILE },
         { name: 'tool-search.md', note: true },
@@ -124,7 +128,7 @@ describe('checkCompanions', () => {
       ],
       cliTool,
     );
-    expect(result.unknown).toEqual([]);
+    expect(companionCheck.unknown).toEqual([]);
   });
 
   it('does not let an unmarked sibling note pass as declared', () => {
@@ -132,28 +136,36 @@ describe('checkCompanions', () => {
   });
 
   it('does not satisfy a directory companion with a file of the same name', () => {
-    const result = checkCompanions(listing(NOTE_FILE, 'refinements'), mold);
-    expect(result.unknown.map((e) => e.name)).toEqual(['refinements']);
-    expect(result.missingRequired).toEqual([]);
-    expect(result.missingRecommended.map((c) => c.file)).toEqual(['eval.md', 'scenarios.md']);
+    const companionCheck = checkCompanions(listing(NOTE_FILE, 'refinements'), mold);
+    expect(companionCheck.unknown.map((entry) => entry.name)).toEqual(['refinements']);
+    expect(companionCheck.missingRequired).toEqual([]);
+    expect(companionCheck.missingRecommended.map((companion) => companion.file)).toEqual([
+      'eval.md',
+      'scenarios.md',
+    ]);
   });
 
   it('does not satisfy a file companion with a directory of the same name', () => {
-    const result = checkCompanions(
+    const companionCheck = checkCompanions(
       [{ name: NOTE_FILE }, { name: 'eval.md', directory: true }],
       mold,
     );
-    expect(result.unknown.map((e) => e.name)).toEqual(['eval.md']);
-    expect(result.missingRecommended.map((c) => c.file)).toEqual(['eval.md', 'scenarios.md']);
+    expect(companionCheck.unknown.map((entry) => entry.name)).toEqual(['eval.md']);
+    expect(companionCheck.missingRecommended.map((companion) => companion.file)).toEqual([
+      'eval.md',
+      'scenarios.md',
+    ]);
   });
 
   it('reports a declared-but-mistyped entry as missing even under allow', () => {
-    const result = checkCompanions(listing(NOTE_FILE), {
+    const companionCheck = checkCompanions(listing(NOTE_FILE), {
       ...prompt,
       additionalCompanions: 'allow',
     });
-    expect(result.unknown).toEqual([]);
-    expect(result.missingRequired.map((c) => c.file)).toEqual(['upstream.prompt']);
+    expect(companionCheck.unknown).toEqual([]);
+    expect(companionCheck.missingRequired.map((companion) => companion.file)).toEqual([
+      'upstream.prompt',
+    ]);
   });
 
   it('refuses to answer for a file-shaped kind', () => {
@@ -210,9 +222,9 @@ describe('companionsOf', () => {
   });
 });
 
-function only(file: string) {
+function only(companionFile: string) {
   return {
-    file,
+    file: companionFile,
     requirement: 'optional',
     purpose: 'under test',
     disposition: 'foundry-only',

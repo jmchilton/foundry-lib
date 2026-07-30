@@ -34,8 +34,8 @@ describe('describeType', () => {
   });
 
   it('unwraps effects — a refined string is still a string', () => {
-    expect(describeType(z.string().refine((s) => s.length > 0))).toBe('string');
-    expect(describeType(z.string().transform((s) => s.trim()))).toBe('string');
+    expect(describeType(z.string().refine((stringValue) => stringValue.length > 0))).toBe('string');
+    expect(describeType(z.string().transform((stringValue) => stringValue.trim()))).toBe('string');
   });
 
   it('renders a small union as its alternatives, deduplicated', () => {
@@ -44,16 +44,16 @@ describe('describeType', () => {
   });
 
   it('collapses a union with more than three distinct shapes', () => {
-    const wide = z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]);
-    expect(describeType(wide)).toBe('one of several shapes');
+    const wideUnion = z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]);
+    expect(describeType(wideUnion)).toBe('one of several shapes');
   });
 
   it('renders a discriminated union by its member shapes', () => {
-    const du = z.discriminatedUnion('type', [
+    const discriminatedUnion = z.discriminatedUnion('type', [
       z.object({ type: z.literal('a') }),
       z.object({ type: z.literal('b') }),
     ]);
-    expect(describeType(du)).toBe('object');
+    expect(describeType(discriminatedUnion)).toBe('object');
   });
 
   it('falls back to `any` for shapes it has no rendering for', () => {
@@ -88,7 +88,7 @@ describe('describeFields', () => {
       middle: z.string(),
       beta: z.string().optional(),
     });
-    expect(fields.map((f) => f.name)).toEqual(['middle', 'zebra', 'alpha', 'beta']);
+    expect(fields.map((field) => field.name)).toEqual(['middle', 'zebra', 'alpha', 'beta']);
   });
 
   it('returns an empty list for an empty shape', () => {

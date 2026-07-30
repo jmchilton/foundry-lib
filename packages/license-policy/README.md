@@ -125,12 +125,12 @@ A `license_file: true` row obliges an instance to carry a verbatim copy, convent
 `LICENSES/<id>.LICENSE`. These read those copies so a site can render license terms in-app
 rather than bouncing the reader out to GitHub.
 
-| Export                     | What it does                                          |
-| -------------------------- | ----------------------------------------------------- |
-| `loadLicenseFiles(dir)`    | Every `*.LICENSE` in `dir`, id-sorted, with its text. |
-| `findLicenseFile(dir, id)` | One by id, or `undefined`.                            |
-| `licenseIdFromFile(path)`  | `LICENSES/nf-schema.LICENSE` → `nf-schema`.           |
-| `LICENSE_FILE_EXT`         | `.LICENSE`.                                           |
+| Export                                             | What it does                                         |
+| -------------------------------------------------- | ---------------------------------------------------- |
+| `loadLicenseFiles(licenseDirectory)`               | Every `*.LICENSE`, license-id-sorted, with its text. |
+| `findLicenseFileById(licenseDirectory, licenseId)` | One by license id, or `undefined`.                   |
+| `licenseIdFromFilePath(path)`                      | `LICENSES/nf-schema.LICENSE` → `nf-schema`.          |
+| `LICENSE_FILE_EXTENSION`                           | `.LICENSE`.                                          |
 
 The directory is a parameter rather than a resolved `../LICENSES`, because the callers are
 Astro pages whose cwd is a subdirectory — an implicit relative path is the one thing that

@@ -72,8 +72,8 @@ describe('the bundled vocabularies', () => {
   });
 
   it('keeps the vocabulary domain-neutral', () => {
-    const prose = INHERITED_GROUPS.flatMap((g) =>
-      Object.values(inherited[g]).map((t) => `${t.label} ${t.description}`),
+    const prose = INHERITED_GROUPS.flatMap((group) =>
+      Object.values(inherited[group]).map((term) => `${term.label} ${term.description}`),
     ).join(' ');
     for (const word of ['workflow', 'Galaxy', 'genomic', 'statistical', 'Nextflow']) {
       expect(prose, `mentions \`${word}\``).not.toContain(word);
@@ -100,9 +100,15 @@ describe('composing an instance contract', () => {
   });
 
   it('narrows in the shipped order, not the order the caller listed', () => {
-    const a = buildReferenceContract({ kinds, narrow: { modes: ['sidecar', 'verbatim'] } });
-    const b = buildReferenceContract({ kinds, narrow: { modes: ['verbatim', 'sidecar'] } });
-    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    const firstContract = buildReferenceContract({
+      kinds,
+      narrow: { modes: ['sidecar', 'verbatim'] },
+    });
+    const secondContract = buildReferenceContract({
+      kinds,
+      narrow: { modes: ['verbatim', 'sidecar'] },
+    });
+    expect(JSON.stringify(firstContract)).toBe(JSON.stringify(secondContract));
   });
 
   it('refuses narrowing to a term the vocabulary does not have', () => {
@@ -212,47 +218,48 @@ describe('parsing an arbitrary table', () => {
 });
 
 describe('reading an instance file', () => {
-  let dir: string;
-  const write = (body: string): string => {
-    dir = mkdtempSync(path.join(tmpdir(), 'rc-'));
-    const file = path.join(dir, REFERENCE_CONTRACT_FILE);
-    writeFileSync(file, body);
-    return file;
+  let temporaryDirectory: string;
+  const writeContract = (body: string): string => {
+    temporaryDirectory = mkdtempSync(path.join(tmpdir(), 'rc-'));
+    const contractPath = path.join(temporaryDirectory, REFERENCE_CONTRACT_FILE);
+    writeFileSync(contractPath, body);
+    return contractPath;
   };
-  const cleanup = () => rmSync(dir, { recursive: true, force: true });
+  const removeTemporaryDirectory = () =>
+    rmSync(temporaryDirectory, { recursive: true, force: true });
 
   it('reads a file holding only `kinds`', () => {
-    const file = write(
+    const contractPath = writeContract(
       'kinds:\n  pattern: {label: Pattern, description: d, ref_shape: wiki-link}\n',
     );
     try {
-      expect(loadInstanceKinds(file)).toEqual({
+      expect(loadInstanceKinds(contractPath)).toEqual({
         pattern: { label: 'Pattern', description: 'd', ref_shape: 'wiki-link' },
       });
     } finally {
-      cleanup();
+      removeTemporaryDirectory();
     }
   });
 
   it('refuses an instance file that re-declares an inherited vocabulary', () => {
-    const file = write(
+    const contractPath = writeContract(
       'kinds:\n  p: {label: P, description: d}\nmodes:\n  verbatim: {label: V, description: d}\n',
     );
     try {
-      expect(() => loadInstanceKinds(file)).toThrow(
+      expect(() => loadInstanceKinds(contractPath)).toThrow(
         /declares `modes`, which is inherited from @galaxy-foundry\/reference-contract/,
       );
     } finally {
-      cleanup();
+      removeTemporaryDirectory();
     }
   });
 
   it('refuses a file with no `kinds` block', () => {
-    const file = write('spec_url: http://example.invalid\n');
+    const contractPath = writeContract('spec_url: http://example.invalid\n');
     try {
-      expect(() => loadInstanceKinds(file)).toThrow(/has no `kinds` block/);
+      expect(() => loadInstanceKinds(contractPath)).toThrow(/has no `kinds` block/);
     } finally {
-      cleanup();
+      removeTemporaryDirectory();
     }
   });
 

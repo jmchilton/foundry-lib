@@ -19,53 +19,57 @@ export interface RemarkWikiLinksOptions {
 
 const LINK_TYPES = new Set(['link', 'linkReference']);
 
-function linkNode(link: WikiLink, dest: WikiLinkDestination | null): MdNode {
+function linkNode(link: WikiLink, destination: WikiLinkDestination | null): MdNode {
   const label: MdNode = { type: 'text', value: link.display };
-  if (!dest) return { type: 'strong', children: [label] };
+  if (!destination) return { type: 'strong', children: [label] };
   return {
     type: 'link',
-    url: `${dest.href}${link.anchor}`,
-    title: dest.title ?? null,
+    url: `${destination.href}${link.anchor}`,
+    title: destination.title ?? null,
     children: [label],
   };
 }
 
-function splitText(value: string, resolve: RemarkWikiLinksOptions['resolve']): MdNode[] | null {
-  const scan = new RegExp(WIKI_LINK_SCAN_RE.source, 'g');
-  const out: MdNode[] = [];
-  let last = 0;
-  let m: RegExpExecArray | null;
-  while ((m = scan.exec(value)) !== null) {
-    const inner = m[1];
+function splitText(text: string, resolve: RemarkWikiLinksOptions['resolve']): MdNode[] | null {
+  const wikiLinkPattern = new RegExp(WIKI_LINK_SCAN_RE.source, 'g');
+  const replacementNodes: MdNode[] = [];
+  let textStartIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = wikiLinkPattern.exec(text)) !== null) {
+    const inner = match[1];
     if (inner === undefined) continue;
     const link = parseWikiLink(inner);
     if (!link) continue;
-    if (m.index > last) out.push({ type: 'text', value: value.slice(last, m.index) });
-    out.push(linkNode(link, resolve(link)));
-    last = m.index + m[0].length;
+    if (match.index > textStartIndex) {
+      replacementNodes.push({ type: 'text', value: text.slice(textStartIndex, match.index) });
+    }
+    replacementNodes.push(linkNode(link, resolve(link)));
+    textStartIndex = match.index + match[0].length;
   }
-  if (out.length === 0) return null;
-  if (last < value.length) out.push({ type: 'text', value: value.slice(last) });
-  return out;
+  if (replacementNodes.length === 0) return null;
+  if (textStartIndex < text.length) {
+    replacementNodes.push({ type: 'text', value: text.slice(textStartIndex) });
+  }
+  return replacementNodes;
 }
 
-export default function remarkWikiLinks(opts: RemarkWikiLinksOptions) {
+export default function remarkWikiLinks(options: RemarkWikiLinksOptions) {
   const visit = (node: MdNode): void => {
     const children = node.children;
     if (!children) return;
 
-    const out: MdNode[] = [];
+    const rewrittenChildren: MdNode[] = [];
     for (const child of children) {
       if (child.type === 'text' && child.value !== undefined && child.value.includes('[[')) {
-        const split = splitText(child.value, opts.resolve);
-        if (split) out.push(...split);
-        else out.push(child);
+        const splitNodes = splitText(child.value, options.resolve);
+        if (splitNodes) rewrittenChildren.push(...splitNodes);
+        else rewrittenChildren.push(child);
         continue;
       }
       if (!LINK_TYPES.has(child.type)) visit(child);
-      out.push(child);
+      rewrittenChildren.push(child);
     }
-    node.children = out;
+    node.children = rewrittenChildren;
   };
 
   return (tree: MdNode): void => visit(tree);

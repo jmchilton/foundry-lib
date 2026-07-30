@@ -25,8 +25,8 @@ describe('the bundled table', () => {
   });
 
   it('ships the ids both instances actually author against', () => {
-    for (const id of ['MIT', 'CC-BY-4.0', 'CC-BY-NC-4.0', 'GPL-3.0-only', 'Apache-2.0']) {
-      expect(licenseIds(policy)).toContain(id);
+    for (const licenseId of ['MIT', 'CC-BY-4.0', 'CC-BY-NC-4.0', 'GPL-3.0-only', 'Apache-2.0']) {
+      expect(licenseIds(policy)).toContain(licenseId);
     }
   });
 
@@ -42,9 +42,9 @@ describe('the bundled table', () => {
   });
 
   it('resolves a known id to its own row', () => {
-    const row = resolveLicenseRow(policy, 'MIT');
-    expect(row.policy).toBe('verbatim-ok');
-    expect(row.defect).toBeUndefined();
+    const licenseRow = resolveLicenseRow(policy, 'MIT');
+    expect(licenseRow.policy).toBe('verbatim-ok');
+    expect(licenseRow.defect).toBeUndefined();
   });
 
   it('does not leak `default` into the curated id list', () => {
@@ -148,9 +148,9 @@ default:
 `;
 
   it('accepts a well-formed table', () => {
-    const parsed = parseLicensePolicy(minimal);
-    expect(licenseIds(parsed)).toEqual(['MIT']);
-    expect(parsed.default.defect).toBe(true);
+    const parsedPolicy = parseLicensePolicy(minimal);
+    expect(licenseIds(parsedPolicy)).toEqual(['MIT']);
+    expect(parsedPolicy.default.defect).toBe(true);
   });
 
   it.each([
@@ -163,18 +163,21 @@ default:
   });
 
   it('rejects a row with an unknown policy value', () => {
-    const bad = minimal.replace('policy: verbatim-ok', 'policy: whatever-ok');
-    expect(() => parseLicensePolicy(bad)).toThrow(/whatever-ok/);
+    const invalidPolicy = minimal.replace('policy: verbatim-ok', 'policy: whatever-ok');
+    expect(() => parseLicensePolicy(invalidPolicy)).toThrow(/whatever-ok/);
   });
 
   it('rejects a row with an unknown cast mode', () => {
-    const bad = minimal.replace('[verbatim, condense, sidecar]', '[verbatim, paraphrase]');
-    expect(() => parseLicensePolicy(bad)).toThrow(/paraphrase/);
+    const invalidPolicy = minimal.replace(
+      '[verbatim, condense, sidecar]',
+      '[verbatim, paraphrase]',
+    );
+    expect(() => parseLicensePolicy(invalidPolicy)).toThrow(/paraphrase/);
   });
 
   it('rejects a row missing a required field', () => {
-    const bad = minimal.replace('    license_file: true\n', '');
-    expect(() => parseLicensePolicy(bad)).toThrow(/license_file/);
+    const incompletePolicy = minimal.replace('    license_file: true\n', '');
+    expect(() => parseLicensePolicy(incompletePolicy)).toThrow(/license_file/);
   });
 
   it('names the source in the error, so a caller knows which file failed', () => {
@@ -191,9 +194,9 @@ describe('locating a table on disk', () => {
   });
 
   it('loads a table from a directory holding one', () => {
-    const dir = bundledPolicyPath().slice(0, -(LICENSE_POLICY_FILE.length + 1));
-    const loaded: LicensePolicy = loadLicensePolicy(dir);
-    expect(licenseIds(loaded)).toEqual(licenseIds(bundledPolicy()));
+    const policyDirectory = bundledPolicyPath().slice(0, -(LICENSE_POLICY_FILE.length + 1));
+    const loadedPolicy: LicensePolicy = loadLicensePolicy(policyDirectory);
+    expect(licenseIds(loadedPolicy)).toEqual(licenseIds(bundledPolicy()));
   });
 
   it('throws a path-naming error when the directory has no table', () => {

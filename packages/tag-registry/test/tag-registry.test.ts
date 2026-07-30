@@ -33,15 +33,19 @@ const parse = (text: string) => parseTagRegistry(text, 'test.yml');
 
 describe('parsing', () => {
   it('reads facets, labels, and glosses', () => {
-    const file = parse(VALID);
-    expect(Object.keys(file.facets)).toEqual(['target', 'meta']);
-    expect(file.facets['target']?.label).toBe('Target');
-    expect(file.facets['target']?.values?.['target/galaxy']).toBe('Galaxy-specific material.');
+    const registryFile = parse(VALID);
+    expect(Object.keys(registryFile.facets)).toEqual(['target', 'meta']);
+    expect(registryFile.facets['target']?.label).toBe('Target');
+    expect(registryFile.facets['target']?.values?.['target/galaxy']).toBe(
+      'Galaxy-specific material.',
+    );
   });
 
   it('accepts a facet declared before it has any members', () => {
-    const file = parse('facets:\n  topic:\n    label: Topic\n    description: Subject areas.\n');
-    expect(file.facets['topic']?.values).toBeUndefined();
+    const registryFile = parse(
+      'facets:\n  topic:\n    label: Topic\n    description: Subject areas.\n',
+    );
+    expect(registryFile.facets['topic']?.values).toBeUndefined();
   });
 
   it('accepts `version` and does not require it', () => {
@@ -121,14 +125,14 @@ facets:
     values:
       cautionary-bad: A deliberately invalid exemplar.
 `;
-    const r = tagRegistry(parse(text));
-    expect(r.isValidTag('cautionary-bad')).toBe(true);
-    expect(r.facetOf('cautionary-bad')).toBe('role');
+    const customRegistry = tagRegistry(parse(text));
+    expect(customRegistry.isValidTag('cautionary-bad')).toBe(true);
+    expect(customRegistry.facetOf('cautionary-bad')).toBe('role');
   });
 
   it('reports every tag and every facet in declaration order', () => {
     expect(registry.allTags()).toEqual(['target/galaxy', 'target/cwl', 'meta']);
-    expect(registry.facets().map((f) => f.key)).toEqual(['target', 'meta']);
+    expect(registry.facets().map((facet) => facet.key)).toEqual(['target', 'meta']);
   });
 
   it('answers nothing for an unregistered tag', () => {
@@ -144,26 +148,26 @@ facets:
   });
 
   it('indexes a facet with no members without inventing one', () => {
-    const file = parse('facets:\n  topic:\n    label: Topic\n    description: D.\n');
-    expect(buildTagIndex(file).size).toBe(0);
+    const registryFile = parse('facets:\n  topic:\n    label: Topic\n    description: D.\n');
+    expect(buildTagIndex(registryFile).size).toBe(0);
     expect(
-      tagRegistry(file)
+      tagRegistry(registryFile)
         .facets()
-        .map((f) => f.key),
+        .map((facet) => facet.key),
     ).toEqual(['topic']);
   });
 });
 
 describe('loading from disk', () => {
   it('reads, validates and wraps a file', () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'tag-registry-'));
+    const registryDirectory = mkdtempSync(path.join(tmpdir(), 'tag-registry-'));
     try {
-      const file = path.join(dir, TAG_REGISTRY_FILE);
-      writeFileSync(file, VALID);
-      expect(loadTagRegistry(file).isValidTag('target/cwl')).toBe(true);
-      expect(findTagRegistryPath(dir)).toBe(file);
+      const registryPath = path.join(registryDirectory, TAG_REGISTRY_FILE);
+      writeFileSync(registryPath, VALID);
+      expect(loadTagRegistry(registryPath).isValidTag('target/cwl')).toBe(true);
+      expect(findTagRegistryPath(registryDirectory)).toBe(registryPath);
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      rmSync(registryDirectory, { recursive: true, force: true });
     }
   });
 
@@ -172,11 +176,13 @@ describe('loading from disk', () => {
   });
 
   it('reports where it searched when there is nothing to find', () => {
-    const dir = mkdtempSync(path.join(tmpdir(), 'tag-registry-'));
+    const registryDirectory = mkdtempSync(path.join(tmpdir(), 'tag-registry-'));
     try {
-      expect(() => findTagRegistryPath(dir)).toThrow(/meta_tags\.yml not found above/);
+      expect(() => findTagRegistryPath(registryDirectory)).toThrow(
+        /meta_tags\.yml not found above/,
+      );
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      rmSync(registryDirectory, { recursive: true, force: true });
     }
   });
 });

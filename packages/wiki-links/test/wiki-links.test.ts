@@ -88,30 +88,30 @@ describe('parseWikiLink', () => {
 });
 
 describe('resolveWikiLink', () => {
-  const map = new Map([
+  const targetMap = new Map([
     ['foo', '/notes/foo'],
     ['foo-bar', '/notes/foo-bar'],
     ['foo-bar-baz', '/notes/foo-bar-baz'],
   ]);
 
   it('resolves an exact slug match', () => {
-    expect(resolveWikiLink('[[foo]]', map)).toBe('/notes/foo');
-    expect(resolveWikiLink('[[Foo Bar]]', map)).toBe('/notes/foo-bar');
+    expect(resolveWikiLink('[[foo]]', targetMap)).toBe('/notes/foo');
+    expect(resolveWikiLink('[[Foo Bar]]', targetMap)).toBe('/notes/foo-bar');
   });
 
   it('resolves through the anchor and the alias', () => {
-    expect(resolveWikiLink('[[foo#section]]', map)).toBe('/notes/foo');
-    expect(resolveWikiLink('[[foo|see this]]', map)).toBe('/notes/foo');
+    expect(resolveWikiLink('[[foo#section]]', targetMap)).toBe('/notes/foo');
+    expect(resolveWikiLink('[[foo|see this]]', targetMap)).toBe('/notes/foo');
   });
 
   it('does NOT resolve a prefix', () => {
-    expect(resolveWikiLink('[[foo-b]]', map)).toBeUndefined();
-    expect(resolveWikiLink('[[fo]]', map)).toBeUndefined();
+    expect(resolveWikiLink('[[foo-b]]', targetMap)).toBeUndefined();
+    expect(resolveWikiLink('[[fo]]', targetMap)).toBeUndefined();
   });
 
   it('never resolves an empty slug (the `[[...]]` bug)', () => {
-    expect(resolveWikiLink('[[...]]', map)).toBeUndefined();
-    expect(resolveWikiLink('[[***]]', map)).toBeUndefined();
+    expect(resolveWikiLink('[[...]]', targetMap)).toBeUndefined();
+    expect(resolveWikiLink('[[***]]', targetMap)).toBeUndefined();
     expect(slugify('...')).toBe('');
   });
 
@@ -124,8 +124,8 @@ describe('resolveWikiLink', () => {
   });
 
   it('returns undefined for a non-link and an unknown target', () => {
-    expect(resolveWikiLink('[[nope]]', map)).toBeUndefined();
-    expect(resolveWikiLink(42, map)).toBeUndefined();
+    expect(resolveWikiLink('[[nope]]', targetMap)).toBeUndefined();
+    expect(resolveWikiLink(42, targetMap)).toBeUndefined();
   });
 });
 

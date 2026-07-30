@@ -9,15 +9,15 @@ export interface ManifestKindExtras {
   collections?: CollectionTable;
 }
 
-export function manifestKinds<Ctx>(
-  kinds: readonly AnyKindDefinition<Ctx>[],
-  ctx: Ctx,
+export function manifestKinds<Context>(
+  kinds: readonly AnyKindDefinition<Context>[],
+  context: Context,
   extras: ManifestKindExtras = {},
 ): ManifestKindInput[] {
-  const { docs = {}, examples = {}, collections } = extras;
+  const { docs: kindDocs = {}, examples, collections } = extras;
   return kinds.map((definition) => {
-    const doc = docs[definition.kind];
-    const example = examples[definition.kind];
+    const kindDoc = kindDocs[definition.kind];
+    const example = examples?.[definition.kind];
     const locations =
       collections === undefined
         ? undefined
@@ -32,12 +32,12 @@ export function manifestKinds<Ctx>(
       summary: definition.summary,
       shape: definition.shape,
       companions: definition.companions,
-      frontmatter: definition.build(ctx).shape,
+      frontmatter: definition.build(context).shape,
       ...(definition.additionalCompanions === undefined
         ? {}
         : { additionalCompanions: definition.additionalCompanions }),
       ...(locations === undefined || locations.length === 0 ? {} : { locations }),
-      ...(doc === undefined ? {} : { doc }),
+      ...(kindDoc === undefined ? {} : { doc: kindDoc }),
       ...(example === undefined ? {} : { example }),
     };
   });

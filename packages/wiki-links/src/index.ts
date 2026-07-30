@@ -21,17 +21,17 @@ export interface WikiLink {
   display: string;
 }
 
-export function stripBrackets(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const m = WIKI_LINK_RE.exec(value);
-  return m?.[1] ? m[1].trim() : null;
+export function stripBrackets(wikiLinkValue: unknown): string | null {
+  if (typeof wikiLinkValue !== 'string') return null;
+  const match = WIKI_LINK_RE.exec(wikiLinkValue);
+  return match?.[1] ? match[1].trim() : null;
 }
 
-export function parseWikiLink(value: unknown): WikiLink | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  const m = /^\[\[([\s\S]*)\]\]$/.exec(trimmed);
-  const inner = (m?.[1] ?? trimmed).trim();
+export function parseWikiLink(wikiLinkValue: unknown): WikiLink | null {
+  if (typeof wikiLinkValue !== 'string') return null;
+  const trimmedValue = wikiLinkValue.trim();
+  const bracketMatch = /^\[\[([\s\S]*)\]\]$/.exec(trimmedValue);
+  const inner = (bracketMatch?.[1] ?? trimmedValue).trim();
   if (inner.length === 0) return null;
 
   // Split the alias first so `#` in display text remains prose.
@@ -47,14 +47,15 @@ export function parseWikiLink(value: unknown): WikiLink | null {
   };
 }
 
-export function resolveWikiLink<T>(value: unknown, map: ReadonlyMap<string, T>): T | undefined {
-  const parsed = parseWikiLink(value);
-  if (!parsed) return undefined;
-  const slug = slugify(parsed.target);
+export function resolveWikiLink<Target>(
+  wikiLinkValue: unknown,
+  targetMap: ReadonlyMap<string, Target>,
+): Target | undefined {
+  const parsedLink = parseWikiLink(wikiLinkValue);
+  if (!parsedLink) return undefined;
+  const slug = slugify(parsedLink.target);
   if (slug.length === 0) return undefined;
-  return map.get(slug);
+  return targetMap.get(slug);
 }
 
-// The anchor ids the `#section` half of a link lands on. Note `slugifyTerm` is NOT
-// `slugify` — see ./anchors.
 export { addBoldTermAnchors, slugifyTerm } from './anchors.js';

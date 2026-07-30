@@ -35,32 +35,38 @@ export const INHERITED_GROUPS = ['used_at', 'load', 'modes', 'evidence'] as cons
 
 export const REFERENCE_CONTRACT_FILE = 'reference_contract.yml';
 
-function fail(source: string | undefined, message: string): never {
-  throw new Error(source ? `${source}: ${message}` : message);
+function throwValidationError(sourcePath: string | undefined, message: string): never {
+  throw new Error(sourcePath ? `${sourcePath}: ${message}` : message);
 }
 
 function parseTerm(
-  where: string,
-  raw: unknown,
-  source: string | undefined,
+  termPath: string,
+  rawTerm: unknown,
+  sourcePath: string | undefined,
   href?: string,
 ): KindTerm {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-    fail(source, `${where} is not a mapping`);
+  if (typeof rawTerm !== 'object' || rawTerm === null || Array.isArray(rawTerm)) {
+    throwValidationError(sourcePath, `${termPath} is not a mapping`);
   }
-  const r = raw as Record<string, unknown>;
+  const fields = rawTerm as Record<string, unknown>;
   for (const field of ['label', 'description'] as const) {
-    if (typeof r[field] !== 'string' || !r[field]) {
-      fail(source, `${where} missing required field \`${field}\``);
+    if (typeof fields[field] !== 'string' || !fields[field]) {
+      throwValidationError(sourcePath, `${termPath} missing required field \`${field}\``);
     }
   }
-  const shape = r['ref_shape'];
+  const shape = fields['ref_shape'];
   if (shape !== undefined && shape !== 'wiki-link' && shape !== 'path') {
-    fail(source, `${where} has unknown ref_shape \`${String(shape)}\` (expected wiki-link | path)`);
+    throwValidationError(
+      sourcePath,
+      `${termPath} has unknown ref_shape \`${String(shape)}\` (expected wiki-link | path)`,
+    );
   }
 
-  const term: KindTerm = { label: r['label'] as string, description: r['description'] as string };
-  const link = typeof r['href'] === 'string' ? r['href'] : href;
+  const term: KindTerm = {
+    label: fields['label'] as string,
+    description: fields['description'] as string,
+  };
+  const link = typeof fields['href'] === 'string' ? fields['href'] : href;
   if (link !== undefined) term.href = link;
   if (shape !== undefined) term.ref_shape = shape;
   return term;
@@ -68,62 +74,69 @@ function parseTerm(
 
 function parseGroup(
   group: string,
-  raw: unknown,
-  source: string | undefined,
+  rawGroup: unknown,
+  sourcePath: string | undefined,
   href?: string,
 ): Record<string, KindTerm> {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-    fail(source, `\`${group}\` is not a mapping`);
+  if (typeof rawGroup !== 'object' || rawGroup === null || Array.isArray(rawGroup)) {
+    throwValidationError(sourcePath, `\`${group}\` is not a mapping`);
   }
-  const entries = Object.entries(raw as Record<string, unknown>);
-  if (entries.length === 0) fail(source, `\`${group}\` is empty`);
+  const entries = Object.entries(rawGroup as Record<string, unknown>);
+  if (entries.length === 0) throwValidationError(sourcePath, `\`${group}\` is empty`);
   return Object.fromEntries(
-    entries.map(([k, v]) => [k, parseTerm(`${group}.${k}`, v, source, href)]),
+    entries.map(([termKey, termValue]) => [
+      termKey,
+      parseTerm(`${group}.${termKey}`, termValue, sourcePath, href),
+    ]),
   );
 }
 
-export function parseInheritedVocabularies(text: string, source?: string): InheritedVocabularies {
-  const data: unknown = yaml.load(text);
-  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-    fail(source, 'reference contract is not a mapping');
+export function parseInheritedVocabularies(
+  text: string,
+  sourcePath?: string,
+): InheritedVocabularies {
+  const parsedValue: unknown = yaml.load(text);
+  if (typeof parsedValue !== 'object' || parsedValue === null || Array.isArray(parsedValue)) {
+    throwValidationError(sourcePath, 'reference contract is not a mapping');
   }
-  const table = data as Record<string, unknown>;
-  const specUrl = typeof table['spec_url'] === 'string' ? table['spec_url'] : undefined;
+  const contractData = parsedValue as Record<string, unknown>;
+  const specUrl =
+    typeof contractData['spec_url'] === 'string' ? contractData['spec_url'] : undefined;
 
-  if (table['kinds'] !== undefined) {
-    fail(
-      source,
+  if (contractData['kinds'] !== undefined) {
+    throwValidationError(
+      sourcePath,
       "`kinds` is the instance's to declare, not the shared table's — pass it to buildReferenceContract()",
     );
   }
 
   return {
-    used_at: parseGroup('used_at', table['used_at'], source, specUrl),
-    load: parseGroup('load', table['load'], source, specUrl),
-    modes: parseGroup('modes', table['modes'], source, specUrl),
-    evidence: parseGroup('evidence', table['evidence'], source, specUrl),
+    used_at: parseGroup('used_at', contractData['used_at'], sourcePath, specUrl),
+    load: parseGroup('load', contractData['load'], sourcePath, specUrl),
+    modes: parseGroup('modes', contractData['modes'], sourcePath, specUrl),
+    evidence: parseGroup('evidence', contractData['evidence'], sourcePath, specUrl),
   };
 }
 
 const BUNDLED_PATH = fileURLToPath(new URL('../data/reference-contract.yml', import.meta.url));
 
-let bundledText: string | undefined;
-let bundled: InheritedVocabularies | undefined;
+let cachedBundledText: string | undefined;
+let cachedVocabularies: InheritedVocabularies | undefined;
 
 export function bundledContractPath(): string {
   return BUNDLED_PATH;
 }
 
 export function bundledContractText(): string {
-  if (bundledText === undefined) bundledText = readFileSync(BUNDLED_PATH, 'utf8');
-  return bundledText;
+  if (cachedBundledText === undefined) cachedBundledText = readFileSync(BUNDLED_PATH, 'utf8');
+  return cachedBundledText;
 }
 
 export function bundledVocabularies(): InheritedVocabularies {
-  if (bundled === undefined) {
-    bundled = parseInheritedVocabularies(bundledContractText(), BUNDLED_PATH);
+  if (cachedVocabularies === undefined) {
+    cachedVocabularies = parseInheritedVocabularies(bundledContractText(), BUNDLED_PATH);
   }
-  return bundled;
+  return cachedVocabularies;
 }
 
 export type Narrowing = Partial<Record<InheritedGroup, readonly string[]>>;
@@ -146,15 +159,15 @@ function narrowGroup(
   if (keep.length === 0) {
     throw new Error(`reference contract: narrowing \`${group}\` to nothing leaves no valid value`);
   }
-  const unknown = keep.filter((k) => terms[k] === undefined);
-  if (unknown.length > 0) {
+  const unknownTerms = keep.filter((termKey) => terms[termKey] === undefined);
+  if (unknownTerms.length > 0) {
     throw new Error(
-      `reference contract: cannot narrow \`${group}\` to unknown term(s) ${unknown.join(', ')} ` +
+      `reference contract: cannot narrow \`${group}\` to unknown term(s) ${unknownTerms.join(', ')} ` +
         `(available: ${Object.keys(terms).join(', ')})`,
     );
   }
   // Preserve the source vocabulary order for stable output.
-  return Object.fromEntries(Object.entries(terms).filter(([k]) => keep.includes(k)));
+  return Object.fromEntries(Object.entries(terms).filter(([termKey]) => keep.includes(termKey)));
 }
 
 export function buildReferenceContract({
@@ -166,56 +179,60 @@ export function buildReferenceContract({
     throw new Error('reference contract: `kinds` is empty — an instance must declare at least one');
   }
   if (narrow) {
-    const bad = Object.keys(narrow).filter(
-      (g) => !(INHERITED_GROUPS as readonly string[]).includes(g),
+    const invalidGroups = Object.keys(narrow).filter(
+      (groupName) => !(INHERITED_GROUPS as readonly string[]).includes(groupName),
     );
-    if (bad.length > 0) {
+    if (invalidGroups.length > 0) {
       throw new Error(
-        `reference contract: cannot narrow \`${bad.join(', ')}\` ` +
+        `reference contract: cannot narrow \`${invalidGroups.join(', ')}\` ` +
           `(narrowable: ${INHERITED_GROUPS.join(', ')})`,
       );
     }
   }
-  const pick = (group: InheritedGroup): Record<string, ContractTerm> => {
+  const selectGroupTerms = (group: InheritedGroup): Record<string, ContractTerm> => {
     const keep = narrow?.[group];
     return keep === undefined ? inherited[group] : narrowGroup(group, inherited[group], keep);
   };
   return {
     kinds,
-    used_at: pick('used_at'),
-    load: pick('load'),
-    modes: pick('modes'),
-    evidence: pick('evidence'),
+    used_at: selectGroupTerms('used_at'),
+    load: selectGroupTerms('load'),
+    modes: selectGroupTerms('modes'),
+    evidence: selectGroupTerms('evidence'),
   };
 }
 
-export function loadInstanceKinds(file: string): Record<string, KindTerm> {
-  if (!existsSync(file)) throw new Error(`missing reference contract: ${file}`);
-  const data: unknown = yaml.load(readFileSync(file, 'utf8'));
-  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-    fail(file, 'reference contract is not a mapping');
+export function loadInstanceKinds(contractPath: string): Record<string, KindTerm> {
+  if (!existsSync(contractPath)) throw new Error(`missing reference contract: ${contractPath}`);
+  const parsedValue: unknown = yaml.load(readFileSync(contractPath, 'utf8'));
+  if (typeof parsedValue !== 'object' || parsedValue === null || Array.isArray(parsedValue)) {
+    throwValidationError(contractPath, 'reference contract is not a mapping');
   }
-  const table = data as Record<string, unknown>;
-  if (table['kinds'] === undefined) fail(file, 'has no `kinds` block');
+  const contractData = parsedValue as Record<string, unknown>;
+  if (contractData['kinds'] === undefined) {
+    throwValidationError(contractPath, 'has no `kinds` block');
+  }
   for (const group of INHERITED_GROUPS) {
-    if (table[group] !== undefined) {
-      fail(
-        file,
+    if (contractData[group] !== undefined) {
+      throwValidationError(
+        contractPath,
         `declares \`${group}\`, which is inherited from @galaxy-foundry/reference-contract — delete it`,
       );
     }
   }
-  return parseGroup('kinds', table['kinds'], file);
+  return parseGroup('kinds', contractData['kinds'], contractPath);
 }
 
-export function findReferenceContractPath(startDir: string = process.cwd()): string {
-  let dir = path.resolve(startDir);
+export function findReferenceContractPath(startDirectory: string = process.cwd()): string {
+  let currentDirectory = path.resolve(startDirectory);
   for (;;) {
-    const candidate = path.join(dir, REFERENCE_CONTRACT_FILE);
-    if (existsSync(candidate)) return candidate;
-    const parent = path.dirname(dir);
-    if (parent === dir) throw new Error(`${REFERENCE_CONTRACT_FILE} not found above ${startDir}`);
-    dir = parent;
+    const candidatePath = path.join(currentDirectory, REFERENCE_CONTRACT_FILE);
+    if (existsSync(candidatePath)) return candidatePath;
+    const parentDirectory = path.dirname(currentDirectory);
+    if (parentDirectory === currentDirectory) {
+      throw new Error(`${REFERENCE_CONTRACT_FILE} not found above ${startDirectory}`);
+    }
+    currentDirectory = parentDirectory;
   }
 }
 

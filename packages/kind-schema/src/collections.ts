@@ -8,60 +8,60 @@ export interface CollectionRoute {
 export type CollectionTable = Record<string, CollectionRoute>;
 
 function globToRegExp(pattern: string): RegExp {
-  let out = '';
+  let expression = '';
   for (let i = 0; i < pattern.length; i += 1) {
-    const rest = pattern.slice(i);
-    if (rest.startsWith('**/')) {
-      out += '(?:[^/]+/)*';
+    const patternSuffix = pattern.slice(i);
+    if (patternSuffix.startsWith('**/')) {
+      expression += '(?:[^/]+/)*';
       i += 2;
     } else if (pattern[i] === '*') {
-      out += '[^/]*';
+      expression += '[^/]*';
     } else if ('.+^${}()|[]\\?'.includes(pattern[i]!)) {
-      out += `\\${pattern[i]}`;
+      expression += `\\${pattern[i]}`;
     } else {
-      out += pattern[i];
+      expression += pattern[i];
     }
   }
-  return new RegExp(`^${out}$`);
+  return new RegExp(`^${expression}$`);
 }
 
-export function matchesCollection(path: string, collection: CollectionRoute): boolean {
-  const normalized = path.split('\\').join('/');
-  const prefix = `${collection.base}/`;
-  if (!normalized.startsWith(prefix)) return false;
-  const withinBase = normalized.slice(prefix.length);
-  let matched = false;
+export function matchesCollection(filePath: string, collection: CollectionRoute): boolean {
+  const normalizedPath = filePath.split('\\').join('/');
+  const collectionPrefix = `${collection.base}/`;
+  if (!normalizedPath.startsWith(collectionPrefix)) return false;
+  const relativePath = normalizedPath.slice(collectionPrefix.length);
+  let hasIncludedPattern = false;
   for (const pattern of collection.pattern) {
-    const negated = pattern.startsWith('!');
-    const re = globToRegExp(negated ? pattern.slice(1) : pattern);
-    if (!re.test(withinBase)) continue;
-    if (negated) return false;
-    matched = true;
+    const isExcludedPattern = pattern.startsWith('!');
+    const patternExpression = globToRegExp(isExcludedPattern ? pattern.slice(1) : pattern);
+    if (!patternExpression.test(relativePath)) continue;
+    if (isExcludedPattern) return false;
+    hasIncludedPattern = true;
   }
-  return matched;
+  return hasIncludedPattern;
 }
 
-export function collectionOf<T extends CollectionTable>(
-  table: T,
-  path: string,
-): (keyof T & string) | undefined {
+export function collectionOf<Collections extends CollectionTable>(
+  collections: Collections,
+  filePath: string,
+): (keyof Collections & string) | undefined {
   // Ambiguous routes are table errors; callers can detect them with `collectionsClaiming`.
-  for (const name of Object.keys(table) as (keyof T & string)[]) {
-    if (matchesCollection(path, table[name]!)) return name;
+  for (const collectionName of Object.keys(collections) as (keyof Collections & string)[]) {
+    if (matchesCollection(filePath, collections[collectionName]!)) return collectionName;
   }
   return undefined;
 }
 
-export function collectionsClaiming<T extends CollectionTable>(
-  table: T,
-  path: string,
-): (keyof T & string)[] {
-  return (Object.keys(table) as (keyof T & string)[]).filter((name) =>
-    matchesCollection(path, table[name]!),
+export function collectionsClaiming<Collections extends CollectionTable>(
+  collections: Collections,
+  filePath: string,
+): (keyof Collections & string)[] {
+  return (Object.keys(collections) as (keyof Collections & string)[]).filter((collectionName) =>
+    matchesCollection(filePath, collections[collectionName]!),
   );
 }
 
-export function kindOf(table: CollectionTable, path: string): string | undefined {
-  const name = collectionOf(table, path);
-  return name === undefined ? undefined : table[name]!.kind;
+export function kindOf(collections: CollectionTable, filePath: string): string | undefined {
+  const collectionName = collectionOf(collections, filePath);
+  return collectionName === undefined ? undefined : collections[collectionName]!.kind;
 }

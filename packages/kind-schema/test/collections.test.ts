@@ -8,7 +8,7 @@ import {
   type CollectionRoute,
 } from '../src/collections.js';
 
-const GWF = {
+const GALAXY_WORKFLOW_COLLECTIONS = {
   molds: { base: 'content/molds', pattern: ['**/index.md'], kind: 'mold' },
   patterns: { base: 'content/patterns', pattern: ['**/*.md'], kind: 'pattern' },
   'cli-tools': { base: 'content/cli', pattern: ['*/index.md'], kind: 'cli-tool' },
@@ -16,7 +16,7 @@ const GWF = {
   prompts: { base: 'content/prompts', pattern: ['**/*.md'], kind: 'prompt' },
 } as const satisfies Record<string, CollectionRoute>;
 
-const SGF = {
+const STATISTICAL_GENOMICS_COLLECTIONS = {
   books: { base: 'content/research/books', pattern: ['**/index.md'], kind: 'book' },
   papers: { base: 'content/research/papers', pattern: ['**/index.md'], kind: 'paper' },
   molds: { base: 'content/molds', pattern: ['**/index.md'], kind: 'mold' },
@@ -25,82 +25,121 @@ const SGF = {
 
 describe('routing a path to its collection', () => {
   it('routes a directory note by its index.md', () => {
-    expect(collectionOf(GWF, 'content/molds/summarize-nextflow/index.md')).toBe('molds');
+    expect(
+      collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/molds/summarize-nextflow/index.md'),
+    ).toBe('molds');
   });
 
   it("does not claim a directory note's siblings", () => {
-    expect(collectionOf(GWF, 'content/molds/summarize-nextflow/eval.md')).toBeUndefined();
-    expect(collectionOf(GWF, 'content/molds/summarize-nextflow/scenarios.md')).toBeUndefined();
+    expect(
+      collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/molds/summarize-nextflow/eval.md'),
+    ).toBeUndefined();
+    expect(
+      collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/molds/summarize-nextflow/scenarios.md'),
+    ).toBeUndefined();
   });
 
   it('routes a flat collection at any depth', () => {
-    expect(collectionOf(GWF, 'content/patterns/tabular-joins.md')).toBe('patterns');
-    expect(collectionOf(GWF, 'content/patterns/galaxy/collections/map-over.md')).toBe('patterns');
+    expect(collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/patterns/tabular-joins.md')).toBe(
+      'patterns',
+    );
+    expect(
+      collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/patterns/galaxy/collections/map-over.md'),
+    ).toBe('patterns');
   });
 
   it('returns undefined for a file no collection claims', () => {
-    expect(collectionOf(GWF, 'content/Dashboard.md')).toBeUndefined();
-    expect(collectionOf(GWF, 'content/meta/glossary.md')).toBeUndefined();
-    expect(collectionOf(GWF, 'docs/ARCHITECTURE.md')).toBeUndefined();
+    expect(collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/Dashboard.md')).toBeUndefined();
+    expect(collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/meta/glossary.md')).toBeUndefined();
+    expect(collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'docs/ARCHITECTURE.md')).toBeUndefined();
   });
 
   it('does not match a base that is only a string prefix of the path', () => {
-    expect(collectionOf(GWF, 'content/moldsmith/x/index.md')).toBeUndefined();
+    expect(
+      collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/moldsmith/x/index.md'),
+    ).toBeUndefined();
   });
 
   it('normalizes Windows separators', () => {
-    expect(collectionOf(GWF, 'content\\molds\\summarize-nextflow\\index.md')).toBe('molds');
+    expect(
+      collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content\\molds\\summarize-nextflow\\index.md'),
+    ).toBe('molds');
   });
 });
 
 describe('one directory holding two kinds', () => {
   it("routes the tool's index.md to the tool collection", () => {
-    expect(collectionOf(GWF, 'content/cli/gxwf/index.md')).toBe('cli-tools');
-    expect(kindOf(GWF, 'content/cli/gxwf/index.md')).toBe('cli-tool');
+    expect(collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/cli/gxwf/index.md')).toBe(
+      'cli-tools',
+    );
+    expect(kindOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/cli/gxwf/index.md')).toBe('cli-tool');
   });
 
   it('routes every other file beside it to the command collection', () => {
-    expect(collectionOf(GWF, 'content/cli/gxwf/tool-search.md')).toBe('cli-commands');
-    expect(kindOf(GWF, 'content/cli/gxwf/tool-search.md')).toBe('cli-command');
+    expect(collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/cli/gxwf/tool-search.md')).toBe(
+      'cli-commands',
+    );
+    expect(kindOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/cli/gxwf/tool-search.md')).toBe(
+      'cli-command',
+    );
   });
 
   it('keeps the two disjoint, so table order decides nothing', () => {
-    expect(collectionsClaiming(GWF, 'content/cli/gxwf/index.md')).toEqual(['cli-tools']);
-    expect(collectionsClaiming(GWF, 'content/cli/gxwf/tool-search.md')).toEqual(['cli-commands']);
+    expect(collectionsClaiming(GALAXY_WORKFLOW_COLLECTIONS, 'content/cli/gxwf/index.md')).toEqual([
+      'cli-tools',
+    ]);
+    expect(
+      collectionsClaiming(GALAXY_WORKFLOW_COLLECTIONS, 'content/cli/gxwf/tool-search.md'),
+    ).toEqual(['cli-commands']);
   });
 
   it('does not reach a depth the patterns do not state', () => {
-    expect(collectionOf(GWF, 'content/cli/loose.md')).toBeUndefined();
-    expect(collectionOf(GWF, 'content/cli/gxwf/nested/deep.md')).toBeUndefined();
+    expect(collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/cli/loose.md')).toBeUndefined();
+    expect(
+      collectionOf(GALAXY_WORKFLOW_COLLECTIONS, 'content/cli/gxwf/nested/deep.md'),
+    ).toBeUndefined();
   });
 });
 
 describe('two collections resolving to one kind', () => {
   it('routes each to its own collection', () => {
-    expect(collectionOf(SGF, 'content/molds/summarize-paper/index.md')).toBe('molds');
-    expect(collectionOf(SGF, 'content/research/experiments/blind-run-3/index.md')).toBe(
-      'experiments',
-    );
+    expect(
+      collectionOf(STATISTICAL_GENOMICS_COLLECTIONS, 'content/molds/summarize-paper/index.md'),
+    ).toBe('molds');
+    expect(
+      collectionOf(
+        STATISTICAL_GENOMICS_COLLECTIONS,
+        'content/research/experiments/blind-run-3/index.md',
+      ),
+    ).toBe('experiments');
   });
 
   it('resolves both to the same kind', () => {
-    expect(kindOf(SGF, 'content/molds/summarize-paper/index.md')).toBe('mold');
-    expect(kindOf(SGF, 'content/research/experiments/blind-run-3/index.md')).toBe('mold');
+    expect(kindOf(STATISTICAL_GENOMICS_COLLECTIONS, 'content/molds/summarize-paper/index.md')).toBe(
+      'mold',
+    );
+    expect(
+      kindOf(STATISTICAL_GENOMICS_COLLECTIONS, 'content/research/experiments/blind-run-3/index.md'),
+    ).toBe('mold');
   });
 
   it('keeps sibling bases under a shared parent apart', () => {
-    expect(collectionOf(SGF, 'content/research/books/msmb/index.md')).toBe('books');
-    expect(collectionOf(SGF, 'content/research/papers/leek-2010/index.md')).toBe('papers');
+    expect(
+      collectionOf(STATISTICAL_GENOMICS_COLLECTIONS, 'content/research/books/msmb/index.md'),
+    ).toBe('books');
+    expect(
+      collectionOf(STATISTICAL_GENOMICS_COLLECTIONS, 'content/research/papers/leek-2010/index.md'),
+    ).toBe('papers');
   });
 
   it('claims each note exactly once across the whole table', () => {
-    for (const path of [
+    for (const filePath of [
       'content/research/books/msmb/index.md',
       'content/research/papers/leek-2010/index.md',
       'content/molds/summarize-paper/index.md',
       'content/research/experiments/blind-run-3/index.md',
     ]) {
-      expect(collectionsClaiming(SGF, path)).toHaveLength(1);
+      expect(collectionsClaiming(STATISTICAL_GENOMICS_COLLECTIONS, filePath)).toHaveLength(1);
     }
   });
 });
@@ -117,9 +156,13 @@ describe('matchesCollection', () => {
   });
 
   it('treats glob metacharacters in a base or pattern literally', () => {
-    const odd: CollectionRoute = { base: 'content/a.b', pattern: ['*.md'], kind: 'x' };
-    expect(matchesCollection('content/a.b/note.md', odd)).toBe(true);
-    expect(matchesCollection('content/axb/note.md', odd)).toBe(false);
+    const literalMetacharacterRoute: CollectionRoute = {
+      base: 'content/a.b',
+      pattern: ['*.md'],
+      kind: 'x',
+    };
+    expect(matchesCollection('content/a.b/note.md', literalMetacharacterRoute)).toBe(true);
+    expect(matchesCollection('content/axb/note.md', literalMetacharacterRoute)).toBe(false);
   });
 
   it('does not let `*` cross a separator', () => {

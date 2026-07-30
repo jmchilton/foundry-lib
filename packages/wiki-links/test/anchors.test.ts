@@ -23,9 +23,6 @@ describe('slugifyTerm', () => {
     expect(slugifyTerm('   ')).toBe('');
   });
 
-  // The whole reason this is not `slugify`. Both instances' glossaries already have anchor
-  // ids minted by THIS function, and every one of these cases would repoint if the two were
-  // merged — a silent break of existing `#term` deep links, invisible to a build.
   it('is deliberately NOT slugify', () => {
     expect(slugifyTerm('A - B')).toBe('a---b');
     expect(slugify('A - B')).toBe('a-b');
@@ -63,8 +60,6 @@ describe('addBoldTermAnchors', () => {
     expect(addBoldTermAnchors(html)).toBe(html);
   });
 
-  // `id=""` is worse than no id: it is a valid attribute that matches nothing, so the
-  // anchor silently fails instead of visibly missing.
   it('leaves a term that slugifies to nothing alone', () => {
     const html = '<p><strong>***</strong> x</p>';
     expect(addBoldTermAnchors(html)).toBe(html);

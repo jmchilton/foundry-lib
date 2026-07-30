@@ -54,6 +54,6 @@ type SchemaMatchesTypes = KindManifest extends z.infer<typeof kindManifestSchema
 const schemaMatchesTypes: SchemaMatchesTypes = true;
 void schemaMatchesTypes;
 
-export function parseKindManifest(data: unknown): KindManifest {
-  return kindManifestSchema.parse(data) as KindManifest;
+export function parseKindManifest(manifestData: unknown): KindManifest {
+  return kindManifestSchema.parse(manifestData) as KindManifest;
 }

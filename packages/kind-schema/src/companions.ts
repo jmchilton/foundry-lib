@@ -23,40 +23,45 @@ export interface NormalizedCompanion extends Companion {
   directory: boolean;
 }
 
-const ILLEGAL_IN_NAME = /[*?[\]{}!/\\]/;
+const INVALID_COMPANION_NAME_CHARACTER = /[*?[\]{}!/\\]/;
 
 export function companionsOf(
   declaration: CompanionDeclaration,
 ): ReadonlyMap<string, NormalizedCompanion> {
-  const where = declaration.kind === undefined ? 'companions' : `${declaration.kind}: companions`;
+  const errorPrefix =
+    declaration.kind === undefined ? 'companions' : `${declaration.kind}: companions`;
 
   if (declaration.shape === 'file' && declaration.companions.length > 0) {
     throw new Error(
-      `${where}: a file-shaped kind has no directory to put them in — declare shape: 'directory' or companions: []`,
+      `${errorPrefix}: a file-shaped kind has no directory to put them in — declare shape: 'directory' or companions: []`,
     );
   }
 
-  const byName = new Map<string, NormalizedCompanion>();
+  const companionsByName = new Map<string, NormalizedCompanion>();
   for (const companion of declaration.companions) {
     const { file } = companion;
-    const directory = file.endsWith('/');
-    const name = directory ? file.slice(0, -1) : file;
+    const isDirectory = file.endsWith('/');
+    const entryName = isDirectory ? file.slice(0, -1) : file;
 
-    if (name === '') throw new Error(`${where}: a companion needs a name`);
-    if (ILLEGAL_IN_NAME.test(name)) {
+    if (entryName === '') throw new Error(`${errorPrefix}: a companion needs a name`);
+    if (INVALID_COMPANION_NAME_CHARACTER.test(entryName)) {
       throw new Error(
-        `${where}: '${file}' must be a literal name in one directory — no globs, no separators`,
+        `${errorPrefix}: '${file}' must be a literal name in one directory — no globs, no separators`,
       );
     }
-    if (name === '.' || name === '..') throw new Error(`${where}: '${file}' is not a name`);
-    if (name === NOTE_FILE) {
-      throw new Error(`${where}: '${file}' is the note itself, not a companion of it`);
+    if (entryName === '.' || entryName === '..') {
+      throw new Error(`${errorPrefix}: '${file}' is not a name`);
     }
-    if (byName.has(name)) throw new Error(`${where}: '${name}' declared twice`);
+    if (entryName === NOTE_FILE) {
+      throw new Error(`${errorPrefix}: '${file}' is the note itself, not a companion of it`);
+    }
+    if (companionsByName.has(entryName)) {
+      throw new Error(`${errorPrefix}: '${entryName}' declared twice`);
+    }
 
-    byName.set(name, { ...companion, name, directory });
+    companionsByName.set(entryName, { ...companion, name: entryName, directory: isDirectory });
   }
-  return byName;
+  return companionsByName;
 }
 
 export interface DirectoryEntry {
@@ -78,33 +83,36 @@ export function checkCompanions(
   declaration: CompanionDeclaration,
 ): CompanionCheck {
   if (declaration.shape !== 'directory') {
-    const where = declaration.kind === undefined ? 'this kind' : `kind '${declaration.kind}'`;
-    throw new Error(`${where} is file-shaped: its notes have no directory to hold companions`);
+    const kindLabel = declaration.kind === undefined ? 'this kind' : `kind '${declaration.kind}'`;
+    throw new Error(`${kindLabel} is file-shaped: its notes have no directory to hold companions`);
   }
 
-  const declared = companionsOf(declaration);
-  const allowUnknown = declaration.additionalCompanions === 'allow';
+  const declaredCompanions = companionsOf(declaration);
+  const allowsUnknownEntries = declaration.additionalCompanions === 'allow';
 
-  const satisfied = new Set<string>();
-  const unknown: DirectoryEntry[] = [];
+  const satisfiedCompanions = new Set<string>();
+  const unknownEntries: DirectoryEntry[] = [];
 
   for (const entry of entries) {
     if (entry.name === NOTE_FILE || entry.note === true) continue;
-    const match = declared.get(entry.name);
-    if (match !== undefined && match.directory === (entry.directory === true)) {
-      satisfied.add(match.name);
+    const declaredCompanion = declaredCompanions.get(entry.name);
+    if (
+      declaredCompanion !== undefined &&
+      declaredCompanion.directory === (entry.directory === true)
+    ) {
+      satisfiedCompanions.add(declaredCompanion.name);
       continue;
     }
-    if (!allowUnknown) unknown.push(entry);
+    if (!allowsUnknownEntries) unknownEntries.push(entry);
   }
 
   const missingRequired: NormalizedCompanion[] = [];
   const missingRecommended: NormalizedCompanion[] = [];
-  for (const companion of declared.values()) {
-    if (satisfied.has(companion.name)) continue;
+  for (const companion of declaredCompanions.values()) {
+    if (satisfiedCompanions.has(companion.name)) continue;
     if (companion.requirement === 'required') missingRequired.push(companion);
     else if (companion.requirement === 'recommended') missingRecommended.push(companion);
   }
 
-  return { missingRequired, missingRecommended, unknown };
+  return { missingRequired, missingRecommended, unknown: unknownEntries };
 }

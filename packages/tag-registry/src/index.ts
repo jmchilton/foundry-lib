@@ -28,85 +28,98 @@ export interface TagEntry {
 
 export const TAG_REGISTRY_FILE = 'meta_tags.yml';
 
-function fail(source: string | undefined, message: string): never {
-  throw new Error(source ? `${source}: ${message}` : message);
+function throwValidationError(sourcePath: string | undefined, message: string): never {
+  throw new Error(sourcePath ? `${sourcePath}: ${message}` : message);
 }
 
 function requireText(
-  source: string | undefined,
-  where: string,
-  raw: unknown,
+  sourcePath: string | undefined,
+  fieldPath: string,
+  value: unknown,
   field: string,
 ): string {
-  if (typeof raw !== 'string' || raw.length === 0) {
-    fail(source, `${where} missing required field \`${field}\``);
+  if (typeof value !== 'string' || value.length === 0) {
+    throwValidationError(sourcePath, `${fieldPath} missing required field \`${field}\``);
   }
-  return raw;
+  return value;
 }
 
-function parseFacet(source: string | undefined, key: string, raw: unknown): Facet {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-    fail(source, `facet \`${key}\` is not a mapping`);
+function parseFacet(sourcePath: string | undefined, facetKey: string, rawFacet: unknown): Facet {
+  if (typeof rawFacet !== 'object' || rawFacet === null || Array.isArray(rawFacet)) {
+    throwValidationError(sourcePath, `facet \`${facetKey}\` is not a mapping`);
   }
-  const r = raw as Record<string, unknown>;
+  const fields = rawFacet as Record<string, unknown>;
   const facet: Facet = {
-    label: requireText(source, `facet \`${key}\``, r['label'], 'label'),
-    description: requireText(source, `facet \`${key}\``, r['description'], 'description'),
+    label: requireText(sourcePath, `facet \`${facetKey}\``, fields['label'], 'label'),
+    description: requireText(
+      sourcePath,
+      `facet \`${facetKey}\``,
+      fields['description'],
+      'description',
+    ),
   };
 
-  const values = r['values'];
+  const values = fields['values'];
   if (values === undefined || values === null) return facet;
   if (typeof values !== 'object' || Array.isArray(values)) {
-    fail(source, `facet \`${key}\` has a \`values\` that is not a mapping`);
+    throwValidationError(
+      sourcePath,
+      `facet \`${facetKey}\` has a \`values\` that is not a mapping`,
+    );
   }
-  const out: Record<string, string> = {};
+  const parsedValues: Record<string, string> = {};
   for (const [tag, gloss] of Object.entries(values as Record<string, unknown>)) {
     if (typeof gloss !== 'string' || gloss.length === 0) {
-      fail(source, `tag \`${tag}\` in facet \`${key}\` has no gloss`);
+      throwValidationError(sourcePath, `tag \`${tag}\` in facet \`${facetKey}\` has no gloss`);
     }
-    out[tag] = gloss;
+    parsedValues[tag] = gloss;
   }
-  facet.values = out;
+  facet.values = parsedValues;
   return facet;
 }
 
-export function parseTagRegistry(text: string, source?: string): TagRegistryFile {
-  const data: unknown = yaml.load(text);
-  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-    fail(source, 'tag registry is not a mapping');
+export function parseTagRegistry(text: string, sourcePath?: string): TagRegistryFile {
+  const parsedValue: unknown = yaml.load(text);
+  if (typeof parsedValue !== 'object' || parsedValue === null || Array.isArray(parsedValue)) {
+    throwValidationError(sourcePath, 'tag registry is not a mapping');
   }
-  const table = data as Record<string, unknown>;
+  const registryData = parsedValue as Record<string, unknown>;
 
-  const facetsRaw = table['facets'];
-  if (facetsRaw === undefined) fail(source, 'has no `facets` block');
+  const facetsRaw = registryData['facets'];
+  if (facetsRaw === undefined) throwValidationError(sourcePath, 'has no `facets` block');
   if (typeof facetsRaw !== 'object' || facetsRaw === null || Array.isArray(facetsRaw)) {
-    fail(source, '`facets` is not a mapping');
+    throwValidationError(sourcePath, '`facets` is not a mapping');
   }
   const entries = Object.entries(facetsRaw as Record<string, unknown>);
-  if (entries.length === 0) fail(source, '`facets` is empty');
+  if (entries.length === 0) throwValidationError(sourcePath, '`facets` is empty');
 
   const facets: Record<string, Facet> = {};
-  const declaredBy = new Map<string, string>();
-  for (const [key, raw] of entries) {
-    const facet = parseFacet(source, key, raw);
+  const declaringFacetByTag = new Map<string, string>();
+  for (const [facetKey, rawFacet] of entries) {
+    const facet = parseFacet(sourcePath, facetKey, rawFacet);
     for (const tag of Object.keys(facet.values ?? {})) {
-      const first = declaredBy.get(tag);
-      if (first !== undefined) {
-        fail(source, `tag \`${tag}\` is declared by both \`${first}\` and \`${key}\``);
+      const firstDeclaringFacet = declaringFacetByTag.get(tag);
+      if (firstDeclaringFacet !== undefined) {
+        throwValidationError(
+          sourcePath,
+          `tag \`${tag}\` is declared by both \`${firstDeclaringFacet}\` and \`${facetKey}\``,
+        );
       }
-      declaredBy.set(tag, key);
+      declaringFacetByTag.set(tag, facetKey);
     }
-    facets[key] = facet;
+    facets[facetKey] = facet;
   }
 
-  const version = table['version'];
+  const version = registryData['version'];
   return version === undefined ? { facets } : { version: version as number, facets };
 }
 
-export function buildTagIndex(file: TagRegistryFile): Map<string, TagEntry> {
+export function buildTagIndex(registryFile: TagRegistryFile): Map<string, TagEntry> {
   const index = new Map<string, TagEntry>();
-  for (const [facet, f] of Object.entries(file?.facets ?? {})) {
-    for (const [tag, gloss] of Object.entries(f.values ?? {})) index.set(tag, { facet, gloss });
+  for (const [facetKey, facet] of Object.entries(registryFile?.facets ?? {})) {
+    for (const [tag, gloss] of Object.entries(facet.values ?? {})) {
+      index.set(tag, { facet: facetKey, gloss });
+    }
   }
   return index;
 }
@@ -120,16 +133,16 @@ export interface TagRegistry {
   allTags(): string[];
 }
 
-export function tagRegistry(file: TagRegistryFile): TagRegistry {
-  const index = buildTagIndex(file);
-  const facetMap = file?.facets ?? {};
+export function tagRegistry(registryFile: TagRegistryFile): TagRegistry {
+  const index = buildTagIndex(registryFile);
+  const facetMap = registryFile?.facets ?? {};
   return {
     isValidTag: (tag) => index.has(tag),
     facets: () =>
-      Object.entries(facetMap).map(([key, f]) => ({
-        key,
-        label: f.label,
-        description: f.description,
+      Object.entries(facetMap).map(([facetKey, facet]) => ({
+        key: facetKey,
+        label: facet.label,
+        description: facet.description,
       })),
     facetOf: (tag) => index.get(tag)?.facet,
     facetLabel: (key) => (key && facetMap[key]?.label) || (key ?? ''),
@@ -143,13 +156,15 @@ export function loadTagRegistry(tagsPath: string): TagRegistry {
   return tagRegistry(parseTagRegistry(readFileSync(tagsPath, 'utf8'), tagsPath));
 }
 
-export function findTagRegistryPath(startDir: string = process.cwd()): string {
-  let dir = path.resolve(startDir);
+export function findTagRegistryPath(startDirectory: string = process.cwd()): string {
+  let currentDirectory = path.resolve(startDirectory);
   for (;;) {
-    const candidate = path.join(dir, TAG_REGISTRY_FILE);
-    if (existsSync(candidate)) return candidate;
-    const parent = path.dirname(dir);
-    if (parent === dir) throw new Error(`${TAG_REGISTRY_FILE} not found above ${startDir}`);
-    dir = parent;
+    const candidatePath = path.join(currentDirectory, TAG_REGISTRY_FILE);
+    if (existsSync(candidatePath)) return candidatePath;
+    const parentDirectory = path.dirname(currentDirectory);
+    if (parentDirectory === currentDirectory) {
+      throw new Error(`${TAG_REGISTRY_FILE} not found above ${startDirectory}`);
+    }
+    currentDirectory = parentDirectory;
   }
 }

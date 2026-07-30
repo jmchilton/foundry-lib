@@ -40,9 +40,9 @@ export function buildKindManifest({
   const manifest: KindManifest = {
     instance,
     version: KIND_MANIFEST_VERSION,
-    kinds: kinds.map((input): ManifestKind => {
-      const { kind, title, layer, summary, shape, companions } = input;
-      const { additionalCompanions, locations, doc, example, frontmatter } = input;
+    kinds: kinds.map((kindInput): ManifestKind => {
+      const { kind, title, layer, summary, shape, companions } = kindInput;
+      const { additionalCompanions, locations, doc, example, frontmatter } = kindInput;
       // Conditional spreads preserve absent-key semantics and stable serialized key order.
       return {
         kind,
