@@ -16,6 +16,8 @@ const kindOf = (name: string) =>
     title: name,
     layer: 'substrate',
     summary: 's',
+    shape: 'directory',
+    companions: [],
     build: (ctx) => z.object({ type: z.literal(name), ...ctx.base }).strict(),
   });
 

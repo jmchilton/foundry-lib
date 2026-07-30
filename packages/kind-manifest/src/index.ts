@@ -12,6 +12,7 @@ export type { BuildKindManifestOptions, ManifestKindInput } from './build.js';
 export { describeFields, describeType } from './describe.js';
 
 export {
+  companionSchema,
   kindManifestSchema,
   manifestFieldSchema,
   manifestKindSchema,
@@ -20,9 +21,13 @@ export {
 } from './schema.js';
 
 export type {
+  Companion,
+  CompanionDisposition,
+  CompanionRequirement,
   KindLayer,
   KindManifest,
   ManifestField,
   ManifestKind,
   ManifestSource,
+  NoteShape,
 } from './types.js';

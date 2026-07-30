@@ -19,6 +19,10 @@ in the comments:
 Nothing here is a generalization invented for a hypothetical second caller. It is the
 intersection two callers had already written twice.
 
+One part is an exception, and says so rather than borrowing that claim: [Companions](#companions)
+is not code either instance had. Both instances answer the question it models, four times over in
+four disagreeing mechanisms; this replaces them.
+
 ## The seam
 
 Instances disagree about exactly one thing: what a kind may draw from. One spreads a seven-field
@@ -50,6 +54,15 @@ export const kind = defineKind({
   title: 'Mold',
   layer: 'substrate',
   summary: 'A procedural authoring skill source.',
+  shape: 'directory',
+  companions: [
+    {
+      file: 'eval.md',
+      requirement: 'recommended',
+      purpose: 'Abstract oracle: the properties a cast must satisfy.',
+      disposition: 'foundry-only',
+    },
+  ],
   build: (ctx) => z.object({ type: z.literal('mold'), ...ctx.base, axis: AXIS }).strict(),
   refine: (data, issues, kctx) => {
     /* rules over this kind's own fields */
@@ -59,6 +72,9 @@ export const kind = defineKind({
 
 `build` returns the bare strict object so a manifest generator can walk its `.shape`; `refine`
 is applied separately, by `assemble`.
+
+`shape` and `companions` are the other half of the declaration — where a note **is**, alongside
+what it **says**. Both are required of every kind; see [Companions](#companions).
 
 Go through `defineKind` rather than annotating `: KindDefinition`. The annotation widens the
 shape back to the default, and the erasure travels to whatever reads a note's frontmatter.
@@ -109,7 +125,7 @@ consumers who never called this one.
 buildKindManifest({
   instance: 'galaxy-workflow-foundry',
   source: MANIFEST_SOURCE,
-  kinds: manifestKinds(KINDS, ctx, docs),
+  kinds: manifestKinds(KINDS, ctx, { docs, collections: COLLECTIONS }),
 });
 ```
 
@@ -120,13 +136,21 @@ manifests other Foundries produced and never defines a kind. This package knows 
 `instance` and `source` stay with the caller: they are the producer's own identity, and a shared
 helper filling them in would be asserting provenance rather than recording it.
 
-The `docs` it takes are the prose beside each kind's schema, which
-`@galaxy-foundry/kind-schema/docs` will read for you:
+The third argument is an options object — `{ docs, examples, collections }` — rather than trailing
+positionals. Three record-shaped inputs from three different places, read positionally, is where a
+caller silently passes examples as docs.
+
+`collections` is your routing table, and each kind's `locations` are **derived** from it. Supplying
+a location list per kind would be a second encoding of the table — the same reason the field table
+is derived from the zod shape that validates. It also handles the many-to-many for free: two
+collections resolving to one kind yield two locations.
+
+`docs` is the prose beside each kind's schema, which `@galaxy-foundry/kind-schema/docs` will read:
 
 ```ts
 import { loadKindDocs } from '@galaxy-foundry/kind-schema/docs';
 
-manifestKinds(KINDS, ctx, loadKindDocs(KINDS, 'src/types'));
+manifestKinds(KINDS, ctx, { docs: loadKindDocs(KINDS, 'src/types'), collections: COLLECTIONS });
 ```
 
 It reads `<typesDir>/<kind>/kind.md` for every kind in the list and trims each body — trimmed
@@ -171,6 +195,58 @@ the same frame for every row.
 Supported glob constructs are `**/`, `*`, and a leading `!` to exclude — and nothing more. This
 is deliberately the subset the instances' tables use. Astro's loader matches the same patterns
 with picomatch, so an instance routing with both should pin them against its real corpus.
+
+## Companions
+
+A **companion** is a non-note file in a note's directory: `eval.md` beside a mold, `upstream.prompt`
+beside a prompt, a vendored schema beside a research note. Only a directory-shaped kind can have
+them, which is why `shape` and `companions` arrive together — the second is meaningless without
+the first.
+
+The kind declares them, and `checkCompanions` compares a listing you already have against that
+declaration. It is **pure**: no I/O, so it stays in the barrel and the barrel stays browser-safe.
+
+```ts
+import { checkCompanions } from '@galaxy-foundry/kind-schema';
+import { kindOf } from '@galaxy-foundry/kind-schema/collections';
+
+const entries = readdirSync(dir, { withFileTypes: true }).map((e) => ({
+  name: e.name,
+  directory: e.isDirectory(),
+  // Whether an entry is itself a NOTE — passed in, never inferred. See below.
+  note: kindOf(COLLECTIONS, `${rel}/${e.name}`) !== undefined,
+}));
+
+const { missingRequired, missingRecommended, unknown } = checkCompanions(entries, DEFINITIONS.mold);
+```
+
+Missing required is an error, missing recommended a warning, and `unknown` is what makes a typo'd
+`scenario.md` visible instead of silently dropped. `optional` companions appear in no bucket.
+
+Three things worth knowing before you declare any:
+
+**`note` is information you supply.** `content/cli/<tool>/` is why: `index.md` is a `cli-tool` and
+every sibling `.md` is a `cli-command`, so a `cli-tool` has a directory full of markdown and no
+companions at all. Infer from the extension and every CLI command in the corpus reports as a stray.
+`kindOf` from [`./collections`](#routing) is the answer. The note's own `index.md` needs no marking.
+
+**`file` is literal.** No globs — `companionsOf` throws on one. A directory is named with a
+trailing slash (`refinements/`) and is satisfied by existing; what is inside it is that directory's
+business.
+
+**`disposition` is one axis: whether the file reaches a skill artifact.** `foundry-only` never
+leaves, `cast-input` is read by the caster but does not ship (per-mold condensation prompts),
+`bundled` is copied in. A target's list of files forbidden from a bundle is therefore every
+companion that is not `bundled` — both of the other two, which is the distinction a boolean loses.
+
+Companions describe **layout**, not dependencies. If a declaration starts wanting `load` or `mode`
+or `used_at`, it has become a dependency contract, and the answer to that is a note's `references:`
+entry instead.
+
+`additionalCompanions: 'allow'` is for a kind whose set is genuinely open — vendored research
+sidecars, the acquisition files beside a book. It is not "unmodelled": a kind may declare what it
+knows _and_ permit the rest. There is no absent-versus-empty distinction to learn, because
+`companions: []` is required and means none.
 
 ## Install
 

@@ -118,13 +118,25 @@ const SMOKE = {
           title: 'Mold',
           layer: 'substrate',
           summary: 's',
-          shape: { tags: z.array(z.string()), note: z.string().optional() },
+          shape: 'directory',
+          companions: [
+            {
+              file: 'eval.md',
+              requirement: 'recommended',
+              purpose: 'p',
+              disposition: 'foundry-only',
+            },
+          ],
+          frontmatter: { tags: z.array(z.string()), note: z.string().optional() },
         },
       ],
     });
     const fields = manifest.kinds[0]?.fields;
     if (fields?.[0]?.type !== 'string[]') {
       throw new Error(`packed deriver rendered ${JSON.stringify(fields)}`);
+    }
+    if (manifest.kinds[0]?.companions?.[0]?.disposition !== 'foundry-only') {
+      throw new Error('packed builder dropped the companion vocabulary');
     }
     if (mod.parseKindManifest(JSON.parse(JSON.stringify(manifest))).instance !== 'smoke') {
       throw new Error('packed reader did not round-trip the manifest');
@@ -138,6 +150,15 @@ const SMOKE = {
       title: 'Mold',
       layer: 'substrate',
       summary: 's',
+      shape: 'directory',
+      companions: [
+        {
+          file: 'eval.md',
+          requirement: 'recommended',
+          purpose: 'p',
+          disposition: 'foundry-only',
+        },
+      ],
       build: (ctx) => z.object({ type: z.literal('mold'), axis: ctx.axis }).strict(),
       refine: (data, issues) => {
         if (data.axis === 'banned') {
@@ -165,9 +186,32 @@ const SMOKE = {
     // The manifest bridge crosses a package boundary, so the packed tarball has to carry types
     // it does not own — a `dependencies` entry, not just a devDependency, or a consumer's
     // `ManifestKindInput` resolves to nothing.
-    const [described] = mod.manifestKinds([kind], { axis: z.string() }, { mold: '# Mold' });
-    if (described?.doc !== '# Mold' || !('axis' in described.shape)) {
+    const [described] = mod.manifestKinds(
+      [kind],
+      { axis: z.string() },
+      {
+        docs: { mold: '# Mold' },
+        collections: { molds: { base: 'content/molds', pattern: [], kind: 'mold' } },
+      },
+    );
+    if (described?.doc !== '# Mold' || !('axis' in described.frontmatter)) {
       throw new Error(`packed bridge described the kind as ${JSON.stringify(described)}`);
+    }
+    if (described.shape !== 'directory' || described.companions[0]?.file !== 'eval.md') {
+      throw new Error('packed bridge dropped the layout declaration');
+    }
+    if (described.locations?.[0] !== 'content/molds') {
+      throw new Error('packed bridge did not derive locations from the collection table');
+    }
+
+    // Companions ship in the barrel, not a further entrypoint, because they are pure — the check
+    // worth making from a tarball is that the barrel really does export them.
+    const check = mod.checkCompanions([{ name: mod.NOTE_FILE }, { name: 'scenario.md' }], kind);
+    if (
+      check.missingRecommended[0]?.file !== 'eval.md' ||
+      check.unknown[0]?.name !== 'scenario.md'
+    ) {
+      throw new Error(`packed companion check reported ${JSON.stringify(check)}`);
     }
 
     // The further entrypoints are declared separately in `exports`, so `files` can ship one and

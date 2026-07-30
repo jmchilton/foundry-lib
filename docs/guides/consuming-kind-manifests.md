@@ -17,9 +17,26 @@ import { parseKindManifest } from '@galaxy-foundry/kind-manifest';
 const parsed = parseKindManifest(JSON.parse(responseText));
 ```
 
-Parsing enforces field types, layer values, source shape, and the supported format version.
-Do not replace it with a TypeScript cast: casts disappear at runtime and turn malformed input
-into a broken catalog.
+Parsing enforces field types, layer values, note shape, companion vocabulary, source shape, and the
+supported format version. Do not replace it with a TypeScript cast: casts disappear at runtime and
+turn malformed input into a broken catalog.
+
+## 2a. Render a companion declaration faithfully
+
+A kind's layout arrives beside its fields. Two of the values are easy to collapse into the same
+blank cell, and they say different things:
+
+| you read                        | it means                                | render     |
+| ------------------------------- | --------------------------------------- | ---------- |
+| `companions: [...]`             | the kind declares these                 | the list   |
+| `companions: []`                | the kind declares none, as an assertion | "none"     |
+| `additionalCompanions: 'allow'` | the set is deliberately open            | "open set" |
+
+Rendering an open set as empty is the one to avoid: the kinds carrying that flag are the ones a
+reader can plainly see have companions.
+
+The reader requires `shape` and `companions`, so there is no third "the producer did not say" state
+to handle. That is deliberate — a catalog that had to distinguish it would eventually stop.
 
 ## 3. Attach the fetched revision
 

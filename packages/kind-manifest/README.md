@@ -17,6 +17,16 @@ Foundries can be diffed by machine instead of by eye.
       "title": "Mold",
       "layer": "substrate",
       "summary": "…",
+      "shape": "directory",
+      "companions": [
+        {
+          "file": "eval.md",
+          "requirement": "recommended",
+          "purpose": "The properties a cast must satisfy.",
+          "disposition": "foundry-only"
+        }
+      ],
+      "locations": ["content/molds"],
       "fields": [{ "name": "tags", "required": true, "type": "string[]" }]
     }
   ]
@@ -46,12 +56,29 @@ const manifest = buildKindManifest({
     title: d.title,
     layer: d.layer,
     summary: d.summary,
-    shape: d.build(ctx).shape,
+    shape: d.shape, //           note shape: 'file' | 'directory'
+    companions: d.companions,
+    frontmatter: d.build(ctx).shape, // the zod object the validator runs
     doc: docs[d.kind],
   })),
   source: { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' },
 });
 ```
+
+A kind's **layout** travels beside its frontmatter: `shape` says whether its notes are files or
+directories, `companions` lists the non-note files a note may carry, `additionalCompanions` marks a
+kind whose companion set is genuinely open, `locations` names the collection bases routing to it, and
+`example` carries the worked `example.md` both instances already validate and then throw away. That
+is what lets a catalog say `mold` is a folder in both instances while `pattern` is a folder in one
+and a flat file in the other — a difference otherwise expressible only inside collection globs.
+
+`shape` is why the zod-shape field is called `frontmatter`: one word cannot mean both a note's
+physical shape and the zod object validating its frontmatter, and a producer mapping `d.shape` and
+`d.build(ctx).shape` onto one key is a bug waiting to be written.
+
+`companions: []` means none, as an assertion — never absent-meaning-unmodelled. The reader
+**requires** both `shape` and `companions`, so a catalog never has to tell "this kind declares none"
+apart from "this producer did not say".
 
 `fields` is **derived from the zod shape, never hand-written**. A hand-maintained
 required-metadata table is a second encoding of the schema and drifts the first week;
@@ -64,6 +91,11 @@ happens to the shape once it exists.
 
 `required` answers "must an author write this key", so a field carrying `.default()`
 counts as optional — it validates without the author writing anything.
+
+If you define kinds with
+[`@galaxy-foundry/kind-schema`](https://github.com/jmchilton/foundry-lib/tree/main/packages/kind-schema),
+don't write that map by hand — `manifestKinds` is the bridge, and it derives `locations` from your
+collection table instead of asking you for a second copy of it.
 
 ## The reader
 

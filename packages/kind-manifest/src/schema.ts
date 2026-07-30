@@ -16,12 +16,28 @@ export const manifestFieldSchema = z.object({
   type: z.string(),
 });
 
+export const companionSchema = z.object({
+  file: z.string(),
+  requirement: z.enum(['required', 'recommended', 'optional']),
+  purpose: z.string(),
+  disposition: z.enum(['foundry-only', 'cast-input', 'bundled']),
+});
+
+// `shape` and `companions` are required of a manifest, not tolerated as absent. A consumer of this
+// format is a catalog that renders what it reads, and "this kind reports no companions" and "this
+// kind's producer did not say" are different statements it must not be made to conflate. Every
+// producer of this format declares both, so the reader can insist rather than defend.
 export const manifestKindSchema = z.object({
   kind: z.string(),
   title: z.string(),
   layer: z.enum(['substrate', 'instance']),
   summary: z.string(),
+  shape: z.enum(['file', 'directory']),
+  companions: z.array(companionSchema),
+  additionalCompanions: z.enum(['forbid', 'allow']).optional(),
+  locations: z.array(z.string()).optional(),
   doc: z.string().optional(),
+  example: z.string().optional(),
   fields: z.array(manifestFieldSchema),
 });
 

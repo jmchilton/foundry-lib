@@ -8,7 +8,16 @@ const MOLD = {
   title: 'Mold',
   layer: 'substrate' as const,
   summary: 'A reusable shape.',
-  shape: { tags: z.array(z.string()), summary: z.string().optional() },
+  shape: 'directory' as const,
+  companions: [
+    {
+      file: 'eval.md',
+      requirement: 'recommended' as const,
+      purpose: 'The properties a cast must satisfy.',
+      disposition: 'foundry-only' as const,
+    },
+  ],
+  frontmatter: { tags: z.array(z.string()), summary: z.string().optional() },
 };
 
 describe('buildKindManifest', () => {
@@ -18,7 +27,7 @@ describe('buildKindManifest', () => {
     expect(manifest.instance).toBe('gwf');
   });
 
-  it('derives each kind’s fields from its shape', () => {
+  it('derives each kind’s fields from its frontmatter shape, and carries its layout', () => {
     const manifest = buildKindManifest({ instance: 'gwf', kinds: [MOLD] });
     expect(manifest.kinds).toEqual([
       {
@@ -26,6 +35,15 @@ describe('buildKindManifest', () => {
         title: 'Mold',
         layer: 'substrate',
         summary: 'A reusable shape.',
+        shape: 'directory',
+        companions: [
+          {
+            file: 'eval.md',
+            requirement: 'recommended',
+            purpose: 'The properties a cast must satisfy.',
+            disposition: 'foundry-only',
+          },
+        ],
         fields: [
           { name: 'tags', required: true, type: 'string[]' },
           { name: 'summary', required: false, type: 'string' },
@@ -61,19 +79,49 @@ describe('buildKindManifest', () => {
   // Key order is load-bearing: the manifest is a committed artifact, so emitting `doc`
   // after `fields` rewrites a multi-KB line in every instance's diff for no change in
   // meaning. It goes where the type declares it.
-  it('emits `doc` before `fields`, matching the declared shape', () => {
+  it('emits every optional key in declared order, with the prose last before `fields`', () => {
     const manifest = buildKindManifest({
       instance: 'gwf',
-      kinds: [{ ...MOLD, doc: '# Mold' }],
+      kinds: [
+        {
+          ...MOLD,
+          additionalCompanions: 'allow',
+          locations: ['content/molds'],
+          doc: '# Mold',
+          example: '# Example',
+        },
+      ],
     });
     expect(Object.keys(manifest.kinds[0] as object)).toEqual([
       'kind',
       'title',
       'layer',
       'summary',
+      'shape',
+      'companions',
+      'additionalCompanions',
+      'locations',
       'doc',
+      'example',
       'fields',
     ]);
+  });
+
+  // The optional keys get the same treatment `doc` got, for the same reason: a key present and
+  // undefined disappears from the JSON but not from the object the producer holds.
+  it('omits every absent optional key rather than emitting undefined ones', () => {
+    const [kind] = buildKindManifest({ instance: 'gwf', kinds: [MOLD] }).kinds;
+    for (const key of ['additionalCompanions', 'locations', 'example']) {
+      expect(Object.hasOwn(kind as object, key)).toBe(false);
+    }
+  });
+
+  // A caller's array reaching into the manifest would let a later push mutate a committed
+  // artifact's source of truth after the fact.
+  it('copies the companion list rather than aliasing the caller’s', () => {
+    const manifest = buildKindManifest({ instance: 'gwf', kinds: [MOLD] });
+    expect(manifest.kinds[0]?.companions).not.toBe(MOLD.companions);
+    expect(manifest.kinds[0]?.companions).toEqual(MOLD.companions);
   });
 });
 
