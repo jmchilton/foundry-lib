@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/kind-manifest",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "The shared kind-manifest format for Foundry-pattern instances: types, zod validator, and the zod-shape-to-manifest deriver.",
   "type": "module",
   "exports": {
