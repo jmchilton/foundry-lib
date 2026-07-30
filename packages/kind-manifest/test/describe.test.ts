@@ -70,7 +70,7 @@ describe('describeType', () => {
   it('falls back to `any` for shapes it has no rendering for', () => {
     expect(describeType(z.lazy(() => z.string()))).toBe('any');
     expect(describeType(z.unknown())).toBe('any');
-    expect(describeType(z.record(z.string()))).toBe('any');
+    expect(describeType(z.record(z.string(), z.string()))).toBe('any');
   });
 
   it('renders a nested object as `object` rather than expanding it', () => {

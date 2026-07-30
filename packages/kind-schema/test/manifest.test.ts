@@ -9,7 +9,7 @@ import { kindDefiner, manifestKinds, type AnyKindDefinition } from '../src/index
 // the helper happened to emit — including a wrong one.
 
 interface Ctx {
-  base: { status: z.ZodEnum<['draft', 'reviewed']> };
+  base: { status: z.ZodEnum<{ draft: 'draft'; reviewed: 'reviewed' }> };
 }
 
 const ctx: Ctx = { base: { status: z.enum(['draft', 'reviewed']) } };

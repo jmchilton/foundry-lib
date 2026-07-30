@@ -12,7 +12,11 @@ import { assemble, buildKindUnion, kindDefiner, type AnyKindDefinition } from '.
 // and hands kinds a license table. Both are modelled small enough to read.
 
 interface WideContext {
-  base: { status: z.ZodEnum<['draft', 'reviewed']>; revised: z.ZodDate; summary: z.ZodString };
+  base: {
+    status: z.ZodEnum<{ draft: 'draft'; reviewed: 'reviewed' }>;
+    revised: z.ZodDate;
+    summary: z.ZodString;
+  };
   tag: z.ZodString;
 }
 
