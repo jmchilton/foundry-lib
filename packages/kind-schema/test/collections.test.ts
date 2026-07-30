@@ -8,17 +8,6 @@ import {
   type CollectionRoute,
 } from '../src/collections.js';
 
-// Both instances' real tables, verbatim in structure. They are here because the two cases that
-// make routing non-trivial each appear in exactly one of them, and a matcher tested against one
-// table would not exercise the other's:
-//
-//   galaxyproject/foundry — one directory holding TWO kinds, separated only by filename and a
-//   `!` exclusion. This is what makes a directory→kind rule insufficient.
-//
-//   statistical-genomics-foundry — two collections resolving to ONE kind (`experiments` holds
-//   notes that are structurally molds), which is what lets a browse route exist without
-//   inventing a kind for it.
-
 const GWF = {
   molds: { base: 'content/molds', pattern: ['**/index.md'], kind: 'mold' },
   patterns: { base: 'content/patterns', pattern: ['**/*.md'], kind: 'pattern' },
@@ -56,7 +45,6 @@ describe('routing a path to its collection', () => {
   });
 
   it('does not match a base that is only a string prefix of the path', () => {
-    // `content/moldsmith/` starts with `content/molds` as text but is a different directory.
     expect(collectionOf(GWF, 'content/moldsmith/x/index.md')).toBeUndefined();
   });
 
@@ -76,9 +64,6 @@ describe('one directory holding two kinds', () => {
     expect(kindOf(GWF, 'content/cli/gxwf/tool-search.md')).toBe('cli-command');
   });
 
-  // The `!` exclusion is the ONLY thing keeping these two disjoint — they share a base and
-  // `*/*.md` matches `*/index.md`. Without it `collectionOf` would still answer, by table order,
-  // which is a rule nobody wrote down.
   it('keeps the two disjoint, so table order decides nothing', () => {
     expect(collectionsClaiming(GWF, 'content/cli/gxwf/index.md')).toEqual(['cli-tools']);
     expect(collectionsClaiming(GWF, 'content/cli/gxwf/tool-search.md')).toEqual(['cli-commands']);
@@ -103,8 +88,6 @@ describe('two collections resolving to one kind', () => {
     expect(kindOf(SGF, 'content/research/experiments/blind-run-3/index.md')).toBe('mold');
   });
 
-  // Nested bases: `research/books` and `research/experiments` share a parent, and a matcher that
-  // compared only the first path segment would collapse them.
   it('keeps sibling bases under a shared parent apart', () => {
     expect(collectionOf(SGF, 'content/research/books/msmb/index.md')).toBe('books');
     expect(collectionOf(SGF, 'content/research/papers/leek-2010/index.md')).toBe('papers');

@@ -68,17 +68,11 @@ describe('buildKindManifest', () => {
     expect(manifest.kinds[0]?.doc).toBe('# Mold\n\nbody');
   });
 
-  // `exactOptionalPropertyTypes` is on, and a `doc: undefined` key survives
-  // JSON.stringify as an absent key but shows up in a deep-equality test. Omitting it
-  // entirely keeps the emitted JSON and the in-memory object telling the same story.
   it('omits `doc` entirely rather than emitting an undefined key', () => {
     const manifest = buildKindManifest({ instance: 'gwf', kinds: [MOLD] });
     expect(Object.hasOwn(manifest.kinds[0] as object, 'doc')).toBe(false);
   });
 
-  // Key order is load-bearing: the manifest is a committed artifact, so emitting `doc`
-  // after `fields` rewrites a multi-KB line in every instance's diff for no change in
-  // meaning. It goes where the type declares it.
   it('emits every optional key in declared order, with the prose last before `fields`', () => {
     const manifest = buildKindManifest({
       instance: 'gwf',
@@ -107,8 +101,6 @@ describe('buildKindManifest', () => {
     ]);
   });
 
-  // The optional keys get the same treatment `doc` got, for the same reason: a key present and
-  // undefined disappears from the JSON but not from the object the producer holds.
   it('omits every absent optional key rather than emitting undefined ones', () => {
     const [kind] = buildKindManifest({ instance: 'gwf', kinds: [MOLD] }).kinds;
     for (const key of ['additionalCompanions', 'locations', 'example']) {
@@ -116,8 +108,6 @@ describe('buildKindManifest', () => {
     }
   });
 
-  // A caller's array reaching into the manifest would let a later push mutate a committed
-  // artifact's source of truth after the fact.
   it('copies the companion list rather than aliasing the caller’s', () => {
     const manifest = buildKindManifest({ instance: 'gwf', kinds: [MOLD] });
     expect(manifest.kinds[0]?.companions).not.toBe(MOLD.companions);
@@ -126,9 +116,6 @@ describe('buildKindManifest', () => {
 });
 
 describe('provenance', () => {
-  // The consumer used to bolt all of this on after reading the file —
-  // `manifest.source = {...}` in the pattern site's vendoring script. That put the
-  // producer's identity in the consumer's hands and made vendoring a mutation.
   const source = { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' };
 
   it('emits the source envelope when the producer declares one', () => {
@@ -141,10 +128,6 @@ describe('provenance', () => {
     expect(Object.hasOwn(manifest, 'source')).toBe(false);
   });
 
-  // The constraint that put `revision` on the consumer's side. A manifest is a committed
-  // artifact whose CI gate regenerates it and string-compares; anything in it that varies
-  // with the current commit makes that gate fail on every commit. So two builds of the
-  // same kinds must be byte-identical no matter when they run.
   it('produces byte-identical output across builds, so a --check gate can pass', () => {
     const a = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });
     const b = buildKindManifest({ instance: 'gwf', kinds: [MOLD], source });

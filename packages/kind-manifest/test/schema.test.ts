@@ -1,10 +1,3 @@
-// The consumer half of the format.
-//
-// A cross-instance catalog reads manifests it did not produce, from repos it does not
-// control, at revisions it did not choose. Today it does that by casting the parsed JSON
-// to a hand-written interface — which means a manifest missing `layer`, or carrying
-// `layer: "instnace"`, renders a broken page instead of failing at the read.
-
 import { describe, expect, it } from 'vitest';
 
 import { KIND_MANIFEST_VERSION, buildKindManifest, parseKindManifest } from '../src/index.js';
@@ -59,8 +52,6 @@ describe('parseKindManifest', () => {
     ['a source envelope with no path', { ...VALID, source: { repo: 'a/b' } }],
     ['a misspelled note shape', { ...VALID, kinds: [{ ...VALID.kinds[0], shape: 'folder' }] }],
     ['a kind with no note shape', { ...VALID, kinds: [{ ...VALID.kinds[0], shape: undefined }] }],
-    // Required, not tolerated as absent: a catalog must never have to tell "declares none" apart
-    // from "did not say". `[]` is the way to say none.
     [
       'a kind with no companions key',
       { ...VALID, kinds: [{ ...VALID.kinds[0], companions: undefined }] },
@@ -96,8 +87,6 @@ describe('parseKindManifest', () => {
     expect(() => parseKindManifest(input)).toThrow();
   });
 
-  // A reader that silently accepts a format it does not understand is worse than one
-  // that refuses: it renders a plausible-looking catalog from fields it guessed at.
   it('rejects a manifest from a future format version', () => {
     expect(() => parseKindManifest({ ...VALID, version: KIND_MANIFEST_VERSION + 1 })).toThrow(
       /version/i,

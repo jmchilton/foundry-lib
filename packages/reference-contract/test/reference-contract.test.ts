@@ -1,11 +1,3 @@
-// The vocabulary is the product; the loader is packaging around it. So the assertions split
-// in two: structural rules the loader must enforce on ANY table it is handed, and invariants
-// the SHIPPED vocabulary must satisfy.
-//
-// The sharpest tests here are the ones about the kinds/inherited boundary. That boundary is
-// the reason this package exists, and a loader that quietly accepted `kinds` in the shared
-// table — or `modes` in an instance's file — would let the split rot without anyone noticing.
-
 import { describe, it, expect } from 'vitest';
 
 import {
@@ -63,7 +55,6 @@ describe('the bundled vocabularies', () => {
   });
 
   it('gives every term the spec link, from one `spec_url` rather than twelve copies', () => {
-    // The whole vocabulary is defined in one place, so the data says the URL once.
     expect(bundledContractText().match(/spec_url/g)).toHaveLength(1);
     for (const group of INHERITED_GROUPS) {
       for (const [id, term] of Object.entries(inherited[group])) {
@@ -72,9 +63,6 @@ describe('the bundled vocabularies', () => {
     }
   });
 
-  // These three descriptions are the reconciliation this package performed: each names a
-  // cross-field rule that both instances enforce but only one had written down. Losing the
-  // sentence would silently undo that, and the vocabulary is the only place it is documented.
   it('keeps the enforced rules the reconciled glosses spell out', () => {
     expect(inherited.load['on-demand']?.description).toContain('Requires a `trigger`');
     expect(inherited.evidence['hypothesis']?.description).toContain('Requires a `verification`');
@@ -84,8 +72,6 @@ describe('the bundled vocabularies', () => {
   });
 
   it('keeps the vocabulary domain-neutral', () => {
-    // A shared vocabulary that names one instance's domain has stopped being shared. This
-    // caught "survey or research over real workflows" during the reconciliation.
     const prose = INHERITED_GROUPS.flatMap((g) =>
       Object.values(inherited[g]).map((t) => `${t.label} ${t.description}`),
     ).join(' ');
@@ -107,27 +93,19 @@ describe('composing an instance contract', () => {
     expect(() => buildReferenceContract({ kinds: {} })).toThrow(/`kinds` is empty/);
   });
 
-  // Narrowing is how an instance declines capacity it has not earned. `modes.condense`
-  // commits a Foundry to an LLM phase in its caster; a deterministic caster should be able
-  // to say it supports neither that nor the provenance fields it drags in.
   it('narrows an inherited group to what the instance supports', () => {
     const contract = buildReferenceContract({ kinds, narrow: { modes: ['verbatim', 'sidecar'] } });
     expect(contractKeys(contract, 'modes')).toEqual(['verbatim', 'sidecar']);
-    // Untouched groups stay complete — narrowing one is not narrowing all.
     expect(contractKeys(contract, 'evidence')).toHaveLength(3);
   });
 
   it('narrows in the shipped order, not the order the caller listed', () => {
-    // Two instances narrowing to the same terms must produce identical contracts however
-    // they wrote the list, or a committed manifest diffs on nothing.
     const a = buildReferenceContract({ kinds, narrow: { modes: ['sidecar', 'verbatim'] } });
     const b = buildReferenceContract({ kinds, narrow: { modes: ['verbatim', 'sidecar'] } });
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 
   it('refuses narrowing to a term the vocabulary does not have', () => {
-    // A typo would silently narrow further than intended, and the schema would then reject
-    // notes for a reason nobody could see.
     expect(() => buildReferenceContract({ kinds, narrow: { modes: ['verbatm'] } })).toThrow(
       /cannot narrow `modes` to unknown term\(s\) verbatm \(available: verbatim, condense, sidecar\)/,
     );
@@ -140,8 +118,6 @@ describe('composing an instance contract', () => {
   });
 
   it('refuses narrowing a group that is not inherited', () => {
-    // `kinds` is supplied directly, so narrowing it is a misunderstanding rather than a
-    // no-op worth tolerating. TypeScript catches this; a JS caller would not be.
     expect(() =>
       buildReferenceContract({ kinds, narrow: { kinds: ['pattern'] } as never }),
     ).toThrow(/cannot narrow `kinds` \(narrowable: used_at, load, modes, evidence\)/);
@@ -198,8 +174,6 @@ describe('parsing an arbitrary table', () => {
     expect(Object.keys(parseInheritedVocabularies(valid).used_at)).toEqual(['now']);
   });
 
-  // The boundary this package draws, enforced in the direction that matters: the shared
-  // table must not grow a `kinds` block, because `kinds` is the one thing it cannot know.
   it('rejects a shared table that declares `kinds`', () => {
     expect(() =>
       parseInheritedVocabularies(`kinds:\n  p: {label: P, description: d}\n${valid}`),
@@ -260,8 +234,6 @@ describe('reading an instance file', () => {
     }
   });
 
-  // The other direction of the boundary, and the one that actually decays: an instance
-  // re-adding an inherited block is how the hand-mirroring this package removes creeps back.
   it('refuses an instance file that re-declares an inherited vocabulary', () => {
     const file = write(
       'kinds:\n  p: {label: P, description: d}\nmodes:\n  verbatim: {label: V, description: d}\n',

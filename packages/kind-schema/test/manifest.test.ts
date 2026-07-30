@@ -4,10 +4,6 @@ import { z } from 'zod';
 
 import { kindDefiner, manifestKinds, type AnyKindDefinition } from '../src/index.js';
 
-// Exercised against the REAL `buildKindManifest`, not a stub. The whole point of this helper is
-// that it produces something that package accepts, and a stub would agree with whatever shape
-// the helper happened to emit — including a wrong one.
-
 interface Ctx {
   base: { status: z.ZodEnum<{ draft: 'draft'; reviewed: 'reviewed' }> };
 }
@@ -38,8 +34,6 @@ const mold = defineKind({
         note: z.string().optional(),
       })
       .strict(),
-  // Present precisely so the assertion below — that a refined kind still exposes its `.shape` —
-  // is testing something.
   refine: (data, issues) => {
     if (data.tags.length === 0) {
       issues.addIssue({ code: z.ZodIssueCode.custom, path: ['tags'], message: 'need a tag' });
@@ -77,19 +71,13 @@ describe('manifestKinds', () => {
 
   it('derives the frontmatter shape by building the kind against the context', () => {
     const [first] = manifestKinds(KINDS, ctx);
-    // `status` proves the CONTEXT reached the shape — it is spread in from `ctx.base`, so a
-    // helper that built against the wrong context would drop it.
     expect(Object.keys(first!.frontmatter).sort()).toEqual(['note', 'status', 'tags', 'type']);
   });
 
   it('exposes the shape of a refined kind, not the refinement wrapper', () => {
-    // `refine` is applied by `assemble`, never here: a wrapped object has no `.shape` at all, so
-    // this is the difference between a manifest with fields and one with none.
     expect(manifestKinds([mold], ctx)[0]!.frontmatter).toHaveProperty('tags');
   });
 
-  // The two `shape`s are the reason the zod one was renamed. A bridge mapping both onto one word
-  // is a trap, and this is the assertion that would have caught it swapping them.
   it("keeps a kind's note shape apart from its frontmatter shape", () => {
     const [first] = manifestKinds(KINDS, ctx);
     expect(first!.shape).toBe('directory');
@@ -100,7 +88,6 @@ describe('manifestKinds', () => {
     const [first, second] = manifestKinds(KINDS, ctx);
     expect(first!.companions.map((c) => c.file)).toEqual(['eval.md']);
     expect(first!.companions[0]!.disposition).toBe('foundry-only');
-    // `[]` travels as `[]`, and the open-set flag travels beside it rather than instead of it.
     expect(second!.companions).toEqual([]);
     expect(second!.additionalCompanions).toBe('allow');
   });
@@ -120,8 +107,6 @@ describe('manifestKinds', () => {
     expect('doc' in first!).toBe(false);
   });
 
-  // `exactOptionalPropertyTypes` distinguishes an absent key from one set to `undefined`, and an
-  // explicit `doc: undefined` serializes into the manifest as a key the format does not declare.
   it('omits the doc key entirely rather than setting it undefined', () => {
     const [, second] = manifestKinds(KINDS, ctx, { docs: { mold: 'only the mold has one' } });
     expect('doc' in second!).toBe(false);
@@ -134,10 +119,6 @@ describe('manifestKinds', () => {
 });
 
 describe('locations, derived from the collection table', () => {
-  // Derived, not supplied, for the reason the field table is derived from the zod shape: a
-  // hand-written list is a second encoding of the routing table and drifts from it. This table is
-  // SGF's real shape, where `experiments` and `molds` both resolve to `mold` — the many-to-one case
-  // a per-kind field has to remember to handle and a derivation gets right for free.
   const COLLECTIONS = {
     molds: { base: 'content/molds', pattern: ['**/index.md'], kind: 'mold' },
     experiments: { base: 'content/research/experiments', pattern: ['**/index.md'], kind: 'mold' },
@@ -158,8 +139,6 @@ describe('locations, derived from the collection table', () => {
     expect('locations' in manifestKinds(KINDS, ctx)[0]!).toBe(false);
   });
 
-  // An empty list would report "no collection routes here" as a deliberate fact, when it is a
-  // routing bug. Absent says the manifest does not answer; `[]` would say the answer is none.
   it('omits locations for a kind no collection routes to', () => {
     const orphan = manifestKinds(KINDS, ctx, {
       collections: { books: COLLECTIONS.books },
@@ -184,7 +163,6 @@ describe('feeding the real buildKindManifest', () => {
   it('renders the derived fields rather than leaving them empty', () => {
     const fields = manifest.kinds[0]?.fields ?? [];
     expect(fields.find((f) => f.name === 'tags')?.type).toBe('string[]');
-    // An optional field is not required metadata — the distinction the catalog's table renders.
     expect(fields.find((f) => f.name === 'note')?.required).toBe(false);
     expect(fields.find((f) => f.name === 'tags')?.required).toBe(true);
   });

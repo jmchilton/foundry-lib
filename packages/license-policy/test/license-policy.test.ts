@@ -1,8 +1,3 @@
-// The table is the product; the loader is packaging around it. So the assertions
-// split in two: structural rules the loader must enforce on ANY table it is handed,
-// and invariants the SHIPPED table must satisfy — the ones that make a row
-// meaningful rather than merely well-formed.
-
 import { describe, it, expect } from 'vitest';
 
 import {
@@ -25,15 +20,11 @@ describe('the bundled table', () => {
 
   it('is version 1 and carries the curated rows', () => {
     expect(policy.version).toBe(1);
-    // A guard against a path change turning every assertion below vacuous: an
-    // empty table would satisfy each per-row invariant trivially.
     expect(licenseIds(policy).length).toBeGreaterThan(20);
     expect(Object.keys(policy.global_rules).length).toBeGreaterThan(0);
   });
 
   it('ships the ids both instances actually author against', () => {
-    // Not an exhaustive list — a spot-check that the shipped table is the real
-    // one and not a fixture that happened to parse.
     for (const id of ['MIT', 'CC-BY-4.0', 'CC-BY-NC-4.0', 'GPL-3.0-only', 'Apache-2.0']) {
       expect(licenseIds(policy)).toContain(id);
     }
@@ -57,8 +48,6 @@ describe('the bundled table', () => {
   });
 
   it('does not leak `default` into the curated id list', () => {
-    // `default` is a sibling key of `licenses:`, not a row inside it. If it ever
-    // leaked in, `default` would validate as a license id in every instance.
     expect(licenseIds(policy)).not.toContain('default');
     expect(isValidLicenseId(policy, 'default')).toBe(false);
   });
@@ -90,10 +79,6 @@ describe('table invariants — what makes a row meaningful', () => {
   const rows = Object.entries(policy.licenses);
 
   it('never lets an own-words-only row permit a carry that copies text', () => {
-    // The whole point of the policy column. A row breaking this would silently
-    // authorize the redistribution the table exists to prevent. `sidecar` counts:
-    // it copies the source verbatim into its own file rather than into the note,
-    // which is a different location, not a different amount of copying.
     for (const [id, row] of rows) {
       if (row.policy === 'own-words-only') {
         expect(allowsMode(row, 'verbatim'), `${id} is own-words-only`).toBe(false);
@@ -103,8 +88,6 @@ describe('table invariants — what makes a row meaningful', () => {
   });
 
   it('always lets a verbatim-ok row permit verbatim carry, and demands its notice', () => {
-    // Permission and obligation travel together: a row may authorize copying the
-    // text only if it also requires the licence text to travel with it.
     for (const [id, row] of rows) {
       if (row.policy === 'verbatim-ok') {
         expect(allowsMode(row, 'verbatim'), `${id} is verbatim-ok`).toBe(true);
@@ -114,16 +97,12 @@ describe('table invariants — what makes a row meaningful', () => {
   });
 
   it('gives every row at least one mode it permits', () => {
-    // An empty `allowed_modes` denies every carry, which no row in a curated table
-    // means to say — it reads as a row someone started and did not finish.
     for (const [id, row] of rows) {
       expect(row.allowed_modes.length, `${id} permits no mode at all`).toBeGreaterThan(0);
     }
   });
 
   it('never lets a copyleft row permit condense', () => {
-    // Header rule: condensing a copyleft source into own words is copyleft
-    // laundering, so copyleft rows get verbatim + sidecar only.
     for (const [id, row] of rows) {
       if (row.copyleft) {
         expect(allowsMode(row, 'condense'), `${id} is copyleft`).toBe(false);
@@ -132,8 +111,6 @@ describe('table invariants — what makes a row meaningful', () => {
   });
 
   it('never requires a license_file for an own-words-only row', () => {
-    // Nothing is redistributed verbatim, so there is no notice obligation to
-    // honor — `license_file_tracks_verbatim` in global_rules.
     for (const [id, row] of rows) {
       if (row.policy === 'own-words-only') {
         expect(row.license_file, `${id} is own-words-only`).toBe(false);
@@ -210,8 +187,6 @@ default:
 describe('locating a table on disk', () => {
   it('exposes the bundled copy by path, and it round-trips', () => {
     expect(bundledPolicyPath().endsWith(LICENSE_POLICY_FILE)).toBe(true);
-    // The text accessor is what an instance's conformance test string-compares
-    // against its own copy, so it must be the same bytes the parser saw.
     expect(parseLicensePolicy(bundledPolicyText())).toEqual(bundledPolicy());
   });
 

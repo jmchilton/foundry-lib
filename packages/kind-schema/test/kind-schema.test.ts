@@ -3,14 +3,6 @@ import { z } from 'zod';
 
 import { assemble, buildKindUnion, kindDefiner, type AnyKindDefinition } from '../src/index.js';
 
-// Two instance contexts, deliberately unalike, because the claim this package makes is that the
-// context is the SEAM — the thing instances disagree about — and a test with one context shape
-// would prove nothing about that.
-//
-// These mirror the two real ones: galaxyproject/foundry spreads a seven-field note envelope and
-// hands kinds a tag registry to validate against; statistical-genomics-foundry spreads one field
-// and hands kinds a license table. Both are modelled small enough to read.
-
 interface WideContext {
   base: {
     status: z.ZodEnum<{ draft: 'draft'; reviewed: 'reviewed' }>;
@@ -42,9 +34,6 @@ const narrowCtx: NarrowContext = {
 const defineWide = kindDefiner<WideContext>();
 const defineNarrow = kindDefiner<NarrowContext>();
 
-// These three also disagree about SHAPE, which is the other half of what a kind declares. That is
-// not decoration: a fixture set where every kind was directory-shaped would never exercise a
-// file-shaped one, and `pattern` is a flat file in one instance and a directory in the other.
 const mold = defineWide({
   kind: 'mold',
   title: 'Mold',
@@ -68,7 +57,6 @@ const mold = defineWide({
         tags: z.array(ctx.tag).min(1),
       })
       .strict(),
-  // A rule a shape cannot state: whether `source` is required depends on `axis`.
   refine: (data, issues) => {
     if (data.axis === 'source-specific' && !data.summary.includes('source')) {
       issues.addIssue({
@@ -168,8 +156,6 @@ describe('buildKindUnion', () => {
 
   it("runs the matched kind's refine and not another kind's", () => {
     const union = buildKindUnion(kinds, wideCtx);
-    // Same summary that fails as a source-specific mold passes as a pattern: the rule belongs to
-    // one kind, so the union must not apply it to the other.
     expect(
       union.safeParse({
         type: 'pattern',
@@ -191,22 +177,12 @@ describe('buildKindUnion', () => {
   });
 
   it('still builds from a widened kind array, where the types cannot survive', () => {
-    // The escape hatch stays usable: a caller holding `AnyKindDefinition[]` gets a working
-    // schema, just not a typed one. Only the shapes are lost, never the validation.
     expect(buildKindUnion(kinds, wideCtx).safeParse({ ...validMold, extra: 1 }).success).toBe(
       false,
     );
   });
 });
 
-/**
- * Exact type equality, which — unlike an assignment — `any` does NOT satisfy.
- *
- * The distinction is the whole point here. A plain `const axis: "a" | "b" = parsed.axis` passes
- * when `parsed.axis` is correctly inferred AND when the shape has collapsed to `any`, so it
- * reports success in exactly the case worth catching. The two-function-signatures trick is the
- * standard way to make the checker compare types rather than assignability.
- */
 type Equals<A, B> =
   (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2 ? true : false;
 type MustBeTrue<T extends true> = T;
@@ -216,17 +192,10 @@ export type _AxisIsExact = MustBeTrue<Equals<MoldOut['axis'], 'source-specific' 
 export type _StatusIsExact = MustBeTrue<Equals<MoldOut['status'], 'draft' | 'reviewed'>>;
 export type _RevisedIsExact = MustBeTrue<Equals<MoldOut['revised'], Date>>;
 
-// The union has to keep its members' types too, and for a reason the per-kind assertions above
-// do not cover: an instance may re-export the union's type from its own published API, and a
-// union that erased to `unknown` would hand that erasure to consumers who never called this
-// package. Discriminating on `type` is the least this must preserve — if `.map`'s homogeneous
-// array reaches the return type, `UnionOut['type']` is `unknown` and this stops compiling.
 type TupleKinds = readonly [typeof mold, typeof pattern];
 type UnionOut = z.infer<ReturnType<typeof buildKindUnion<WideContext, TupleKinds>>>;
 export type _UnionDiscriminantIsExact = MustBeTrue<Equals<UnionOut['type'], 'mold' | 'pattern'>>;
 
-// And the arms stay separable rather than merging into one wide record: `axis` belongs to the
-// mold arm only, so narrowing by `type` is what a consumer walking a mixed corpus actually does.
 type MoldArm = Extract<UnionOut, { type: 'mold' }>;
 export type _UnionMoldAxisIsExact = MustBeTrue<
   Equals<MoldArm['axis'], 'source-specific' | 'general'>
@@ -236,12 +205,6 @@ export type _UnionPatternHasNoAxis = MustBeTrue<
 >;
 
 describe('kindDefiner', () => {
-  // The reason `defineKind` exists at all. If the shape widened, `entry.data` degrades to
-  // `unknown` — or, worse, to `any` — on pages that never mention this file.
-  //
-  // The compile-time assertions above are what actually hold this: they are checked by
-  // `tsc -p tsconfig.test.json`, and they fail if the shape collapses in EITHER direction. The
-  // runtime half below only confirms the values agree with the types.
   it("infers the kind's shape rather than widening it to the default", () => {
     const parsed = assemble(mold, wideCtx).parse(validMold);
     const axis: 'source-specific' | 'general' = parsed.axis;
@@ -249,11 +212,6 @@ describe('kindDefiner', () => {
     expect([axis, status]).toEqual(['source-specific', 'draft']);
   });
 
-  // `AnyKindDefinition` is the escape hatch for code that ITERATES kinds, and it has to be the
-  // `any`-shaped one. `KindDefinition<Ctx>` — the erased-but-bounded type — cannot even hold a
-  // concrete kind: `ZodObject` is effectively invariant in its shape parameter, so
-  // `KindDefinition<WideContext> = mold` is a type error rather than a lossy assignment. That
-  // is why both instances declare the `any` alias instead of reaching for the default.
   it('erases the shape for iteration without rejecting the kinds', () => {
     const kinds: readonly AnyKindDefinition<WideContext>[] = [mold, pattern, defineWide(pattern)];
     expect(kinds.map((k) => k.kind)).toEqual(['mold', 'pattern', 'pattern']);

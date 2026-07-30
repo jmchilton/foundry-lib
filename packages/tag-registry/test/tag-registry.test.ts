@@ -1,13 +1,3 @@
-// This package ships no vocabulary, so there is no shipped table to assert invariants on.
-// Everything here is about the FORMAT: the rules both instances wrote down in prose and
-// then did not enforce in code.
-//
-// The sharpest tests are the ones about declared membership. "A tag is valid because a
-// facet declares it, never because its text starts with a facet name" is the rule the whole
-// browse surface rests on — it is what makes an "other" bucket impossible rather than
-// merely empty — and it cannot be proven against either instance's real registry, because
-// both happen to have entirely slashed vocabularies.
-
 import { describe, it, expect } from 'vitest';
 
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
@@ -80,8 +70,6 @@ describe('parsing', () => {
     expect(() => parse(text)).toThrow(message);
   });
 
-  // The closed-enum rule. A tag with no gloss is one the browse surface cannot document,
-  // which is the whole reason the registry is the complete catalog of what a corpus carries.
   it('refuses a tag with no gloss', () => {
     const text = 'facets:\n  a:\n    label: A\n    description: D.\n    values:\n      a/x:\n';
     expect(() => parse(text)).toThrow(/tag `a\/x` in facet `a` has no gloss/);
@@ -92,8 +80,6 @@ describe('parsing', () => {
     expect(() => parse(text)).toThrow(/has no gloss/);
   });
 
-  // Membership is decided by declaration, so two declarations leave no single declaring
-  // facet: `facetOf` would answer with whichever won the iteration.
   it('refuses a tag declared by two facets, naming both', () => {
     const text = `
 facets:
@@ -121,15 +107,11 @@ describe('declared membership', () => {
     expect(registry.tagDescription('meta')).toBe('Process and convention notes.');
   });
 
-  // The rule that makes an "other" bucket impossible: the prefix is a naming convention,
-  // so a tag whose text starts with a facet name is not thereby a member of it.
   it('does not accept a tag by prefix alone', () => {
     expect(registry.isValidTag('target/nextflow')).toBe(false);
     expect(registry.facetOf('target/nextflow')).toBeUndefined();
   });
 
-  // The converse, and the one a prefix-parsing implementation gets wrong: a facet may
-  // declare a tag whose text has nothing to do with the facet's name.
   it('accepts a declared tag whose text does not match its facet', () => {
     const text = `
 facets:

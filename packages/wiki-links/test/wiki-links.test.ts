@@ -1,10 +1,3 @@
-// This package ships no link map, so there is no shipped table to assert invariants on.
-// Everything here is about the GRAMMAR and the LOOKUP RULE — the parts three repos wrote
-// four byte-identical copies of `slugify` for, and then disagreed about everywhere else.
-//
-// Several cases below are transcribed from real corpus links that the divergent
-// implementations got wrong. They are named as such.
-
 import { describe, it, expect } from 'vitest';
 
 import {
@@ -20,9 +13,6 @@ describe('slugify', () => {
     expect(slugify('Summarize Nextflow')).toBe('summarize-nextflow');
   });
 
-  // First pass, and it has to be: `A - B` is one separator. Without it the spaces become
-  // dashes and the run-collapse turns `a---b` into `a-b` anyway — but only by luck, and
-  // not for `A -B`.
   it('treats a spaced hyphen as one separator', () => {
     expect(slugify('Foo  -  Bar')).toBe('foo-bar');
     expect(slugify('Foo -Bar')).toBe('foo-bar');
@@ -37,16 +27,11 @@ describe('slugify', () => {
     expect(slugify('foo---bar')).toBe('foo-bar');
   });
 
-  // The property the whole scheme rests on: a note's `name:` and a link typed in prose land
-  // on the same key, so `[[Summarize Nextflow]]` finds a note filed as summarize-nextflow.
   it('lands a typed name and a filename on the same key', () => {
     expect(slugify('Summarize Nextflow')).toBe(slugify('summarize-nextflow'));
     expect(slugify('Double Dipping')).toBe(slugify('double-dipping'));
   });
 
-  // The limit of that, and worth pinning because it bites: an INTERNAL hyphen is content,
-  // not a separator. `nf-core` keeps its hyphen, so a title-cased link does not reach a note
-  // whose filename elided it. Only whitespace and spaced hyphens normalize away.
   it('keeps an internal hyphen, so nf-core and nfcore are different keys', () => {
     expect(slugify('Convert nf-core Module')).toBe('convert-nf-core-module');
     expect(slugify('Convert nf-core Module')).not.toBe(slugify('convert-nfcore-module'));
@@ -89,8 +74,6 @@ describe('parseWikiLink', () => {
     });
   });
 
-  // Everything left of the pipe is the address, everything right of it is prose — so a `#`
-  // in the display text is text, not an anchor.
   it('splits the alias before the anchor', () => {
     expect(parseWikiLink('[[a|b#c]]')).toEqual({ target: 'a', anchor: '', display: 'b#c' });
     expect(parseWikiLink('[[a#c|b]]')).toEqual({ target: 'a', anchor: '#c', display: 'b' });
@@ -121,25 +104,17 @@ describe('resolveWikiLink', () => {
     expect(resolveWikiLink('[[foo|see this]]', map)).toBe('/notes/foo');
   });
 
-  // The rule this package exists to settle. A prefix fallback was surveyed across ~4,200
-  // links in two Foundries and resolved exactly two of them — both wrongly. A typed stub is
-  // an unfinished link, and answering it with a guess is worse than leaving it visible.
   it('does NOT resolve a prefix', () => {
     expect(resolveWikiLink('[[foo-b]]', map)).toBeUndefined();
     expect(resolveWikiLink('[[fo]]', map)).toBeUndefined();
   });
 
-  // Real link, content/meta/glossary.md in the Galaxy Workflow Foundry. It slugifies to the
-  // empty string, and under a prefix rule the empty string is a prefix of every key — so
-  // this rendered as a confident link to whichever of 264 notes won the tie.
   it('never resolves an empty slug (the `[[...]]` bug)', () => {
     expect(resolveWikiLink('[[...]]', map)).toBeUndefined();
     expect(resolveWikiLink('[[***]]', map)).toBeUndefined();
     expect(slugify('...')).toBe('');
   });
 
-  // Real link, ingest-positive-selection/comparison.md in the Statistical Genomics Foundry.
-  // It means "both Murrell papers"; a prefix rule silently narrowed it to one of them.
   it('never resolves a glob (the `[[murrell-*]]` bug)', () => {
     const papers = new Map([
       ['murrell-2012-meme', '/papers/meme'],

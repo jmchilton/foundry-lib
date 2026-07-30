@@ -1,10 +1,3 @@
-// The reader half of the format.
-//
-// A cross-instance catalog consumes manifests it did not produce, from repos it does not
-// control, at revisions it did not choose. Casting the parsed JSON to an interface makes
-// a malformed manifest render a broken page instead of failing at the read — which is how
-// the pattern site consumes them today, against a fourth hand-written copy of these types.
-
 import { z } from 'zod';
 
 import { KIND_MANIFEST_VERSION } from './build.js';
@@ -23,10 +16,6 @@ export const companionSchema = z.object({
   disposition: z.enum(['foundry-only', 'cast-input', 'bundled']),
 });
 
-// `shape` and `companions` are required of a manifest, not tolerated as absent. A consumer of this
-// format is a catalog that renders what it reads, and "this kind reports no companions" and "this
-// kind's producer did not say" are different statements it must not be made to conflate. Every
-// producer of this format declares both, so the reader can insist rather than defend.
 export const manifestKindSchema = z.object({
   kind: z.string(),
   title: z.string(),
@@ -49,8 +38,6 @@ export const manifestSourceSchema = z.object({
 
 export const kindManifestSchema = z.object({
   instance: z.string(),
-  // Refuse a format we do not understand rather than guessing at its fields. An older
-  // version is fine to read; a newer one may mean something different by the same keys.
   version: z
     .number()
     .int()
@@ -62,18 +49,11 @@ export const kindManifestSchema = z.object({
   source: manifestSourceSchema.optional(),
 });
 
-// The schema and the hand-written interfaces must keep describing the same shape, and only
-// one direction of that is expressible. `exactOptionalPropertyTypes` distinguishes "key
-// absent" from "key present and undefined"; zod's inferred type collapses the two, so a
-// schema-satisfies-interface check fails on `doc` for a difference that does not exist at
-// runtime. Assert instead that everything the builder emits satisfies the reader — which
-// is the direction that would actually break a consumer — and let the round-trip test in
-// test/schema.test.ts cover the other way, where the runtime behaviour is what matters.
 type SchemaMatchesTypes = KindManifest extends z.infer<typeof kindManifestSchema> ? true : never;
+// Keep builder output assignable to the reader schema at compile time.
 const schemaMatchesTypes: SchemaMatchesTypes = true;
 void schemaMatchesTypes;
 
-/** Validate an untrusted manifest, throwing with the offending path named. */
 export function parseKindManifest(data: unknown): KindManifest {
   return kindManifestSchema.parse(data) as KindManifest;
 }

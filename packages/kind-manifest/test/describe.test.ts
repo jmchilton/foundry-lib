@@ -1,12 +1,3 @@
-// The suite that had to exist once per instance.
-//
-// `instructions.txt:241-246` is explicit about why the manifest needs unit tests rather
-// than a regeneration gate: `--check` "regenerates with the same code and string-compares,
-// so a bug in the type renderer produces a wrong manifest that `--check` then blesses
-// forever". The gate can only catch a renderer that changed, never one that was always
-// wrong. So the renderer gets exercised against synthetic shapes here, where a wrong
-// answer is a wrong answer regardless of what the corpus happens to contain.
-
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
@@ -52,8 +43,6 @@ describe('describeType', () => {
     expect(describeType(z.union([z.string(), z.string().min(1)]))).toBe('string');
   });
 
-  // A union wide enough to be unreadable is worse than useless in a metadata table: it
-  // pushes the row off the page and tells the reader nothing they can act on.
   it('collapses a union with more than three distinct shapes', () => {
     const wide = z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]);
     expect(describeType(wide)).toBe('one of several shapes');
@@ -87,9 +76,6 @@ describe('describeFields', () => {
     ]);
   });
 
-  // `required` answers "must an author write this key". A defaulted field validates
-  // without the author writing anything, so it is optional to them even though the
-  // parsed output always carries it.
   it('counts a defaulted field as optional', () => {
     const [field] = describeFields({ tags: z.array(z.string()).default([]) });
     expect(field).toEqual({ name: 'tags', required: false, type: 'string[]' });
