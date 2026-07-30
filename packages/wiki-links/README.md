@@ -64,6 +64,27 @@ stores — a route id, a path plus a summary for the tooltip.
 `WIKI_LINK_RE` matches a string that is nothing but one link, which is the frontmatter-field
 form. `WIKI_LINK_SCAN_RE` finds them embedded in prose.
 
+### Anchor targets
+
+`parseWikiLink` carries `#section` straight through to the href and never asks whether
+anything answers to it. For a glossary rendered from loose markdown, nothing does — unless
+something mints the ids. That is the other half of the same contract, so it lives here.
+
+```ts
+import { addBoldTermAnchors } from '@galaxy-foundry/wiki-links';
+
+addBoldTermAnchors('<p><strong>Mold</strong> is a thing.</p>');
+// → '<p id="mold"><strong>Mold</strong> is a thing.</p>'
+```
+
+It operates on rendered HTML rather than mdast because a glossary is typically rendered
+outside the remark pipeline, from a file the content collections do not own.
+
+> **`slugifyTerm` is not `slugify`.** They diverge on spaced hyphens (`A - B` → `a---b` vs
+> `a-b`), underscores (kept vs dropped) and repeated hyphens (kept vs collapsed). Both
+> instances' glossaries already carry ids minted by `slugifyTerm`, so unifying the two would
+> silently repoint every existing `#term` deep link. A test pins the divergence.
+
 ### The remark transform
 
 ```ts

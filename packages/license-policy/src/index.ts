@@ -158,3 +158,12 @@ export function resolveLicenseRow(
 export function allowsMode(row: LicenseRow, mode: CastMode): boolean {
   return row.allowed_modes.includes(mode);
 }
+
+// The verbatim texts the table's `license_file` obligation refers to.
+export {
+  LICENSE_FILE_EXT,
+  findLicenseFile,
+  licenseIdFromFile,
+  loadLicenseFiles,
+  type LicenseFile,
+} from './license-files.js';
