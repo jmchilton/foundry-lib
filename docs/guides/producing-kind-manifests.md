@@ -23,12 +23,22 @@ const inputs = KINDS.map((definition) => ({
   title: definition.title,
   layer: definition.layer,
   summary: definition.summary,
-  shape: definition.build(context).shape,
+  shape: definition.shape, // 'file' | 'directory'
+  companions: definition.companions,
+  frontmatter: definition.build(context).shape,
   doc: kindDocs[definition.kind],
 }));
 ```
 
 Registry resolution stays here because different instances wire it differently.
+
+`shape` and `frontmatter` are two different facts and the format keeps them apart: the first is
+whether a note is a file or a directory, the second is the Zod object validating its frontmatter.
+One word for both is how a producer ends up publishing one where it meant the other.
+
+If your kinds are defined with [`@galaxy-foundry/kind-schema`](packages/README.md), skip this map
+entirely — `manifestKinds(KINDS, ctx, { docs, collections })` builds it, and derives each kind's
+`locations` from the routing table rather than asking you to restate it.
 
 ## 3. Build the manifest
 

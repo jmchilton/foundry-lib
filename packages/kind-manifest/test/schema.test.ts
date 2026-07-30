@@ -18,7 +18,16 @@ const VALID = buildKindManifest({
       title: 'Mold',
       layer: 'substrate',
       summary: 'A reusable shape.',
-      shape: { tags: z.array(z.string()) },
+      shape: 'directory',
+      companions: [
+        {
+          file: 'eval.md',
+          requirement: 'recommended',
+          purpose: 'The properties a cast must satisfy.',
+          disposition: 'foundry-only',
+        },
+      ],
+      frontmatter: { tags: z.array(z.string()) },
     },
   ],
   source: { repo: 'galaxyproject/foundry', path: 'types/kinds.generated.json' },
@@ -48,6 +57,40 @@ describe('parseKindManifest', () => {
       },
     ],
     ['a source envelope with no path', { ...VALID, source: { repo: 'a/b' } }],
+    ['a misspelled note shape', { ...VALID, kinds: [{ ...VALID.kinds[0], shape: 'folder' }] }],
+    ['a kind with no note shape', { ...VALID, kinds: [{ ...VALID.kinds[0], shape: undefined }] }],
+    // Required, not tolerated as absent: a catalog must never have to tell "declares none" apart
+    // from "did not say". `[]` is the way to say none.
+    [
+      'a kind with no companions key',
+      { ...VALID, kinds: [{ ...VALID.kinds[0], companions: undefined }] },
+    ],
+    [
+      'a companion with no disposition',
+      {
+        ...VALID,
+        kinds: [
+          {
+            ...VALID.kinds[0],
+            companions: [{ file: 'eval.md', requirement: 'optional', purpose: 'p' }],
+          },
+        ],
+      },
+    ],
+    [
+      'a companion disposition outside the vocabulary',
+      {
+        ...VALID,
+        kinds: [
+          {
+            ...VALID.kinds[0],
+            companions: [
+              { file: 'eval.md', requirement: 'optional', purpose: 'p', disposition: 'packaged' },
+            ],
+          },
+        ],
+      },
+    ],
     ['not an object at all', 'a manifest'],
   ])('rejects %s', (_label, input) => {
     expect(() => parseKindManifest(input)).toThrow();

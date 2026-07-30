@@ -38,11 +38,23 @@ const narrowCtx: NarrowContext = {
 const defineWide = kindDefiner<WideContext>();
 const defineNarrow = kindDefiner<NarrowContext>();
 
+// These three also disagree about SHAPE, which is the other half of what a kind declares. That is
+// not decoration: a fixture set where every kind was directory-shaped would never exercise a
+// file-shaped one, and `pattern` is a flat file in one instance and a directory in the other.
 const mold = defineWide({
   kind: 'mold',
   title: 'Mold',
   layer: 'substrate',
   summary: 'A procedural authoring skill source.',
+  shape: 'directory',
+  companions: [
+    {
+      file: 'eval.md',
+      requirement: 'recommended',
+      purpose: 'Abstract oracle: the properties a cast must satisfy.',
+      disposition: 'foundry-only',
+    },
+  ],
   build: (ctx) =>
     z
       .object({
@@ -69,6 +81,8 @@ const pattern = defineWide({
   title: 'Pattern',
   layer: 'substrate',
   summary: 'A corpus-backed recipe.',
+  shape: 'file',
+  companions: [],
   build: (ctx) =>
     z
       .object({ type: z.literal('pattern'), ...ctx.base, pattern_kind: z.enum(['moc', 'recipe']) })
@@ -80,6 +94,9 @@ const book = defineNarrow({
   title: 'Book',
   layer: 'instance',
   summary: 'A book whose chapters are notes.',
+  shape: 'directory',
+  companions: [],
+  additionalCompanions: 'allow',
   build: (ctx) => z.object({ type: z.literal('book'), ...ctx.base, license: z.string() }).strict(),
   refine: (data, issues, kctx) => {
     if (!kctx.licenseIds.includes(data.license)) {

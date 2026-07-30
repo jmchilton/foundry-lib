@@ -10,11 +10,34 @@
 // What stays per-instance is everything that names content: the kind directories, the field
 // primitives a kind spreads (one instance's note envelope is one field, the other's is seven),
 // and the collection table. Those are the DATA. This package is the MECHANISM over it.
+//
+// One exception to the paragraph above, stated rather than glossed: `./companions` is NOT an
+// intersection two callers already wrote. Both instances answer the question it models — in
+// hardcoded allowlists, a per-note frontmatter list, a filename-pairing regex, and a site
+// component reading literal paths — but they answer it in prose and by hand, and no two of those
+// places agree. It is here as a declaration REPLACING four mechanisms, which is a different and
+// weaker claim than the rest of this file makes. See that module's header for the measurements.
 
 import { z } from 'zod';
 
+import type { CompanionDeclaration } from './companions.js';
+
 export type { KindLayer } from '@galaxy-foundry/kind-manifest';
 export { manifestKinds } from './manifest.js';
+export type { ManifestKindExtras } from './manifest.js';
+export {
+  checkCompanions,
+  companionsOf,
+  NOTE_FILE,
+  type Companion,
+  type CompanionCheck,
+  type CompanionDeclaration,
+  type CompanionDisposition,
+  type CompanionRequirement,
+  type DirectoryEntry,
+  type NormalizedCompanion,
+  type NoteShape,
+} from './companions.js';
 
 /**
  * Any shape a kind may have: an object carrying the `type` discriminator.
@@ -50,13 +73,18 @@ export type KindShape = { type: z.ZodTypeAny } & z.ZodRawShape;
  * satisfies every field access rather than failing one. The type-level assertions in this
  * package's tests are the check that does not vary.
  *
- * A kind is `build` plus an optional `refine`, and nothing else. There is deliberately no hook
- * for assembling an entry out of anything but its own frontmatter: a note that needs a sibling
- * file's fields gets them materialized into its frontmatter by a generator instead. That keeps
- * every kind a plain object — no file I/O inside a schema, and a kind manifest that reports
- * what a note actually carries.
+ * A kind's FRONTMATTER contract is `build` plus an optional `refine`, and nothing else. There is
+ * deliberately no hook for assembling an entry out of anything but its own frontmatter: a note
+ * that needs a sibling file's fields gets them materialized into its frontmatter by a generator
+ * instead. That keeps every kind a plain object — no file I/O inside a schema, and a kind
+ * manifest that reports what a note actually carries.
+ *
+ * Its LAYOUT contract is `shape` and `companions`, inherited from `CompanionDeclaration`. The two
+ * halves are separate on purpose: frontmatter is what a note SAYS, layout is where a note IS, and
+ * a kind that only declared the first is why four different places in one instance each grew
+ * their own answer to "what files belong to this note?".
  */
-export interface KindDefinition<Ctx, T extends KindShape = KindShape> {
+export interface KindDefinition<Ctx, T extends KindShape = KindShape> extends CompanionDeclaration {
   /** The `type:` discriminator value. MUST equal the directory name. */
   kind: string;
   /** Display name for the kind catalog. */
