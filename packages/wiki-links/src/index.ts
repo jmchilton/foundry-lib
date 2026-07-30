@@ -110,3 +110,7 @@ export function resolveWikiLink<T>(value: unknown, map: ReadonlyMap<string, T>):
   if (slug.length === 0) return undefined;
   return map.get(slug);
 }
+
+// The anchor ids the `#section` half of a link lands on. Note `slugifyTerm` is NOT
+// `slugify` — see ./anchors.
+export { addBoldTermAnchors, slugifyTerm } from './anchors.js';

@@ -119,6 +119,25 @@ When the rules converge, they can move here. Until then they stay where they are
 
 Types: `LicensePolicy`, `LicenseRow`, `CastMode`, `RedistributionPolicy`.
 
+### The license texts themselves
+
+A `license_file: true` row obliges an instance to carry a verbatim copy, conventionally at
+`LICENSES/<id>.LICENSE`. These read those copies so a site can render license terms in-app
+rather than bouncing the reader out to GitHub.
+
+| Export                     | What it does                                          |
+| -------------------------- | ----------------------------------------------------- |
+| `loadLicenseFiles(dir)`    | Every `*.LICENSE` in `dir`, id-sorted, with its text. |
+| `findLicenseFile(dir, id)` | One by id, or `undefined`.                            |
+| `licenseIdFromFile(path)`  | `LICENSES/nf-schema.LICENSE` → `nf-schema`.           |
+| `LICENSE_FILE_EXT`         | `.LICENSE`.                                           |
+
+The directory is a parameter rather than a resolved `../LICENSES`, because the callers are
+Astro pages whose cwd is a subdirectory — an implicit relative path is the one thing that
+does not survive being shared.
+
+Type: `LicenseFile`.
+
 ## The table
 
 `version: 1`, 23 curated SPDX rows plus a deny-by-default `default` row, and five
