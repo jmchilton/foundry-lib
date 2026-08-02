@@ -109,6 +109,45 @@ lead somewhere.
 It also never rewrites inside an existing `link` or `linkReference`, which would produce a
 nested anchor.
 
+### The raw-markdown rewriter
+
+Some pages resolve links _before_ the markdown is parsed — a glossary rendered with `marked`
+from a file the content collections do not own has no mdast to walk. That path gets the same
+rule, applied to the string:
+
+```ts
+import { resolveWikiLinksInMarkdown, resolveWikiLink } from '@galaxy-foundry/wiki-links';
+
+const resolved = resolveWikiLinksInMarkdown(raw, {
+  resolve: (link) => {
+    const t = resolveWikiLink(link.target, map);
+    return t ? { href: `${base}/${t.id}/` } : null;
+  },
+});
+// then render `resolved` with whatever renderer the page already uses
+```
+
+Same `resolve` callback as the remark transform, and the same fallbacks: a resolved link
+becomes `[display](href#anchor)`, an unresolved one `**display**`.
+
+**Use it instead of a regex over the document.** Both instances wrote that regex, and it
+rewrites inside code spans — where a backtick means the syntax. Each corrupted its own
+glossary, on the entry defining the thing being named:
+
+| glossary             | how it rendered                                                       |
+| -------------------- | --------------------------------------------------------------------- |
+| statistical-genomics | ``**Wiki link** — `**Target**`.``                                     |
+| galaxy-workflow      | ``… Either Mold-shaped (`mold: **...**`, optionally `loop: true`) …`` |
+
+Neither was reported anywhere: a validator strips code spans before scanning, so the renderer
+and the checker went blind on the same text.
+
+Masking covers fenced blocks (backtick and tilde, respecting fence length and info strings) and
+inline spans (a run of N backticks closed by the next run of exactly N; an unmatched run is
+literal text). It does **not** cover indented four-space blocks or raw HTML blocks — telling
+those from a list continuation line needs real block parsing, and a glossary of `**Term** — …`
+paragraphs has neither. Reach for a markdown parser before teaching this function to guess.
+
 ## Dependency-free on purpose
 
 The tree walk is short, and depending on `unist-util-visit` or `@types/mdast` would couple

@@ -87,6 +87,15 @@ const SMOKE = {
       throw new Error('packed resolver resolved an empty slug');
     }
 
+    // The same backtick rule the transform below proves, on the string layer that ships
+    // beside it — the two rewriters must not disagree once packed.
+    const rewritten = mod.resolveWikiLinksInMarkdown('see [[foo]] not `[[foo]]`', {
+      resolve: () => ({ href: '/x' }),
+    });
+    if (rewritten !== 'see [foo](/x) not `[[foo]]`') {
+      throw new Error(`packed markdown rewriter disagreed with the transform: ${rewritten}`);
+    }
+
     // `./remark` is a second `exports` entry. Only a packed tarball proves it ships and
     // resolves — the source tree would import the file directly either way.
     const remarkEntry = path.join(unpacked, 'dist', 'remark.js');
