@@ -58,4 +58,15 @@ export function resolveWikiLink<Target>(
   return targetMap.get(slug);
 }
 
+/**
+ * Where a resolved link points. Shared by both rewriters — the remark transform over a parsed
+ * tree and the string transform over raw markdown — so one `resolve` callback serves either and
+ * the two cannot answer differently.
+ */
+export interface WikiLinkDestination {
+  href: string;
+  title?: string | null;
+}
+
 export { addBoldTermAnchors, slugifyTerm } from './anchors.js';
+export { resolveWikiLinksInMarkdown, type ResolveWikiLinksOptions } from './markdown.js';

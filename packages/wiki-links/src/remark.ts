@@ -1,4 +1,9 @@
-import { WIKI_LINK_SCAN_RE, parseWikiLink, type WikiLink } from './index.js';
+import {
+  WIKI_LINK_SCAN_RE,
+  parseWikiLink,
+  type WikiLink,
+  type WikiLinkDestination,
+} from './index.js';
 
 export interface MdNode {
   type: string;
@@ -8,10 +13,9 @@ export interface MdNode {
   children?: MdNode[];
 }
 
-export interface WikiLinkDestination {
-  href: string;
-  title?: string | null;
-}
+// Declared in the barrel now, so the raw-markdown rewriter shares it rather than declaring a
+// second copy. Re-exported here so importing it from `/remark` keeps working.
+export type { WikiLinkDestination };
 
 export interface RemarkWikiLinksOptions {
   resolve(link: WikiLink): WikiLinkDestination | null;
