@@ -19,8 +19,8 @@ The library owns citation mechanics:
 - strict schemas for scans, normalized evidence snapshots, adjudications, and audit runs;
 - DOI, arXiv, PMID, and PMCID extraction and normalization;
 - explicit Markdown bibliography extraction;
-- provider interfaces plus Crossref, DOI content negotiation, OpenAlex/arXiv, Europe PMC, and
-  allowlisted citation-page resolvers;
+- provider interfaces plus Crossref, DOI content negotiation, OpenAlex/arXiv, Europe PMC, Semantic
+  Scholar, DBLP, and allowlisted citation-page resolvers;
 - title, year, author-list, first-author, and cross-identifier comparison, separated into identity
   errors and publication-drift warnings;
 - deterministic offline replay from normalized evidence;
@@ -82,6 +82,11 @@ lookup with no record is `unresolved`; a resolved record describing another work
 A DOI Crossref does not register — a deposited dataset or software release, for instance — is
 retried through DOI content negotiation, which resolves it through whichever agency registered it.
 Only a DOI no agency recognizes becomes `unresolved`.
+
+A title without an identifier is searched across Crossref, OpenAlex, Semantic Scholar, and DBLP in
+turn, because search coverage varies by venue, year, and publication type. If any of those indexes
+could not be reached and none resolved the title, the result is `unavailable` rather than
+`unresolved`: the index that would have recognized it may be the one that failed.
 
 Comparison results are typed mismatches carrying a severity. An `error` disputes the identity of
 the cited work; a `warning` records ordinary publication drift, such as a preprint that later

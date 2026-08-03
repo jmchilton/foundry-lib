@@ -14,4 +14,6 @@ and compared with an overlap check that abstains rather than guessing on short o
 Reference-section lines the extractor could not read are recorded, and the report states extraction
 coverage and per-artifact findings alongside the verdict counts. A DOI Crossref does not register
 is retried through DOI content negotiation, so a deposited dataset no longer shares the unresolved
-verdict with a fabricated identifier.
+verdict with a fabricated identifier. Bibliographic lookup searches Crossref, OpenAlex, Semantic
+Scholar, and DBLP in turn, and reports a citation as unavailable rather than unresolved when an
+index could not be reached.

@@ -13,6 +13,32 @@ function jsonResponse(payload: unknown, status = 200): Awaited<ReturnType<FetchL
   };
 }
 
+/** An empty but successful search result for whichever index the URL names. */
+function emptySearchResponse(url: string): Awaited<ReturnType<FetchLike>> {
+  if (url.includes('api.crossref.org')) return jsonResponse({ message: { items: [] } });
+  if (url.includes('api.openalex.org')) return jsonResponse({ results: [] });
+  if (url.includes('api.semanticscholar.org')) return jsonResponse({ data: [] });
+  return jsonResponse({ result: { hits: {} } });
+}
+
+/**
+ * Runs the bibliographic chain with every index empty except those named in `payloads`, so a test
+ * states only the index it cares about.
+ */
+function resolveBibliographic(
+  query: EvidenceQuery,
+  payloads: Record<string, unknown>,
+): Promise<Awaited<ReturnType<ScholarlyResolver['resolve']>>> {
+  return new ScholarlyResolver({
+    fetch: async (url) => {
+      const match = Object.entries(payloads).find(([host]) => url.includes(host));
+      return match ? jsonResponse(match[1]) : emptySearchResponse(url);
+    },
+    crossrefDelayMs: 0,
+    now: () => '2026-08-02T00:00:00.000Z',
+  }).resolve(query);
+}
+
 describe('scholarly resolvers', () => {
   it('normalizes Crossref responses to matcher fields', async () => {
     const fetch: FetchLike = async () =>
@@ -126,6 +152,82 @@ describe('scholarly resolvers', () => {
       crossrefDelayMs: 0,
     }).resolve(query);
     expect(evidence.state).toBe('unavailable');
+  });
+
+  it('searches further indexes when the earlier ones do not carry the title', async () => {
+    const query: EvidenceQuery = {
+      type: 'bibliographic',
+      title: 'A conference paper indexed only by DBLP',
+    };
+    const semanticScholar = await resolveBibliographic(query, {
+      'api.semanticscholar.org': {
+        data: [
+          {
+            title: 'A conference paper indexed only by DBLP',
+            authors: [{ name: 'Ada Lovelace' }],
+            year: 2024,
+            externalIds: { DOI: '10.1000/S2', ArXiv: '2401.00001' },
+          },
+        ],
+      },
+    });
+    expect(semanticScholar).toMatchObject({
+      state: 'resolved',
+      provider: 'semantic-scholar',
+      metadata: {
+        authors: ['Ada Lovelace'],
+        year: 2024,
+        identifiers: [
+          { kind: 'doi', value: '10.1000/s2' },
+          { kind: 'arxiv', value: '2401.00001' },
+        ],
+      },
+    });
+
+    const dblp = await resolveBibliographic(query, {
+      'dblp.org': {
+        result: {
+          hits: {
+            hit: [
+              {
+                info: {
+                  title: 'A conference paper indexed only by DBLP.',
+                  authors: { author: { text: 'Ada Lovelace' } },
+                  year: '2024',
+                  doi: '10.1000/DBLP',
+                },
+              },
+            ],
+          },
+        },
+      },
+    });
+    expect(dblp).toMatchObject({
+      state: 'resolved',
+      provider: 'dblp',
+      metadata: {
+        title: 'A conference paper indexed only by DBLP',
+        authors: ['Ada Lovelace'],
+        year: 2024,
+        identifiers: [{ kind: 'doi', value: '10.1000/dblp' }],
+      },
+    });
+  });
+
+  it('reports a search that could not run as unavailable rather than unresolved', async () => {
+    const query: EvidenceQuery = { type: 'bibliographic', title: 'A title nobody indexed' };
+    const searched = await resolveBibliographic(query, {});
+    expect(searched.state).toBe('unresolved');
+
+    const outage = await new ScholarlyResolver({
+      fetch: async (url) => {
+        if (url.includes('api.openalex.org')) throw new Error('network offline');
+        return emptySearchResponse(url);
+      },
+      crossrefDelayMs: 0,
+    }).resolve(query);
+    expect(outage.state).toBe('unavailable');
+    expect(outage.error).toContain('openalex');
   });
 
   it('rejects Crossref payloads with missing metadata or the wrong DOI', async () => {

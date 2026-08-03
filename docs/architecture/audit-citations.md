@@ -130,6 +130,13 @@ nonblank title, and identifier lookups must return the requested DOI, arXiv-deri
 PMCID. Malformed or identity-inconsistent provider payloads are `unavailable`, while the arXiv
 resolver may continue to its Atom-feed fallback.
 
+Bibliographic lookup is a search, not a registry read, and search coverage varies by venue, year,
+and publication type — DBLP indexes computer-science conference proceedings that Crossref covers
+unevenly, for instance. A title is therefore searched across Crossref, OpenAlex, Semantic Scholar,
+and DBLP in turn until one resolves it, and absence from a single index is not treated as evidence
+that the work does not exist. Identifier lookups do not fan out this way: they read a registry that
+is authoritative for the identifier.
+
 A single provider missing a record is not the same as no record existing. Crossref registers most
 scholarly DOIs but not all of them — DataCite covers deposited datasets and software, and further
 agencies cover their own regions and disciplines — so a DOI Crossref does not know is retried

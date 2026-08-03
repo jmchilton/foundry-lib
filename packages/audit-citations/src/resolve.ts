@@ -249,21 +249,46 @@ export class ScholarlyResolver {
     }
   }
 
+  /**
+   * Bibliographic lookup is a search rather than a registry read, and search coverage varies by
+   * venue, year, and publication type, so a title absent from one index is weak evidence that the
+   * work does not exist. Providers are tried in turn until one resolves.
+   *
+   * A search that could not run is not a search that found nothing. If any provider was unavailable
+   * and none resolved, the citation is `unavailable`: the index that would have recognized the
+   * title may be exactly the one that failed.
+   */
   async #resolveBibliographic(
     query: EvidenceQuery & { type: 'bibliographic' },
   ): Promise<CitationEvidence> {
-    const crossref = await this.#resolveBibliographicCrossref(query);
-    if (crossref.state === 'resolved') return crossref;
-    const openAlex = await this.#resolveBibliographicOpenAlex(query);
-    if (openAlex.state === 'resolved') return openAlex;
-    if (crossref.state === 'unavailable' && openAlex.state === 'unavailable') {
+    const attempts: CitationEvidence[] = [];
+    for (const lookup of [
+      this.#resolveBibliographicCrossref,
+      this.#resolveBibliographicOpenAlex,
+      this.#resolveBibliographicSemanticScholar,
+      this.#resolveBibliographicDblp,
+    ]) {
+      const evidence = await lookup.call(this, query);
+      if (evidence.state === 'resolved') return evidence;
+      attempts.push(evidence);
+    }
+    const searched = attempts.map((attempt) => attempt.provider).join('+');
+    const unavailable = attempts.filter((attempt) => attempt.state === 'unavailable');
+    if (unavailable.length > 0) {
       return this.#unavailable(
         query,
-        'crossref+openalex',
-        `Crossref: ${crossref.error ?? 'unavailable'}; OpenAlex: ${openAlex.error ?? 'unavailable'}`,
+        searched,
+        unavailable
+          .map((attempt) => `${attempt.provider}: ${attempt.error ?? 'unavailable'}`)
+          .join('; '),
       );
     }
-    return openAlex.state === 'unresolved' ? openAlex : crossref;
+    return this.#unresolved(
+      query,
+      searched,
+      attempts.at(-1)?.locator?.url ?? '',
+      'No title candidate passed threshold in any index.',
+    );
   }
 
   async #resolveBibliographicCrossref(
@@ -317,17 +342,69 @@ export class ScholarlyResolver {
     }
   }
 
+  async #resolveBibliographicSemanticScholar(
+    query: EvidenceQuery & { type: 'bibliographic' },
+  ): Promise<CitationEvidence> {
+    const parameters = new URLSearchParams({
+      query: query.title,
+      limit: '3',
+      fields: 'title,authors,year,externalIds',
+    });
+    const url = `https://api.semanticscholar.org/graph/v1/paper/search?${parameters}`;
+    try {
+      const payload = asRecord(await this.#retryingJson(url));
+      const items = asArray(payload['data']).map(asRecord);
+      const best = bestTitleMatch(query.title, items, (item) => stringValue(item['title']));
+      if (!best || titleSimilarity(query.title, stringValue(best['title'])) < 0.75) {
+        return this.#unresolved(
+          query,
+          'semantic-scholar',
+          url,
+          'No title candidate passed threshold.',
+        );
+      }
+      const metadata = semanticScholarMetadata(best);
+      return this.#resolved(query, 'semantic-scholar', metadata, url, metadata.identifiers[0]);
+    } catch (error) {
+      return this.#failure(query, 'semantic-scholar', url, error);
+    }
+  }
+
+  async #resolveBibliographicDblp(
+    query: EvidenceQuery & { type: 'bibliographic' },
+  ): Promise<CitationEvidence> {
+    const parameters = new URLSearchParams({ q: query.title, format: 'json', h: '3' });
+    const url = `https://dblp.org/search/publ/api?${parameters}`;
+    try {
+      const payload = asRecord(await this.#retryingJson(url));
+      const hits = asRecord(asRecord(asRecord(payload['result'])['hits']));
+      const items = asArray(hits['hit']).map((hit) => asRecord(asRecord(hit)['info']));
+      const best = bestTitleMatch(query.title, items, (item) => stringValue(item['title']));
+      if (!best || titleSimilarity(query.title, stringValue(best['title'])) < 0.75) {
+        return this.#unresolved(query, 'dblp', url, 'No title candidate passed threshold.');
+      }
+      const metadata = dblpMetadata(best);
+      return this.#resolved(query, 'dblp', metadata, url, metadata.identifiers[0]);
+    } catch (error) {
+      return this.#failure(query, 'dblp', url, error);
+    }
+  }
+
+  async #retryingJson(url: string): Promise<unknown> {
+    try {
+      return await this.#json(url);
+    } catch (error) {
+      if (!(error instanceof HttpError) || error.status !== 429) throw error;
+      await delay(1000);
+      return await this.#json(url);
+    }
+  }
+
   async #crossrefJson(url: string): Promise<unknown> {
     const elapsed = Date.now() - this.#lastCrossrefRequest;
     if (elapsed < this.#crossrefDelayMs) await delay(this.#crossrefDelayMs - elapsed);
     try {
-      try {
-        return await this.#json(url);
-      } catch (error) {
-        if (!(error instanceof HttpError) || error.status !== 429) throw error;
-        await delay(1000);
-        return await this.#json(url);
-      }
+      return await this.#retryingJson(url);
     } finally {
       this.#lastCrossrefRequest = Date.now();
     }
@@ -456,6 +533,39 @@ function cslMetadata(record: Record<string, unknown>): ScholarlyMetadata {
       })
       .filter(Boolean),
     ...numberField('year', cslYear(record)),
+    identifiers: doi ? [{ kind: 'doi', value: doi }] : [],
+  };
+}
+
+function semanticScholarMetadata(item: Record<string, unknown>): ScholarlyMetadata {
+  const external = asRecord(item['externalIds']);
+  const identifiers: ScholarlyMetadata['identifiers'] = [];
+  const doi = stringValue(external['DOI']).toLocaleLowerCase();
+  if (doi) identifiers.push({ kind: 'doi', value: doi });
+  const arxiv = stringValue(external['ArXiv']).toLocaleLowerCase();
+  if (arxiv) identifiers.push({ kind: 'arxiv', value: arxiv });
+  const pubmed = stringValue(external['PubMed']);
+  if (pubmed) identifiers.push({ kind: 'pmid', value: pubmed });
+  return {
+    title: stringValue(item['title']),
+    authors: asArray(item['authors'])
+      .map((author) => stringValue(asRecord(author)['name']))
+      .filter(Boolean),
+    ...numberField('year', item['year']),
+    identifiers,
+  };
+}
+
+/** DBLP collapses a single-author list to one object and reports the year as a string. */
+function dblpMetadata(info: Record<string, unknown>): ScholarlyMetadata {
+  const authors = asRecord(info['authors'])['author'];
+  const doi = stringValue(info['doi']).toLocaleLowerCase();
+  return {
+    title: stringValue(info['title']).replace(/\.$/u, ''),
+    authors: (Array.isArray(authors) ? authors : [authors])
+      .map((author) => stringValue(asRecord(author)['text']))
+      .filter(Boolean),
+    ...numberField('year', Number(stringValue(info['year'])) || undefined),
     identifiers: doi ? [{ kind: 'doi', value: doi }] : [],
   };
 }
