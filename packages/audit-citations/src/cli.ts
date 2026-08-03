@@ -67,6 +67,9 @@ export async function runCitationCli(arguments_: readonly string[]): Promise<voi
     ? new ScholarlyResolver({
         scholarlyPageHosts: config.scholarlyPageHosts ?? [],
         ...(config.userAgent ? { userAgent: config.userAgent } : {}),
+        ...(config.requestTimeoutMs !== undefined
+          ? { requestTimeoutMs: config.requestTimeoutMs }
+          : {}),
       })
     : undefined;
   const collected = await collectEvidence(scan.candidates, existing, {

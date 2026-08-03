@@ -16,6 +16,7 @@ policy.
 | Bibliography heading vocabulary     | supplies a default        | may override               |
 | Provider response normalization     | owns                      | selects refresh timing     |
 | Citation-page host trust            | enforces allowlist        | declares hosts             |
+| Per-request deadline                | enforces                  | sets the budget            |
 | Adjudication format and stale check | owns                      | performs review            |
 | Release or acceptance policy        | does not own              | declares                   |
 
@@ -124,6 +125,12 @@ Provider evidence has three states:
 - `resolved`: normalized metadata was observed;
 - `unresolved`: the provider completed the query and found no record; and
 - `unavailable`: the query could not be evaluated because evidence or infrastructure was absent.
+
+`unavailable` is only meaningful if a stalled provider actually reaches it, so each request carries a
+deadline spanning both the response and its body — a provider that sends headers and then stalls
+mid-stream would otherwise hang a run indefinitely. The resolver enforces the deadline itself rather
+than relying on the abort signal it passes down, because the transport is an extension point and a
+caller's `fetch` may ignore the signal. The consuming repository sets the budget.
 
 A successful HTTP status is not sufficient for `resolved`: normalized metadata must contain a
 nonblank title, and identifier lookups must return the requested DOI, arXiv-derived DOI, PMID, or

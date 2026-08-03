@@ -31,6 +31,7 @@ export const citationAuditConfigSchema = z
     referenceHeadingTerms: z.array(z.string().min(1)).optional(),
     scholarlyPageHosts: z.array(z.string().min(1)).optional(),
     userAgent: z.string().min(1).optional(),
+    requestTimeoutMs: z.number().int().positive().optional(),
   })
   .strict();
 

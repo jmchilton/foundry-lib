@@ -39,6 +39,76 @@ function resolveBibliographic(
   }).resolve(query);
 }
 
+/** A transport that never answers, standing in for a provider that accepts a socket and stalls. */
+const stalled = new Promise<never>(() => undefined);
+
+const slowDoi: EvidenceQuery = {
+  type: 'identifier',
+  identifier: { kind: 'doi', value: '10.1000/slow' },
+};
+
+describe('request deadlines', () => {
+  it('reports a stalled request as unavailable instead of hanging the audit', async () => {
+    const evidence = await new ScholarlyResolver({
+      fetch: () => stalled,
+      crossrefDelayMs: 0,
+      requestTimeoutMs: 10,
+    }).resolve(slowDoi);
+    expect(evidence.state).toBe('unavailable');
+    expect(evidence.error).toMatch(/timed out after 10 ms/u);
+  });
+
+  it('applies the deadline to the response body, not only to the connection', async () => {
+    // Headers arrive promptly and the body then stalls, which hangs a run just as effectively.
+    const evidence = await new ScholarlyResolver({
+      fetch: async () => ({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        json: () => stalled,
+        text: () => stalled,
+      }),
+      crossrefDelayMs: 0,
+      requestTimeoutMs: 10,
+    }).resolve(slowDoi);
+    expect(evidence.state).toBe('unavailable');
+    expect(evidence.error).toMatch(/timed out/u);
+  });
+
+  it('aborts the signal so a cooperative transport releases the connection', async () => {
+    let observed: AbortSignal | undefined;
+    const evidence = await new ScholarlyResolver({
+      fetch: (_url, init) => {
+        observed = init?.signal;
+        return stalled;
+      },
+      crossrefDelayMs: 0,
+      requestTimeoutMs: 10,
+    }).resolve(slowDoi);
+    expect(evidence.state).toBe('unavailable');
+    expect(observed?.aborted).toBe(true);
+  });
+
+  it('leaves a request that answers within the budget alone', async () => {
+    const evidence = await new ScholarlyResolver({
+      fetch: async () => {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        return jsonResponse({ message: { DOI: '10.1000/slow', title: ['Answered in time'] } });
+      },
+      crossrefDelayMs: 0,
+      requestTimeoutMs: 500,
+      now: () => '2026-08-02T00:00:00.000Z',
+    }).resolve(slowDoi);
+    expect(evidence).toMatchObject({ state: 'resolved', metadata: { title: 'Answered in time' } });
+  });
+
+  it('rejects a deadline that could never be met', () => {
+    expect(() => new ScholarlyResolver({ fetch: () => stalled, requestTimeoutMs: 0 })).toThrow(
+      /must be positive/u,
+    );
+  });
+});
+
 describe('scholarly resolvers', () => {
   it('normalizes Crossref responses to matcher fields', async () => {
     const fetch: FetchLike = async () =>

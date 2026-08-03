@@ -16,4 +16,6 @@ coverage and per-artifact findings alongside the verdict counts. A DOI Crossref 
 is retried through DOI content negotiation, so a deposited dataset no longer shares the unresolved
 verdict with a fabricated identifier. Bibliographic lookup searches Crossref, OpenAlex, Semantic
 Scholar, and DBLP in turn, and reports a citation as unavailable rather than unresolved when an
-index could not be reached.
+index could not be reached. Every provider request runs under a configurable deadline that covers
+the response body as well as the connection, so a provider that stalls mid-stream becomes an
+unavailable citation instead of a hung run.

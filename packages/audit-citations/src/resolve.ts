@@ -25,7 +25,7 @@ export interface FetchResponse {
 
 export type FetchLike = (
   url: string,
-  init?: { headers?: Record<string, string> },
+  init?: { headers?: Record<string, string>; signal?: AbortSignal },
 ) => Promise<FetchResponse>;
 
 export interface ScholarlyResolverOptions {
@@ -34,7 +34,14 @@ export interface ScholarlyResolverOptions {
   scholarlyPageHosts?: readonly string[];
   now?: () => string;
   crossrefDelayMs?: number;
+  /**
+   * Deadline for a single request, covering the response and its body. Every provider uses the
+   * same budget, and a chain of providers spends it once per attempt. Defaults to 15 seconds.
+   */
+  requestTimeoutMs?: number;
 }
+
+const DEFAULT_REQUEST_TIMEOUT_MS = 15_000;
 
 export class ScholarlyResolver {
   readonly #fetch: FetchLike;
@@ -42,6 +49,7 @@ export class ScholarlyResolver {
   readonly #scholarlyPageHosts: readonly string[];
   readonly #now: () => string;
   readonly #crossrefDelayMs: number;
+  readonly #requestTimeoutMs: number;
   #lastCrossrefRequest = 0;
 
   constructor(options: ScholarlyResolverOptions = {}) {
@@ -52,6 +60,8 @@ export class ScholarlyResolver {
     this.#scholarlyPageHosts = options.scholarlyPageHosts ?? [];
     this.#now = options.now ?? (() => new Date().toISOString());
     this.#crossrefDelayMs = options.crossrefDelayMs ?? 250;
+    this.#requestTimeoutMs = options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
+    if (this.#requestTimeoutMs <= 0) throw new Error('requestTimeoutMs must be positive');
   }
 
   async resolve(query: EvidenceQuery): Promise<CitationEvidence> {
@@ -104,9 +114,7 @@ export class ScholarlyResolver {
   ): Promise<CitationEvidence> {
     const url = `https://doi.org/${encodeURI(query.identifier.value)}`;
     try {
-      const response = await this.#request(url, CSL_JSON_MEDIA_TYPE);
-      if (!response.ok) throw new HttpError(response.status, response.statusText);
-      const metadata = cslMetadata(asRecord(await response.json()));
+      const metadata = cslMetadata(asRecord(await this.#json(url, CSL_JSON_MEDIA_TYPE)));
       assertIdentifier(metadata, query.identifier, 'DOI content negotiation');
       return this.#resolved(
         query,
@@ -141,9 +149,7 @@ export class ScholarlyResolver {
       const atomUrl =
         'https://export.arxiv.org/api/query?' + new URLSearchParams({ id_list: arxivId });
       try {
-        const response = await this.#request(atomUrl, 'application/atom+xml');
-        if (!response.ok) throw new HttpError(response.status, response.statusText);
-        const metadata = arxivMetadata(await response.text(), arxivId);
+        const metadata = arxivMetadata(await this.#text(atomUrl, 'application/atom+xml'), arxivId);
         if (!metadata) return this.#unresolved(query, 'arxiv', atomUrl, 'No entry returned.');
         return this.#resolved(query, 'arxiv', metadata, atomUrl, { kind: 'arxiv', value: arxivId });
       } catch (arxivError) {
@@ -206,11 +212,13 @@ export class ScholarlyResolver {
           url,
         );
       }
-      const response = await this.#request(url, 'text/html');
-      if (!response.ok) throw new HttpError(response.status, response.statusText);
+      const page = await this.#request(url, 'text/html', async (response) => {
+        if (!response.ok) throw new HttpError(response.status, response.statusText);
+        return { finalUrl: response.url, html: await response.text() };
+      });
       // The allowlist is a trust boundary, so a redirect off it does not inherit the trust the
       // requested host was granted.
-      const finalHost = finalHostname(response, url);
+      const finalHost = finalHostname(page.finalUrl, url);
       if (finalHost && !this.#allowedHost(finalHost)) {
         return this.#unavailable(
           query,
@@ -219,7 +227,7 @@ export class ScholarlyResolver {
           url,
         );
       }
-      const values = citationMeta(await response.text());
+      const values = citationMeta(page.html);
       const title = values.get('citation_title')?.[0];
       if (!title) {
         return this.#unavailable(
@@ -419,14 +427,57 @@ export class ScholarlyResolver {
     }
   }
 
-  async #json(url: string): Promise<unknown> {
-    const response = await this.#request(url, 'application/json, application/atom+xml');
-    if (!response.ok) throw new HttpError(response.status, response.statusText);
-    return response.json();
+  #json(url: string, accept = 'application/json, application/atom+xml'): Promise<unknown> {
+    return this.#request(url, accept, async (response) => {
+      if (!response.ok) throw new HttpError(response.status, response.statusText);
+      return response.json();
+    });
   }
 
-  #request(url: string, accept: string): Promise<FetchResponse> {
-    return this.#fetch(url, { headers: { 'User-Agent': this.#userAgent, Accept: accept } });
+  #text(url: string, accept: string): Promise<string> {
+    return this.#request(url, accept, async (response) => {
+      if (!response.ok) throw new HttpError(response.status, response.statusText);
+      return response.text();
+    });
+  }
+
+  /**
+   * Runs one request and its body read under a single deadline.
+   *
+   * The deadline covers the body because a provider that returns headers and then stalls mid-stream
+   * hangs an audit just as effectively as one that never answers. The signal is handed to the
+   * transport so a cooperative implementation aborts promptly and releases the socket, and the whole
+   * operation is *also* raced against the deadline, because `FetchLike` is an extension point and a
+   * transport that ignores the signal must still not be able to hang a run.
+   */
+  async #request<T>(
+    url: string,
+    accept: string,
+    read: (response: FetchResponse) => Promise<T>,
+  ): Promise<T> {
+    const controller = new AbortController();
+    const attempt = (async () =>
+      read(
+        await this.#fetch(url, {
+          headers: { 'User-Agent': this.#userAgent, Accept: accept },
+          signal: controller.signal,
+        }),
+      ))();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(new TimeoutError(this.#requestTimeoutMs, url));
+      }, this.#requestTimeoutMs);
+    });
+    try {
+      return await Promise.race([attempt, deadline]);
+    } finally {
+      clearTimeout(timer);
+      // An uncooperative transport may still settle after losing the race, and nothing is waiting
+      // on it by then. Absorb the result so it cannot surface as an unhandled rejection.
+      void attempt.catch(() => undefined);
+    }
   }
 
   #allowedHost(url: URL): boolean {
@@ -505,6 +556,16 @@ class HttpError extends Error {
     statusText: string,
   ) {
     super(`HTTP ${status}: ${statusText}`);
+  }
+}
+
+/**
+ * Not an {@link HttpError}, so it falls through to `unavailable`: a request that ran out of time
+ * never learned whether the record exists.
+ */
+class TimeoutError extends Error {
+  constructor(timeoutMs: number, url: string) {
+    super(`Request timed out after ${timeoutMs} ms: ${url}`);
   }
 }
 
@@ -647,10 +708,10 @@ function citationMeta(html: string): Map<string, string[]> {
   return values;
 }
 
-function finalHostname(response: FetchResponse, requestedUrl: string): URL | undefined {
-  if (!response.url || response.url === requestedUrl) return undefined;
+function finalHostname(finalUrl: string | undefined, requestedUrl: string): URL | undefined {
+  if (!finalUrl || finalUrl === requestedUrl) return undefined;
   try {
-    return new URL(response.url);
+    return new URL(finalUrl);
   } catch {
     return undefined;
   }

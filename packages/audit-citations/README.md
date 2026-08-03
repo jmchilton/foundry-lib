@@ -79,6 +79,11 @@ Evidence acquisition and evaluation remain separate. A timeout is `unavailable`;
 lookup with no record is `unresolved`; a resolved record describing another work is
 `resolved-mismatched`.
 
+Every request carries its own deadline, covering the response body as well as the connection, so a
+provider that answers and then stalls mid-stream cannot hang a run. It defaults to 15 seconds and is
+set with `requestTimeoutMs`. The deadline is enforced by the resolver rather than delegated to the
+transport, because a caller-supplied `fetch` may ignore the abort signal it is given.
+
 A DOI Crossref does not register — a deposited dataset or software release, for instance — is
 retried through DOI content negotiation, which resolves it through whichever agency registered it.
 Only a DOI no agency recognizes becomes `unresolved`.
@@ -171,7 +176,8 @@ Create `audit-citations.config.json` in the consuming repository:
   ],
   "referenceHeadingTerms": ["references", "source note"],
   "scholarlyPageHosts": ["proceedings.mlr.press", "proceedings.neurips.cc"],
-  "userAgent": "my-foundry-citation-audit/1.0 (https://example.org/contact)"
+  "userAgent": "my-foundry-citation-audit/1.0 (https://example.org/contact)",
+  "requestTimeoutMs": 15000
 }
 ```
 
