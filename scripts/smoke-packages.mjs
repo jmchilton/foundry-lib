@@ -29,7 +29,9 @@ const packagesDir = path.join(root, 'packages');
 // Each entry names an export the unpacked tarball must actually produce. A tarball
 // that imports but exposes nothing is not a working package.
 const SMOKE = {
-  '@galaxy-foundry/audit-citations': async (mod, _peer, unpacked) => {
+  '@galaxy-foundry/audit-citations': async (mod, peer, unpacked) => {
+    const { z } = await peer('zod');
+
     const scan = mod.extractCitations([
       {
         path: 'notes/example.md',
@@ -70,6 +72,16 @@ const SMOKE = {
     const config = await import(pathToFileURL(path.join(unpacked, 'dist', 'config.js')).href);
     if (typeof config.loadConfiguredDocuments !== 'function') {
       throw new Error('tarball does not expose the ./config filesystem adapter');
+    }
+    // The package exports its wire schemas, so zod is a peer. Composing an exported schema into
+    // one built from the consumer's own zod is what the peer exists to keep working — a bundled
+    // copy would put two instances in the same tree. Both directions, so neither is vacuous.
+    const envelope = z.object({ run: mod.citationAuditRunSchema });
+    if (!envelope.safeParse({ run }).success) {
+      throw new Error('composed schema rejected a valid run across zod instances');
+    }
+    if (envelope.safeParse({ run: { ...run, schemaVersion: 2 } }).success) {
+      throw new Error('composed schema accepted an unknown schema version');
     }
   },
   '@galaxy-foundry/license-policy': (mod) => {

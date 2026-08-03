@@ -79,9 +79,10 @@ Dependencies stay narrow:
 - `license-policy` owns YAML parsing through `js-yaml`.
 - `kind-manifest` uses a Zod peer so it reflects the caller's schema instance.
 - `reference-contract` and `tag-registry` own YAML parsing through `js-yaml`.
-- `audit-citations` owns Zod validation for its JSON wire documents. Its `fast-glob` and `git`
-  filesystem adapter sits behind the `./config` subpath, so the main entry point stays a pure
-  function of the documents the caller supplies.
+- `audit-citations` exports the Zod schemas for its JSON wire documents, so it uses a Zod peer for
+  the same reason `kind-manifest` does: a caller composing those schemas must get its own instance.
+  Its `fast-glob` and `git` filesystem adapter sits behind the `./config` subpath, so the main entry
+  point stays a pure function of the documents the caller supplies.
 - packages do not depend on each other merely because they share a repository.
 
 The monorepo coordinates testing and publication, not runtime coupling.
