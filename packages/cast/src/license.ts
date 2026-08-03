@@ -15,11 +15,9 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 import {
-  allowsMode,
   bundledPolicy,
   declaresVerbatimCarry,
   resolveLicenseRow,
-  type CastMode,
   type LicensePolicy,
 } from '@galaxy-foundry/license-policy';
 
@@ -52,12 +50,14 @@ export function applyLicensePolicy(
     // Only pass-through content is governed. A note written in the Foundry's own words about a
     // licensed source is the Foundry's prose, and casting it redistributes the Foundry's work —
     // `global_rules.foundry_content_out_of_scope`. The judgement was made when the note was
-    // written and recorded in `derived`; a cast is not the place to re-litigate it, and `mode` was
-    // never able to express it. Hashing below stays unconditional: `license_file_hash` is
-    // provenance about lineage, not permission to redistribute.
-    if (declaresVerbatimCarry(entry.derived) && !allowsMode(row, entry.mode as CastMode)) {
+    // written and recorded in `derived`; a cast is not the place to re-litigate it. Hashing below
+    // stays unconditional: `license_file_hash` is provenance about lineage, not permission.
+    //
+    // `policy` is the whole question, and `mode` is absent from it deliberately. How a bundle is
+    // assembled — copied, rendered to a sidecar — says nothing about whether the text may travel.
+    if (declaresVerbatimCarry(entry.derived) && row.policy === 'own-words-only') {
       errors.push(
-        `${entry.src}: license ${entry.license} (${row.policy}) forbids mode=${entry.mode} (allowed: ${row.allowed_modes.join(', ') || 'none — summarize at ingestion instead'})`,
+        `${entry.src}: license ${entry.license} is own-words-only, so its text cannot be carried into a cast — summarize it in the note instead of passing it through`,
       );
     }
     if (entry.license_file) {

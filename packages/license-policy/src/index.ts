@@ -4,14 +4,11 @@ import { fileURLToPath } from 'node:url';
 
 import yaml from 'js-yaml';
 
-export type CastMode = 'verbatim' | 'condense' | 'sidecar';
-
 export type RedistributionPolicy = 'verbatim-ok' | 'own-words-only';
 
 export interface LicenseRow {
   name: string;
   policy: RedistributionPolicy;
-  allowed_modes: CastMode[];
   license_file: boolean;
   copyleft: boolean;
   defect?: boolean;
@@ -30,7 +27,6 @@ export const LICENSE_POLICY_FILE = 'license-policy.yml';
 
 export const LICENSE_REF_RE = /^LicenseRef-[A-Za-z0-9.-]+$/;
 
-const CAST_MODES: readonly string[] = ['verbatim', 'condense', 'sidecar'];
 const POLICIES: readonly string[] = ['verbatim-ok', 'own-words-only'];
 
 function throwValidationError(sourcePath: string | undefined, message: string): never {
@@ -62,19 +58,6 @@ function validateRow(rowPath: string, rawRow: unknown, sourcePath: string | unde
       sourcePath,
       `${rowPath} has unknown policy \`${String(fields['policy'])}\` (expected ${POLICIES.join(' | ')})`,
     );
-  }
-
-  const allowedModes = fields['allowed_modes'];
-  if (!Array.isArray(allowedModes)) {
-    throwValidationError(sourcePath, `${rowPath} missing required field \`allowed_modes\``);
-  }
-  for (const castMode of allowedModes as unknown[]) {
-    if (typeof castMode !== 'string' || !CAST_MODES.includes(castMode)) {
-      throwValidationError(
-        sourcePath,
-        `${rowPath} has unknown cast mode \`${String(castMode)}\` (expected ${CAST_MODES.join(' | ')})`,
-      );
-    }
   }
 }
 
@@ -163,10 +146,6 @@ export function resolveLicenseRow(
     if (licenseRow) return licenseRow;
   }
   return policy.default;
-}
-
-export function allowsMode(licenseRow: LicenseRow, castMode: CastMode): boolean {
-  return licenseRow.allowed_modes.includes(castMode);
 }
 
 /**

@@ -9,12 +9,12 @@ TypeScript entry point and package README.
 
 The public surface includes:
 
-- policy types: `LicensePolicy`, `LicenseRow`, `CastMode`, and `RedistributionPolicy`;
+- policy types: `LicensePolicy`, `LicenseRow`, and `RedistributionPolicy`;
 - bundled data access: `bundledPolicy`, `bundledPolicyText`, and `bundledPolicyPath`;
 - parsing and discovery: `parseLicensePolicy`, `loadLicensePolicy`, and
   `findLicensePolicyPath`;
 - resolution helpers: `licenseIds`, `isValidLicenseId`, `resolveLicenseRow`, and
-  `allowsMode`; and
+  `declaresVerbatimCarry`; and
 - constants: `LICENSE_POLICY_FILE` and `LICENSE_REF_RE`.
 
 Start with [Adopt the license policy](guides/adopting-license-policy.md) for an integration

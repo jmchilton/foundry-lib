@@ -47,17 +47,21 @@ describe('refs the policy does not cover', () => {
   });
 });
 
-describe('the mode a license permits', () => {
+describe('what a license permits', () => {
   it('accepts a permissive license carried verbatim', () => {
     expect(applyLicensePolicy([entry({ license: 'CC-BY-4.0' })], dir)).toEqual([]);
   });
 
-  it('names the license, its policy, the mode and the alternatives', () => {
+  // The message names the source, the license, and what to do instead. It deliberately does NOT
+  // name a mode: no mode would have made this carry lawful, so offering one as the remedy sent
+  // authors looking for a different transform when the fix is to summarize the source.
+  it('names the license and the remedy, not a mode', () => {
     const errors = applyLicensePolicy([entry({ license: 'CC-BY-NC-4.0' })], dir);
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain('content/research/note.md');
     expect(errors[0]).toContain('CC-BY-NC-4.0');
-    expect(errors[0]).toContain('mode=verbatim');
+    expect(errors[0]).toContain('summarize it in the note');
+    expect(errors[0]).not.toContain('mode=');
   });
 
   it('refuses an unknown license, because it resolves to the defect row', () => {
@@ -144,7 +148,7 @@ describe('notes that do reproduce upstream expression', () => {
       dir,
     );
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatch(/forbids mode=verbatim/);
+    expect(errors[0]).toMatch(/own-words-only/);
   });
 
   it('allows quote-bearing carry under a permissive license', () => {
@@ -160,7 +164,7 @@ describe('notes that do reproduce upstream expression', () => {
   it('still polices a ref that declares no posture at all', () => {
     const errors = applyLicensePolicy([entry({ license: 'LicenseRef-all-rights-reserved' })], dir);
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toMatch(/summarize at ingestion instead/);
+    expect(errors[0]).toMatch(/summarize it in the note/);
   });
 });
 

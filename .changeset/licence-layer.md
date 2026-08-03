@@ -25,3 +25,10 @@ The nine `own-words-only` rows drop `[condense]` for `[]`. No instance implement
 condensing at cast time would still require the restricted text in the repository to condense
 from. Such a source is used by summarizing it when the note is written, which takes the note out
 of this table entirely.
+
+**Breaking:** the `allowed_modes` column is gone, along with `allowsMode` and the `CastMode`
+type. A license constrains what a note may contain, never how a bundle is assembled from it, so
+mapping a license to casting transforms was the wrong axis — and the column was derivable from
+(`policy`, `copyleft`) on every row without exception, which is how it went unnoticed. `policy`
+is now the whole answer: pass-through content under an `own-words-only` row may not be carried in
+any form, and under a `verbatim-ok` row it may be, subject to `license_file` and `copyleft`.

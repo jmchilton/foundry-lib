@@ -3,7 +3,6 @@ import { describe, it, expect } from 'vitest';
 import {
   LICENSE_POLICY_FILE,
   LICENSE_REF_RE,
-  allowsMode,
   bundledPolicy,
   bundledPolicyPath,
   bundledPolicyText,
@@ -79,41 +78,21 @@ describe('table invariants — what makes a row meaningful', () => {
   const policy = bundledPolicy();
   const rows = Object.entries(policy.licenses);
 
-  it('never lets an own-words-only row permit a carry that copies text', () => {
-    for (const [id, row] of rows) {
-      if (row.policy === 'own-words-only') {
-        expect(allowsMode(row, 'verbatim'), `${id} is own-words-only`).toBe(false);
-        expect(allowsMode(row, 'sidecar'), `${id} is own-words-only`).toBe(false);
-      }
-    }
-  });
-
-  it('always lets a verbatim-ok row permit verbatim carry, and demands its notice', () => {
+  it('demands a notice from every verbatim-ok row', () => {
     for (const [id, row] of rows) {
       if (row.policy === 'verbatim-ok') {
-        expect(allowsMode(row, 'verbatim'), `${id} is verbatim-ok`).toBe(true);
         expect(row.license_file, `${id} is verbatim-ok`).toBe(true);
       }
     }
   });
 
-  // Scoped to verbatim-ok rows. An own-words-only row permitting nothing is now the point rather
-  // than a defect: no mode makes such content lawful to pass through. Its emptiness is asserted
-  // directly in `own-words-only rows permit no pass-through mode`, so between the two every row
-  // is pinned to an exact expectation instead of merely to a non-empty one.
-  it('gives every verbatim-ok row at least one mode it permits', () => {
-    for (const [id, row] of rows) {
-      if (row.policy === 'verbatim-ok') {
-        expect(row.allowed_modes.length, `${id} permits no mode at all`).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  it('never lets a copyleft row permit condense', () => {
-    for (const [id, row] of rows) {
-      if (row.copyleft) {
-        expect(allowsMode(row, 'condense'), `${id} is copyleft`).toBe(false);
-      }
+  // A row says what a license permits; it does not name casting transforms. `allowed_modes` used
+  // to, and it was derivable from (`policy`, `copyleft`) on every row — two other fields restated
+  // in a vocabulary borrowed from casting. Asserted rather than merely deleted so the column
+  // cannot reappear one row at a time.
+  it('names no casting transform on any row', () => {
+    for (const [id, row] of [...rows, ['default', policy.default] as const]) {
+      expect(Object.keys(row), `${id}`).not.toContain('allowed_modes');
     }
   });
 
@@ -140,14 +119,12 @@ licenses:
   MIT:
     name: MIT
     policy: verbatim-ok
-    allowed_modes: [verbatim, condense, sidecar]
     license_file: true
     copyleft: false
     obligations: keep the notice
 default:
   name: unresolved
   policy: own-words-only
-  allowed_modes: [condense]
   license_file: false
   copyleft: false
   defect: true
@@ -172,14 +149,6 @@ default:
   it('rejects a row with an unknown policy value', () => {
     const invalidPolicy = minimal.replace('policy: verbatim-ok', 'policy: whatever-ok');
     expect(() => parseLicensePolicy(invalidPolicy)).toThrow(/whatever-ok/);
-  });
-
-  it('rejects a row with an unknown cast mode', () => {
-    const invalidPolicy = minimal.replace(
-      '[verbatim, condense, sidecar]',
-      '[verbatim, paraphrase]',
-    );
-    expect(() => parseLicensePolicy(invalidPolicy)).toThrow(/paraphrase/);
   });
 
   it('rejects a row missing a required field', () => {
@@ -236,18 +205,5 @@ describe('declaresVerbatimCarry', () => {
   it('treats an absent posture as pass-through', () => {
     expect(declaresVerbatimCarry(undefined)).toBe(true);
     expect(declaresVerbatimCarry(null)).toBe(true);
-  });
-});
-
-describe('own-words-only rows permit no pass-through mode', () => {
-  // `[condense]` named a mode no instance implements, and condensing at cast time would still
-  // require the restricted text in the repository to condense from.
-  it('leaves every own-words-only row empty', () => {
-    const policy = bundledPolicy();
-    const rows = [...Object.entries(policy.licenses), ['default', policy.default] as const];
-    const offenders = rows
-      .filter(([, row]) => row.policy === 'own-words-only' && row.allowed_modes.length > 0)
-      .map(([id]) => id);
-    expect(offenders).toEqual([]);
   });
 });

@@ -32,7 +32,7 @@ import {
   bundledPolicy,
   isValidLicenseId,
   resolveLicenseRow,
-  allowsMode,
+  declaresVerbatimCarry,
 } from '@galaxy-foundry/license-policy';
 
 const policy = bundledPolicy();
@@ -42,8 +42,11 @@ isValidLicenseId(policy, 'LicenseRef-msmb'); // true — the escape hatch
 isValidLicenseId(policy, 'Made-Up-1.0'); // false
 
 const row = resolveLicenseRow(policy, 'CC-BY-NC-4.0');
-row.policy; // 'own-words-only'
-allowsMode(row, 'verbatim'); // false — paraphrase, or do not carry it
+row.policy; // 'own-words-only' — its text may not be carried into a cast at all
+
+// ...but only pass-through content is governed. Your own summary of that paper is your prose.
+declaresVerbatimCarry('own-words-summary'); // false — out of scope
+declaresVerbatimCarry('faithful-summary-with-quotes'); // true — the row applies
 
 // An unknown or missing id lands on the default row: own-words-only, `defect: true`.
 resolveLicenseRow(policy, 'typo').defect; // true
@@ -114,10 +117,10 @@ When the rules converge, they can move here. Until then they stay where they are
 | `licenseIds(policy)`                    | The curated SPDX ids — drives an instance's schema grammar.          |
 | `isValidLicenseId(policy, id)`          | Curated id, or `LicenseRef-<slug>`.                                  |
 | `resolveLicenseRow(policy, id)`         | Row for an id; unknown/missing → the `default` row.                  |
-| `allowsMode(row, mode)`                 | Whether a row permits `verbatim` \| `condense` \| `sidecar`.         |
+| `declaresVerbatimCarry(derived)`        | Whether a note's posture reproduces upstream expression.             |
 | `LICENSE_POLICY_FILE`, `LICENSE_REF_RE` | The conventional filename and the escape-hatch pattern.              |
 
-Types: `LicensePolicy`, `LicenseRow`, `CastMode`, `RedistributionPolicy`.
+Types: `LicensePolicy`, `LicenseRow`, `RedistributionPolicy`.
 
 ### The license texts themselves
 
@@ -143,13 +146,12 @@ Type: `LicenseFile`.
 `version: 1`, 23 curated SPDX rows plus a deny-by-default `default` row, and five
 `global_rules` that apply across every row. Each row declares:
 
-| Field           | Meaning                                                         |
-| --------------- | --------------------------------------------------------------- |
-| `policy`        | `verbatim-ok` or `own-words-only`                               |
-| `allowed_modes` | Which casting transforms a reference under this license may use |
-| `license_file`  | Whether a verbatim `LICENSES/` copy must accompany the carry    |
-| `copyleft`      | Whether the isolate-in-its-own-file obligation applies          |
-| `obligations`   | What honoring the license actually requires                     |
+| Field          | Meaning                                                      |
+| -------------- | ------------------------------------------------------------ |
+| `policy`       | `verbatim-ok` or `own-words-only`                            |
+| `license_file` | Whether a verbatim `LICENSES/` copy must accompany the carry |
+| `copyleft`     | Whether the isolate-in-its-own-file obligation applies       |
+| `obligations`  | What honoring the license actually requires                  |
 
 Parsing is strict: both enums are closed, every field is checked, and an unknown value is an
 error rather than a silently-ignored key. A published table is a contract, and a row that is
