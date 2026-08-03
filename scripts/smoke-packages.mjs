@@ -157,6 +157,50 @@ const SMOKE = {
       throw new Error('packed transform rewrote code — a backtick means the syntax');
     }
   },
+  '@galaxy-foundry/site-kit': (mod, _peer, unpacked) => {
+    // The nav rule, from the packed JS rather than the source tree.
+    const nav = mod.resolveNav(
+      [
+        { path: '/tag/', label: 'Tag' },
+        { path: '/tags/', label: 'Tags' },
+        { path: '/log/', label: 'Log' },
+      ],
+      2,
+      '/foundry/',
+      '/foundry/tags/sub/',
+    );
+    if (nav.bar.map((l) => l.href).join() !== '/foundry/tag/,/foundry/tags/') {
+      throw new Error('packed resolver did not apply the base');
+    }
+    if (
+      nav.bar
+        .filter((l) => l.active)
+        .map((l) => l.label)
+        .join() !== 'Tags'
+    ) {
+      throw new Error('packed resolver matched on a prefix rather than a path segment');
+    }
+    if (nav.more.length !== 1)
+      throw new Error('packed resolver did not cut the list at navVisible');
+    if (!mod.CONTAINER) throw new Error('packed package does not export the container measure');
+
+    // This package's `exports` point at SOURCE, not `dist` — the components ship unbuilt and Astro
+    // compiles them at the consumer. So `files` carrying `src/` IS the delivery, and nothing but a
+    // packed tarball can prove it: every test and typecheck here reads the source tree, where the
+    // files are present either way.
+    for (const component of ['SiteShell', 'SiteHeader', 'SiteFooter']) {
+      const file = path.join(unpacked, 'src', 'components', `${component}.astro`);
+      if (!existsSync(file)) throw new Error(`tarball has no src/components/${component}.astro`);
+    }
+
+    // The README tells consumers to assert that `min-h-dvh` reaches their stylesheet, as the only
+    // way to tell a working `@source` from a misspelled one. That advice is worth exactly as much
+    // as the class being in the SHIPPED source — Tailwind scans the packed file, not this repo's.
+    const shell = readFileSync(path.join(unpacked, 'src', 'components', 'SiteShell.astro'), 'utf8');
+    if (!shell.includes('min-h-dvh')) {
+      throw new Error('packed shell does not name the canary class the README documents');
+    }
+  },
   '@galaxy-foundry/kind-manifest': async (mod, peer) => {
     // zod is a peer dependency, so the packed tarball does not carry it. Resolving it
     // from beside the unpacked package is exactly what a consumer's install does — and
