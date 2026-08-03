@@ -163,6 +163,14 @@ a citation `resolved-mismatched`, so a preprint that later acquired a journal ye
 deposit year read as a publication year — stay visible without entering the manual-review queue
 beside a fabricated author.
 
+Title similarity answers two different questions, and its two thresholds are deliberately unequal. A
+search accepts a candidate loosely, because a close but wrong hit is handed to the comparison rather
+than trusted, whereas a real work the search rejects is reported as though no index had heard of it.
+The comparison disputes identity strictly, because falling below it puts a person in the review
+queue. Both thresholds therefore live beside the similarity function rather than in the resolver and
+the evaluator that apply them, so neither can be tightened without seeing the one it is calibrated
+against.
+
 Author comparison abstains rather than guessing. Two author lists are compared only as deep as the
 shorter one reaches, because a provider that stores three of thirty authors is not evidence of a
 fabricated list, and below three compared names the check abstains unless every name matches, since

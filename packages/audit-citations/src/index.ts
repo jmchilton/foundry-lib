@@ -59,15 +59,9 @@ export {
 } from './evidence.js';
 export type { CitationResolver, CollectedEvidence, CollectEvidenceOptions } from './evidence.js';
 
-export {
-  authorNameMatches,
-  authorOverlap,
-  evaluateCitation,
-  firstAuthorFamily,
-  mismatchesForEvidence,
-  normalizeWords,
-  titleSimilarity,
-} from './match.js';
+export { authorNameMatches, firstAuthorFamily, normalizeWords, titleSimilarity } from './text.js';
+
+export { authorOverlap, evaluateCitation, mismatchesForEvidence } from './match.js';
 
 export { ScholarlyResolver } from './resolve.js';
 export type { FetchLike, FetchResponse, ScholarlyResolverOptions } from './resolve.js';

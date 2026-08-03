@@ -6,8 +6,14 @@ import type {
   CitationVerdict,
   ScholarlyMetadata,
 } from './schema.js';
+import {
+  TITLE_IDENTITY_THRESHOLD,
+  authorNameMatches,
+  firstAuthorFamily,
+  normalizeWords,
+  titleSimilarity,
+} from './text.js';
 
-const TITLE_SIMILARITY_THRESHOLD = 0.88;
 const AUTHOR_OVERLAP_THRESHOLD = 0.6;
 
 /**
@@ -60,7 +66,7 @@ export function mismatchesForEvidence(
   const mismatches: CitationMismatch[] = [];
   if (described.title) {
     const similarity = titleSimilarity(described.title, evidence.metadata.title);
-    if (similarity < TITLE_SIMILARITY_THRESHOLD) {
+    if (similarity < TITLE_IDENTITY_THRESHOLD) {
       mismatches.push({
         code: 'title',
         severity: 'error',
@@ -143,69 +149,6 @@ export function authorOverlap(
   return matches / depth;
 }
 
-/**
- * Compares personal names token-wise so that initials, diacritics, and reversed given/family order
- * do not read as different people.
- */
-export function authorNameMatches(left: string, right: string): boolean {
-  const leftTokens = normalizeWords(left).split(' ').filter(Boolean);
-  const rightTokens = normalizeWords(right).split(' ').filter(Boolean);
-  if (leftTokens.length === 0 || rightTokens.length === 0) return false;
-  const [shorter, longer] =
-    leftTokens.length <= rightTokens.length ? [leftTokens, rightTokens] : [rightTokens, leftTokens];
-  const pool = [...longer];
-  for (const token of shorter) {
-    const index = pool.findIndex((other) => tokenMatches(token, other));
-    if (index < 0) return false;
-    pool.splice(index, 1);
-  }
-  return true;
-}
-
-function tokenMatches(left: string, right: string): boolean {
-  if (left === right) return true;
-  if (left.length === 1) return right.startsWith(left);
-  if (right.length === 1) return left.startsWith(right);
-  return false;
-}
-
-export function normalizeWords(value: string): string {
-  return (
-    value
-      .normalize('NFKD')
-      .replace(/\p{Mark}/gu, '')
-      .toLocaleLowerCase()
-      .match(/[a-z0-9]+/gu)
-      ?.join(' ') ?? ''
-  );
-}
-
-export function titleSimilarity(left: string, right: string): number {
-  const normalizedLeft = normalizeWords(left);
-  const normalizedRight = normalizeWords(right);
-  if (normalizedLeft === normalizedRight) return 1;
-  const longest = Math.max(normalizedLeft.length, normalizedRight.length);
-  if (longest === 0) return 1;
-  return 1 - levenshteinDistance(normalizedLeft, normalizedRight) / longest;
-}
-
-export function firstAuthorFamily(authorText: string | undefined): string | undefined {
-  if (!authorText) return undefined;
-  const withoutLabel = authorText.replace(/^.+?:\s*/u, '');
-  const first = withoutLabel.split(/\s+and\s+|;/iu, 1)[0]?.trim();
-  if (!first) return undefined;
-  const beforeComma = first.includes(',') ? (first.split(',', 1)[0] ?? '') : first;
-  const words = beforeComma
-    .replace(/\s+et\s+al\.?$/iu, '')
-    .trim()
-    .split(/\s+/u);
-  if (words.length === 0) return undefined;
-  const final = words.at(-1)?.replace(/[^A-Za-z]/gu, '') ?? '';
-  const family = final.length === 1 || final === final.toUpperCase() ? words[0] : words.at(-1);
-  const normalized = family ? normalizeWords(family) : '';
-  return normalized || undefined;
-}
-
 function crossEvidenceMismatches(
   evidence: readonly (CitationEvidence & { metadata: ScholarlyMetadata })[],
 ): CitationMismatch[] {
@@ -214,7 +157,7 @@ function crossEvidenceMismatches(
   if (!first) return mismatches;
   for (const other of evidence.slice(1)) {
     const similarity = titleSimilarity(first.metadata.title, other.metadata.title);
-    if (similarity < TITLE_SIMILARITY_THRESHOLD) {
+    if (similarity < TITLE_IDENTITY_THRESHOLD) {
       mismatches.push({
         code: 'cross-identifier',
         severity: 'error',
@@ -233,24 +176,6 @@ function evidenceQueryLabel(evidence: CitationEvidence): string {
     return `${evidence.query.identifier.kind}:${evidence.query.identifier.value}`;
   }
   return `title:${normalizeWords(evidence.query.title)}`;
-}
-
-function levenshteinDistance(left: string, right: string): number {
-  const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
-  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
-    const current = [leftIndex];
-    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
-      const substitution =
-        previous[rightIndex - 1]! + (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1);
-      current[rightIndex] = Math.min(
-        previous[rightIndex]! + 1,
-        current[rightIndex - 1]! + 1,
-        substitution,
-      );
-    }
-    previous.splice(0, previous.length, ...current);
-  }
-  return previous[right.length] ?? left.length;
 }
 
 function uniqueMismatches(mismatches: readonly CitationMismatch[]): CitationMismatch[] {

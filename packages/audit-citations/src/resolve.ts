@@ -1,5 +1,5 @@
 import { evidenceId } from './identity.js';
-import { firstAuthorFamily, titleSimilarity } from './match.js';
+import { TITLE_SEARCH_THRESHOLD, firstAuthorFamily, titleSimilarity } from './text.js';
 import type {
   CitationEvidence,
   CitationIdentifier,
@@ -304,7 +304,10 @@ export class ScholarlyResolver {
       const payload = asRecord(await this.#crossrefJson(url));
       const items = asArray(asRecord(payload['message'])['items']).map(asRecord);
       const best = bestTitleMatch(query.title, items, (item) => firstString(item['title']));
-      if (!best || titleSimilarity(query.title, firstString(best['title'])) < 0.75) {
+      if (
+        !best ||
+        titleSimilarity(query.title, firstString(best['title'])) < TITLE_SEARCH_THRESHOLD
+      ) {
         return this.#unresolved(query, 'crossref', url, 'No title candidate passed threshold.');
       }
       const metadata = crossrefMetadata(best);
@@ -332,7 +335,7 @@ export class ScholarlyResolver {
         stringValue(item['display_name'] ?? item['title']),
       );
       const title = best ? stringValue(best['display_name'] ?? best['title']) : '';
-      if (!best || titleSimilarity(query.title, title) < 0.75) {
+      if (!best || titleSimilarity(query.title, title) < TITLE_SEARCH_THRESHOLD) {
         return this.#unresolved(query, 'openalex', url, 'No title candidate passed threshold.');
       }
       const metadata = openAlexMetadata(best);
@@ -355,7 +358,10 @@ export class ScholarlyResolver {
       const payload = asRecord(await this.#retryingJson(url));
       const items = asArray(payload['data']).map(asRecord);
       const best = bestTitleMatch(query.title, items, (item) => stringValue(item['title']));
-      if (!best || titleSimilarity(query.title, stringValue(best['title'])) < 0.75) {
+      if (
+        !best ||
+        titleSimilarity(query.title, stringValue(best['title'])) < TITLE_SEARCH_THRESHOLD
+      ) {
         return this.#unresolved(
           query,
           'semantic-scholar',
@@ -380,7 +386,10 @@ export class ScholarlyResolver {
       const hits = asRecord(asRecord(asRecord(payload['result'])['hits']));
       const items = asArray(hits['hit']).map((hit) => asRecord(asRecord(hit)['info']));
       const best = bestTitleMatch(query.title, items, (item) => stringValue(item['title']));
-      if (!best || titleSimilarity(query.title, stringValue(best['title'])) < 0.75) {
+      if (
+        !best ||
+        titleSimilarity(query.title, stringValue(best['title'])) < TITLE_SEARCH_THRESHOLD
+      ) {
         return this.#unresolved(query, 'dblp', url, 'No title candidate passed threshold.');
       }
       const metadata = dblpMetadata(best);
