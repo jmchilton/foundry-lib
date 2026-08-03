@@ -31,6 +31,10 @@ with each instance.
     <strong>@galaxy-foundry/wiki-links</strong>
     <p>Resolve <code>[[Target]]</code> the same way in the renderer and the validator.</p>
   </div>
+  <div>
+    <strong>@galaxy-foundry/site-kit</strong>
+    <p>Render the reading shell from a site's identity, instead of copying a header.</p>
+  </div>
 </div>
 
 ## Choose your path
@@ -73,10 +77,12 @@ removes duplicated maintenance without erasing a real local decision.
 | [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds |
 | [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them  |
 | [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet |
+| [`@galaxy-foundry/site-kit`](https://www.npmjs.com/package/@galaxy-foundry/site-kit)                     | stand up the reading shell instead of hand-rolling one            |
 | [`@galaxy-foundry/wiki-links`](https://www.npmjs.com/package/@galaxy-foundry/wiki-links)                 | resolve `[[Target]]` links in prose and frontmatter, exactly      |
 
 Every package is an ES module, supports Node.js 20 and later, and publishes from CI with npm
-provenance.
+provenance. `site-kit` additionally ships unbuilt `.astro` source, which its consumer's Astro build
+compiles — and which its consumer's Tailwind has to be pointed at explicitly.
 
 ## Design rule
 

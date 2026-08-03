@@ -1,0 +1,70 @@
+---
+import { CONTAINER, type SiteIdentity } from '../index.js';
+import SiteFooter from './SiteFooter.astro';
+import SiteHeader from './SiteHeader.astro';
+
+/**
+ * The reading shell: document skeleton, header, footer, and the page in between.
+ *
+ * The kit brings no stylesheet of its own. Every class below is either a Tailwind utility or a
+ * token name — `--color-galaxy-dark`, `--color-accent`, `--color-surface`, `--color-text-primary`,
+ * `--color-text-on-dark`, `--font-sans` — plus three classes the instance defines: `.skip-link`,
+ * `.bg-grid`, `.nav-link-active`. The instance owns all of those, and Tailwind has to be pointed
+ * at this package's `src/` or none of the utilities here reach its stylesheet. Both of those fail
+ * SILENTLY: a green build and an unstyled page. See the README.
+ */
+interface Props {
+  /** The page title, before the site name is appended. */
+  title: string;
+  /** Overrides the identity's description for this page. */
+  description?: string;
+  /** `import.meta.env.BASE_URL` from the consumer — the kit never reads the environment. */
+  base: string;
+  /** `Astro.url.pathname` from the consumer, for the active-section rule. */
+  pathname: string;
+  identity: SiteIdentity;
+}
+
+const { title, base, pathname, identity } = Astro.props;
+const { description = identity.description } = Astro.props;
+const fullTitle = `${title} - ${identity.name}`;
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{fullTitle}</title>
+  <meta name="description" content={description} />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+  <script is:inline>
+    const dark = localStorage.theme === 'dark' ||
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', dark);
+    // Pagefind's component UI reads its palette off this attribute, not our `.dark` class.
+    document.documentElement.dataset.pfTheme = dark ? 'dark' : 'light';
+  </script>
+</head>
+<body class="min-h-dvh flex flex-col bg-(--color-surface) text-(--color-text-primary)">
+  <a href="#main" class="skip-link">Skip to content</a>
+  <SiteHeader
+    base={base}
+    pathname={pathname}
+    name={identity.name}
+    navLinks={identity.navLinks}
+    navVisible={identity.navVisible}
+  />
+  <main id="main" class={`flex-1 bg-grid ${CONTAINER} w-full mx-auto px-4 sm:px-6 py-6 leading-relaxed`}>
+    <slot />
+  </main>
+  <SiteFooter
+    base={base}
+    fullName={identity.fullName}
+    repoUrl={identity.repoUrl}
+    footerLinks={identity.footerLinks}
+  />
+</body>
+</html>
