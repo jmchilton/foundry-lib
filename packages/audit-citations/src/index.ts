@@ -9,6 +9,7 @@ export {
   citationEvidenceSnapshotSchema,
   citationFindingSchema,
   citationIdentifierSchema,
+  citationMismatchSchema,
   citationScanSchema,
   citationVerdicts,
   corpusIdentitySchema,
@@ -16,6 +17,8 @@ export {
   evidenceQuerySchema,
   evidenceStates,
   extractionDiagnosticsSchema,
+  mismatchCodes,
+  mismatchSeverities,
   parseCitationAdjudications,
   parseCitationAuditRun,
   parseCitationEvidenceSnapshot,
@@ -32,6 +35,7 @@ export type {
   CitationEvidenceSnapshot,
   CitationFinding,
   CitationIdentifier,
+  CitationMismatch,
   CitationScan,
   CitationVerdict,
   CorpusIdentity,
@@ -39,6 +43,8 @@ export type {
   EvidenceQuery,
   EvidenceState,
   ExtractionDiagnostics,
+  MismatchCode,
+  MismatchSeverity,
   ScholarlyMetadata,
 } from './schema.js';
 
@@ -54,9 +60,11 @@ export {
 export type { CitationResolver, CollectedEvidence, CollectEvidenceOptions } from './evidence.js';
 
 export {
+  authorNameMatches,
+  authorOverlap,
   evaluateCitation,
   firstAuthorFamily,
-  mismatchReasonsForEvidence,
+  mismatchesForEvidence,
   normalizeWords,
   titleSimilarity,
 } from './match.js';

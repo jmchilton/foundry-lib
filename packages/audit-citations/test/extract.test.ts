@@ -97,4 +97,46 @@ describe('citation extraction', () => {
     ]);
     expect(scan.candidates).toHaveLength(0);
   });
+
+  it('counts reference-section lines it could not extract', () => {
+    const scan = extractCitations([
+      {
+        path: 'notes/example.md',
+        artifactKind: 'note',
+        text:
+          '# Notes\n\nProse outside the reference section.\n\n' +
+          '## References\n\n' +
+          '1. Example A. "A supported entry." (2024).\n' +
+          '- Example B. "A bullet entry." (2024).\n',
+      },
+    ]);
+    expect(scan.candidates).toHaveLength(1);
+    expect(scan.diagnostics.unextractedReferenceLines).toEqual([
+      { artifactPath: 'notes/example.md', line: 8 },
+    ]);
+  });
+
+  it('splits a bibliography author list instead of keeping one blob', () => {
+    const scan = extractCitations([
+      {
+        path: 'notes/example.md',
+        artifactKind: 'note',
+        text:
+          '## References\n' +
+          '1. Sidarta-Oliveira D, Domingos AI. "A multi-author entry." (2025).\n',
+      },
+    ]);
+    expect(scan.candidates[0]?.described?.authors).toEqual(['Sidarta-Oliveira D', 'Domingos AI']);
+  });
+
+  it('keeps a family-name-first author list from splitting on its own commas', () => {
+    const scan = extractCitations([
+      {
+        path: 'notes/example.md',
+        artifactKind: 'note',
+        text: '## References\n1. Smith, J., Doe, A. "A compressed author list." (2024).\n',
+      },
+    ]);
+    expect(scan.candidates[0]?.described?.authors).toEqual(['Smith, J.', 'Doe, A']);
+  });
 });

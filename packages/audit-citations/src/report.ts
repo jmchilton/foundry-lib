@@ -6,6 +6,7 @@ import type {
   CitationFinding,
   CitationIdentifier,
 } from './schema.js';
+import { compareCodePoints } from './digest.js';
 import { evidenceSnapshotDigest } from './identity.js';
 import {
   citationVerdicts,
@@ -41,6 +42,7 @@ export function renderCitationAuditMarkdown(
     ...citationVerdicts.map((verdict) => `| ${verdict} | ${run.summary[verdict]} |`),
     `| total | ${run.summary.total} |`,
     '',
+    ...coverageSection(run),
   ];
 
   for (const verdict of citationVerdicts) {
@@ -75,6 +77,8 @@ export function renderCitationAuditMarkdown(
     }
     lines.push('');
   }
+
+  lines.push(...perArtifactSection(run));
 
   lines.push('## Adjudicated extractor false positives', '');
   const falsePositives = run.findings.filter((finding) => finding.excludedFromDenominator);
@@ -125,9 +129,69 @@ function queryLabel(record: CitationEvidence): string {
 }
 
 function reviewSummary(finding: CitationFinding, review: CitationAdjudication | undefined): string {
-  const reasons = finding.mismatchReasons.join('; ');
+  const reasons = finding.mismatches
+    .map((mismatch) =>
+      mismatch.severity === 'warning' ? `warning: ${mismatch.detail}` : mismatch.detail,
+    )
+    .join('; ');
   if (!review) return reasons || '—';
   return [reasons, `manual review: ${review.note}`].filter(Boolean).join('; ');
+}
+
+/**
+ * A resolution rate means nothing without the number of references the extractor could not read,
+ * so the denominator is reported next to the verdict counts rather than left in the diagnostics.
+ */
+function coverageSection(run: CitationAuditRun): string[] {
+  const extracted = run.candidates.length;
+  const unextracted = run.diagnostics.unextractedReferenceLines;
+  const seen = extracted + unextracted.length;
+  const lines = [
+    '## Extraction coverage',
+    '',
+    `Extracted **${extracted} of ${seen}** reference-section lines. The verdict counts above ` +
+      'describe only the extracted lines.',
+    '',
+  ];
+  if (unextracted.length > 0) {
+    lines.push(
+      'A wrapped entry counts once per physical line, so this is a lower bound on coverage.',
+      '',
+      ...unextracted.map((entry) => `- \`${entry.artifactPath}:${entry.line}\``),
+      '',
+    );
+  }
+  return lines;
+}
+
+/**
+ * Several flagged citations in one artifact is a stronger signal than the same number spread across
+ * a corpus, so findings roll up per artifact with the most affected first.
+ */
+function perArtifactSection(run: CitationAuditRun): string[] {
+  const totals = new Map<string, { total: number; flagged: number }>();
+  for (const finding of run.findings) {
+    if (finding.excludedFromDenominator) continue;
+    const candidate = run.candidates.find((item) => item.id === finding.candidateId);
+    if (!candidate) throw new Error(`finding references unknown candidate ${finding.candidateId}`);
+    const entry = totals.get(candidate.span.artifactPath) ?? { total: 0, flagged: 0 };
+    entry.total += 1;
+    if (finding.effectiveVerdict !== 'resolved') entry.flagged += 1;
+    totals.set(candidate.span.artifactPath, entry);
+  }
+  const rows = [...totals.entries()].sort(
+    ([leftPath, left], [rightPath, right]) =>
+      right.flagged - left.flagged || compareCodePoints(leftPath, rightPath),
+  );
+  if (rows.length === 0) return ['## Findings per artifact', '', 'None.', ''];
+  return [
+    '## Findings per artifact',
+    '',
+    '| Artifact | Citations | Not resolved |',
+    '|---|---:|---:|',
+    ...rows.map(([path, entry]) => `| \`${path}\` | ${entry.total} | ${entry.flagged} |`),
+    '',
+  ];
 }
 
 function escapeCell(value: string): string {

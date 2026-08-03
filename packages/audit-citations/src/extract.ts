@@ -20,6 +20,7 @@ const HEADING_RE = /^(#{1,6})\s+(.+?)\s*$/u;
 const BIBLIOGRAPHY_ENTRY_RE = /^\s*\d+\.\s+/u;
 const QUOTED_TITLE_RE = /["“]([^"”]{8,})["”]/u;
 const YEAR_RE = /(?<!\d)((?:19|20)\d{2})(?!\d)/gu;
+const INITIALS_ONLY_RE = /^(?:[A-Z]\.?\s*){1,3}$/u;
 const AUTHOR_YEAR_RE =
   /\b[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’-]+(?:\s+(?:et\s+al\.|and\s+[A-Z][A-Za-z'’-]+))?\s*\((?:19|20)\d{2}\)/gu;
 
@@ -57,6 +58,7 @@ export function extractCitations(
   const diagnostics: ExtractionDiagnostics = {
     excludedUrls: [],
     authorYearPatternCount: 0,
+    unextractedReferenceLines: [],
   };
   const context: ExtractionContext = {
     diagnostics,
@@ -96,7 +98,7 @@ function extractDocument(
     const identifiers = extractIdentifiers(sourceText, context.options.scholarlyPageHosts);
     const bibliographyEntry =
       referenceHeadingLevel !== undefined && BIBLIOGRAPHY_ENTRY_RE.test(sourceText);
-    const described = extractDescription(sourceText, bibliographyEntry, identifiers);
+    const described = extractDescription(sourceText, bibliographyEntry);
     const shouldInclude =
       identifiers.length > 0 ||
       (bibliographyEntry && described?.title !== undefined && described.year !== undefined);
@@ -120,6 +122,8 @@ function extractDocument(
         identifiers,
         ...(described && Object.keys(described).length > 0 ? { described } : {}),
       });
+    } else if (referenceHeadingLevel !== undefined && sourceText.trim() !== '') {
+      context.diagnostics.unextractedReferenceLines.push({ artifactPath, line });
     }
 
     for (const url of sourceText.match(URL_RE) ?? []) {
@@ -164,26 +168,38 @@ export function extractIdentifiers(
 function extractDescription(
   sourceText: string,
   bibliographyEntry: boolean,
-  identifiers: readonly CitationIdentifier[],
 ): DescribedCitation | undefined {
   const title = extractTitle(sourceText, bibliographyEntry);
   const authorText = title ? extractAuthorText(sourceText, title) : undefined;
-  let year = title !== undefined || bibliographyEntry ? extractYear(sourceText) : undefined;
-  if (
-    identifiers.some((identifier) => identifier.kind === 'arxiv') &&
-    !identifiers.some(
-      (identifier) => identifier.kind === 'doi' && !identifier.value.startsWith('10.48550/arxiv.'),
-    ) &&
-    /\b(?:v\d+|revised)\b/iu.test(sourceText)
-  ) {
-    year = undefined;
-  }
-  if (!title && !authorText && year === undefined) return undefined;
+  const authors = authorText ? splitAuthorList(authorText) : [];
+  const year = title !== undefined || bibliographyEntry ? extractYear(sourceText) : undefined;
+  if (!title && authors.length === 0 && year === undefined) return undefined;
   return {
     ...(title ? { title } : {}),
-    ...(authorText ? { authors: [authorText] } : {}),
+    ...(authors.length > 0 ? { authors } : {}),
     ...(year !== undefined ? { year } : {}),
   };
+}
+
+/**
+ * Splits a bibliography author blob on separators the supported grammar uses. A trailing
+ * initials-only fragment rejoins the name before it, so `Smith, J., Doe, A.` yields two authors
+ * rather than four.
+ */
+function splitAuthorList(authorText: string): string[] {
+  const parts = authorText
+    .split(/\s*(?:[,;&]|\band\b)\s*/iu)
+    .map((part) => part.trim())
+    .filter((part) => part !== '' && !/^(?:et\s+al\.?|others)$/iu.test(part));
+  const authors: string[] = [];
+  for (const part of parts) {
+    if (INITIALS_ONLY_RE.test(part) && authors.length > 0) {
+      authors[authors.length - 1] = `${authors.at(-1)}, ${part}`;
+      continue;
+    }
+    authors.push(part);
+  }
+  return authors;
 }
 
 function extractTitle(text: string, bibliographyEntry: boolean): string | undefined {

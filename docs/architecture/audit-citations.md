@@ -139,8 +139,31 @@ The citation evaluator produces four verdicts:
 - `unavailable`.
 
 Every resolved identifier is compared. One good DOI cannot hide a second identifier resolving to a
-different work. arXiv deposit year is not compared as though it were necessarily the later journal
-publication year.
+different work.
+
+Comparison produces mismatches, not free text, and each carries a severity. An `error` disputes the
+identity of the cited work: a title that describes something else, a first author who does not
+appear, an author list mostly absent from the record, or two identifiers resolving to different
+works. A `warning` records ordinary publication drift, currently a differing year. Only errors make
+a citation `resolved-mismatched`, so a preprint that later acquired a journal year — and an arXiv
+deposit year read as a publication year — stay visible without entering the manual-review queue
+beside a fabricated author.
+
+Author comparison abstains rather than guessing. Two author lists are compared only as deep as the
+shorter one reaches, because a provider that stores three of thirty authors is not evidence of a
+fabricated list, and below three compared names the check abstains unless every name matches, since
+one wrong name out of two is a transcription slip. The leading name is still compared separately in
+that case.
+
+## Coverage is part of the result
+
+A resolution rate describes only the citations the extractor could read. The scan therefore records
+every non-blank line inside a reference section that produced no candidate, and the report states
+extraction coverage beside the verdict counts. A wrapped entry contributes one line per physical
+line, so the figure is a lower bound.
+
+Escalating an unresolved citation to a web search would need a language model, which would make a
+run irreproducible. That tier belongs to a consuming repository, above this package's boundary.
 
 Manual classification remains orthogonal. `extractor-false-positive` removes an occurrence from
 the citation denominator; `resolver-false-positive` supplies an explicit effective verdict; and

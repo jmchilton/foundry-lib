@@ -21,7 +21,8 @@ The library owns citation mechanics:
 - explicit Markdown bibliography extraction;
 - provider interfaces plus Crossref, OpenAlex/arXiv, Europe PMC, and allowlisted citation-page
   resolvers;
-- title, year, first-author, and cross-identifier comparison;
+- title, year, author-list, first-author, and cross-identifier comparison, separated into identity
+  errors and publication-drift warnings;
 - deterministic offline replay from normalized evidence;
 - stale-safe manual adjudication; and
 - machine-readable findings and a Markdown report.
@@ -43,7 +44,11 @@ The experimental extractor intentionally recognizes a narrow, documented grammar
 - `PMC` followed by five-to-nine digits;
 - allowlisted scholarly-page URLs whose paths end in `.html`; and
 - single-line, numbered Markdown bibliography entries under a configured reference heading, with
-  either a quoted title or the supported `authors. title. ... year` shape.
+  either a quoted title or the supported `authors. title. ... year` shape; the author blob is split
+  on `,`, `;`, `&`, and `and`, rejoining an initials-only fragment with the name before it.
+
+Any other non-blank line under a reference heading is counted as unextracted and reported as
+missing coverage rather than passed over silently.
 
 Old-style arXiv identifiers, shorter historical PMIDs, bullet-list or wrapped bibliography
 entries, and arbitrary scholarly URLs are not currently extracted. Author–year prose such as
@@ -73,6 +78,16 @@ instance config ──> CLI filesystem adapter ──> SourceDocument[]
 Evidence acquisition and evaluation remain separate. A timeout is `unavailable`; a completed
 lookup with no record is `unresolved`; a resolved record describing another work is
 `resolved-mismatched`.
+
+Comparison results are typed mismatches carrying a severity. An `error` disputes the identity of
+the cited work; a `warning` records ordinary publication drift, such as a preprint that later
+acquired a journal year. Only errors make a citation a finding, so drift stays visible without
+demanding review beside a wrong author.
+
+The report states extraction coverage — how many reference-section lines produced a candidate —
+next to the verdict counts, because a resolution rate describes only the citations the extractor
+could read. It also rolls findings up per artifact, since several flagged citations in one document
+is a stronger signal than the same number spread across a corpus.
 
 ## Library usage
 
@@ -204,6 +219,8 @@ for entity relationships, ownership, and compatibility rules.
 - It does not validate tools, APIs, command flags, or numeric thresholds.
 - It does not define a repository-wide release gate or composite score.
 - It does not contain Foundry-specific source paths or artifact kinds.
+- It does not escalate an unresolved citation to a language model or a web search. That tier cannot
+  be replayed, so it belongs to a consuming repository rather than to this package.
 - It does not create `audit-base` or `audit-schemas`; those boundaries must be earned by another
   checker rather than inferred from citation terminology.
 

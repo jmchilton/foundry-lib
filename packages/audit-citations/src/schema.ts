@@ -13,6 +13,29 @@ export const citationVerdicts = [
 
 export const evidenceStates = ['resolved', 'unresolved', 'unavailable'] as const;
 
+/**
+ * A mismatch is an `error` when it disputes the identity of the cited work, and a `warning` when it
+ * reflects ordinary publication drift. Only errors make a citation a finding, so a preprint that
+ * later acquired a journal year does not enter the manual-review queue alongside a wrong author.
+ */
+export const mismatchSeverities = ['error', 'warning'] as const;
+
+export const mismatchCodes = [
+  'title',
+  'author',
+  'author-list',
+  'year',
+  'cross-identifier',
+] as const;
+
+export const citationMismatchSchema = z
+  .object({
+    code: z.enum(mismatchCodes),
+    severity: z.enum(mismatchSeverities),
+    detail: z.string().min(1),
+  })
+  .strict();
+
 export const citationIdentifierSchema = z
   .object({
     kind: z.string().min(1),
@@ -75,6 +98,20 @@ export const extractionDiagnosticsSchema = z
         .strict(),
     ),
     authorYearPatternCount: z.number().int().nonnegative(),
+    /**
+     * Non-blank lines inside a reference section that produced no candidate. Reporting resolution
+     * rates without this denominator would let a narrow extractor look like a clean corpus. A
+     * wrapped entry contributes one line per physical line, so extraction coverage is a lower
+     * bound.
+     */
+    unextractedReferenceLines: z.array(
+      z
+        .object({
+          artifactPath: z.string(),
+          line: z.number().int().positive(),
+        })
+        .strict(),
+    ),
   })
   .strict();
 
@@ -162,10 +199,19 @@ export const citationFindingSchema = z
     evidenceIds: z.array(z.string().min(1)).min(1),
     verdict: z.enum(citationVerdicts),
     effectiveVerdict: z.enum(citationVerdicts),
-    mismatchReasons: z.array(z.string()),
+    mismatches: z.array(citationMismatchSchema),
     excludedFromDenominator: z.boolean(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (finding) =>
+      finding.mismatches.some((mismatch) => mismatch.severity === 'error') ===
+      (finding.verdict === 'resolved-mismatched'),
+    {
+      message: 'resolved-mismatched must carry an error mismatch, and no other verdict may',
+      path: ['verdict'],
+    },
+  );
 
 export const citationAdjudicationSchema = z
   .object({
@@ -244,6 +290,9 @@ export const citationAuditRunSchema = z
   .strict();
 
 export type CitationIdentifier = z.infer<typeof citationIdentifierSchema>;
+export type CitationMismatch = z.infer<typeof citationMismatchSchema>;
+export type MismatchSeverity = (typeof mismatchSeverities)[number];
+export type MismatchCode = (typeof mismatchCodes)[number];
 export type ArtifactSpan = z.infer<typeof artifactSpanSchema>;
 export type DescribedCitation = z.infer<typeof describedCitationSchema>;
 export type CitationCandidate = z.infer<typeof citationCandidateSchema>;

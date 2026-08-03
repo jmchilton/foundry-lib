@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCitationAuditRun,
   citationCandidateSchema,
+  citationFindingSchema,
   evidenceId,
   extractCitations,
   parseCitationAuditRun,
@@ -75,6 +76,7 @@ describe('persisted schemas', () => {
         diagnostics: {
           excludedUrls: [],
           authorYearPatternCount: 0,
+          unextractedReferenceLines: [],
         },
       }),
     ).toThrow(/duplicate candidate ID/u);
@@ -103,7 +105,7 @@ describe('persisted schemas', () => {
             evidenceIds: ['evidence'],
             verdict: 'resolved',
             effectiveVerdict: 'resolved',
-            mismatchReasons: [],
+            mismatches: [],
             excludedFromDenominator: false,
           },
         ],
@@ -111,9 +113,40 @@ describe('persisted schemas', () => {
         diagnostics: {
           excludedUrls: [],
           authorYearPatternCount: 0,
+          unextractedReferenceLines: [],
         },
       }),
     ).toThrow(/unknown candidate/u);
+  });
+
+  it('keeps the verdict and the mismatch severities from disagreeing', () => {
+    const finding = {
+      candidateId: 'candidate',
+      evidenceIds: ['evidence'],
+      effectiveVerdict: 'resolved' as const,
+      excludedFromDenominator: false,
+    };
+    expect(() =>
+      citationFindingSchema.parse({
+        ...finding,
+        verdict: 'resolved',
+        mismatches: [{ code: 'title', severity: 'error', detail: 'describes another work' }],
+      }),
+    ).toThrow(/resolved-mismatched must carry an error mismatch/u);
+    expect(() =>
+      citationFindingSchema.parse({
+        ...finding,
+        verdict: 'resolved-mismatched',
+        mismatches: [{ code: 'year', severity: 'warning', detail: 'year differs' }],
+      }),
+    ).toThrow(/resolved-mismatched must carry an error mismatch/u);
+    expect(
+      citationFindingSchema.parse({
+        ...finding,
+        verdict: 'resolved',
+        mismatches: [{ code: 'year', severity: 'warning', detail: 'year differs' }],
+      }).verdict,
+    ).toBe('resolved');
   });
 
   it('requires enough citation identity to construct an evidence query', () => {
@@ -154,6 +187,7 @@ describe('persisted schemas', () => {
         diagnostics: {
           excludedUrls: [],
           authorYearPatternCount: 0,
+          unextractedReferenceLines: [],
         },
       }),
     ).toThrow(/source digest/u);
