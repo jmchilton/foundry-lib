@@ -5,8 +5,9 @@
 New package: the deterministic half of casting.
 
 Bundle placement (`bundle_path` resolution against a target's `_target.yml`), drift
-reconciliation with a `--check` mode that writes nothing, content hashing, and the provenance
-record's shape at schema version 4.
+reconciliation with a `--check` mode that writes nothing, content hashing, the provenance
+record's shape at schema version 4, and enforcement of the license → redistribution-policy
+table over an assembled cast.
 
 Extracted from `galaxyproject/foundry`, where each piece already had a second caller — the
 caster, the verifier, the pipeline assembler and the site all needed to agree on where a
