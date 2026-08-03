@@ -26,6 +26,15 @@ release cadences.
 | [`@galaxy-foundry/reference-contract`](packages/reference-contract) | The four typed-reference vocabularies every instance inherits, and the composer that adds its own `kinds` |
 | [`@galaxy-foundry/tag-registry`](packages/tag-registry)             | The `meta_tags.yml` format and its accessors — the rules, not the facets                                  |
 | [`@galaxy-foundry/wiki-links`](packages/wiki-links)                 | The `[[Target]]` grammar, the exact resolver, and a dependency-free remark transform                      |
+| [`@galaxy-foundry/cast`](packages/cast)                             | Bundle placement, drift reconciliation, and the provenance record a cast writes                           |
+
+`cast` is the exception to the rule below, and knowingly so. Only one instance casts today;
+the second has declined the LLM phase in its contract and has yet to build a caster at all.
+The package is extracted **ahead** of that second implementation rather than after it, because
+the flagship's 54 committed bundles are a byte-identity oracle that a from-scratch second
+caster would not have — and adopting it is what tests whether the boundary was drawn right.
+If adoption has to widen the contract, that is the evidence arriving, not the rule being
+broken twice.
 
 ## What does not live here
 
