@@ -38,10 +38,20 @@ export interface ProvenanceRefEntry {
   source: 'deterministic';
   companion_of?: string;
   /**
-   * License lineage of redistributed third-party content. Absent for Foundry-authored refs,
-   * which fall under the repository's own LICENSE and outside redistribution policy.
+   * License lineage of the upstream work this ref draws on.
+   *
+   * Its presence does NOT by itself mean third-party content is being redistributed. An instance
+   * whose corpus is written from published sources records the source's license on its own notes,
+   * for attribution — `derived` is what says whether any of the source's expression survives into
+   * the bytes. See `applyLicensePolicy`.
    */
   license?: string;
+  /**
+   * How this note relates to the work `license` names — the posture recorded when the note was
+   * written. Absent for refs that are not authored notes (a vendored schema, an upstream doc),
+   * which are pass-through by definition.
+   */
+  derived?: string;
   license_file?: string;
   license_file_hash?: string;
 }

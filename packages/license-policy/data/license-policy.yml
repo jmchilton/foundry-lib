@@ -27,7 +27,14 @@
 # verbatim | condense | sidecar) a ref under this license may use:
 #   - verbatim-ok (permissive):  verbatim, condense, sidecar
 #   - verbatim-ok (copyleft):    verbatim, sidecar   (no own-words launder)
-#   - own-words-only:            condense            (no verbatim carry)
+#   - own-words-only:            (none)              content may not pass through
+#
+# own-words-only rows are empty rather than `[condense]`. `allowed_modes` governs
+# THIRD-PARTY PASS-THROUGH only (see `foundry_content_out_of_scope`), and there is
+# no mode that makes carrying own-words-only content lawful: condensing it at cast
+# time still requires the restricted text in the repository to condense FROM. The
+# way to use such a source is to summarize it when the note is written, which makes
+# the note the Foundry's own prose and takes it out of this table entirely.
 
 version: 1
 
@@ -191,7 +198,7 @@ licenses:
   CC-BY-NC-SA-2.0:
     name: CC BY-NC-SA 2.0
     policy: own-words-only
-    allowed_modes: [condense]
+    allowed_modes: []
     license_file: false
     copyleft: false
     obligations: >-
@@ -209,7 +216,7 @@ licenses:
   CC-BY-NC-4.0:
     name: CC BY-NC 4.0
     policy: own-words-only
-    allowed_modes: [condense]
+    allowed_modes: []
     license_file: false
     copyleft: false
     obligations: attribution + citation; NC condition kept out of casts (own-words)
@@ -217,7 +224,7 @@ licenses:
   CC-BY-NC-3.0:
     name: CC BY-NC 3.0
     policy: own-words-only
-    allowed_modes: [condense]
+    allowed_modes: []
     license_file: false
     copyleft: false
     obligations: attribution + citation; NC condition kept out of casts (own-words)
@@ -225,7 +232,7 @@ licenses:
   CC-BY-NC-2.5:
     name: CC BY-NC 2.5
     policy: own-words-only
-    allowed_modes: [condense]
+    allowed_modes: []
     license_file: false
     copyleft: false
     obligations: attribution + citation; NC condition kept out of casts (own-words)
@@ -233,7 +240,7 @@ licenses:
   CC-BY-NC-2.0-UK:
     name: CC BY-NC 2.0 England & Wales
     policy: own-words-only
-    allowed_modes: [condense]
+    allowed_modes: []
     license_file: false
     copyleft: false
     obligations: attribution + citation; NC condition kept out of casts (own-words)
@@ -241,7 +248,7 @@ licenses:
   CC-BY-NC-ND-4.0:
     name: CC BY-NC-ND 4.0
     policy: own-words-only
-    allowed_modes: [condense]
+    allowed_modes: []
     license_file: false
     copyleft: false
     obligations: >-
@@ -251,7 +258,7 @@ licenses:
   LicenseRef-arXiv-nonexclusive-distrib-1.0:
     name: arXiv non-exclusive distribution 1.0
     policy: own-words-only
-    allowed_modes: [condense]
+    allowed_modes: []
     license_file: false
     copyleft: false
     obligations: >-
@@ -260,7 +267,7 @@ licenses:
   LicenseRef-all-rights-reserved:
     name: All rights reserved / read-only manuscript
     policy: own-words-only
-    allowed_modes: [condense]
+    allowed_modes: []
     license_file: false
     copyleft: false
     obligations: citation only
@@ -269,7 +276,7 @@ licenses:
 default:
   name: unresolved / missing
   policy: own-words-only
-  allowed_modes: [condense]
+  allowed_modes: []
   license_file: false
   copyleft: false
   defect: true

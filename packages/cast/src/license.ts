@@ -15,8 +15,11 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 import {
+  allowsMode,
   bundledPolicy,
+  declaresVerbatimCarry,
   resolveLicenseRow,
+  type CastMode,
   type LicensePolicy,
 } from '@galaxy-foundry/license-policy';
 
@@ -39,16 +42,22 @@ export function applyLicensePolicy(
   repoRoot: string,
   policy: LicensePolicy = bundledPolicy(),
 ): string[] {
-  // A ref with no `license` is Foundry-authored — it falls under the repository's own LICENSE
-  // and outside redistribution policy. When no ref carries one, the table is never consulted.
+  // A ref with no `license` names no upstream work at all, so there is nothing to police. When no
+  // ref carries one, the table is never consulted.
   if (!entries.some((e) => e.license)) return [];
   const errors: string[] = [];
   for (const entry of entries) {
     if (!entry.license) continue;
     const row = resolveLicenseRow(policy, entry.license);
-    if (!row.allowed_modes.includes(entry.mode as (typeof row.allowed_modes)[number])) {
+    // Only pass-through content is governed. A note written in the Foundry's own words about a
+    // licensed source is the Foundry's prose, and casting it redistributes the Foundry's work —
+    // `global_rules.foundry_content_out_of_scope`. The judgement was made when the note was
+    // written and recorded in `derived`; a cast is not the place to re-litigate it, and `mode` was
+    // never able to express it. Hashing below stays unconditional: `license_file_hash` is
+    // provenance about lineage, not permission to redistribute.
+    if (declaresVerbatimCarry(entry.derived) && !allowsMode(row, entry.mode as CastMode)) {
       errors.push(
-        `${entry.src}: license ${entry.license} (${row.policy}) forbids mode=${entry.mode} (allowed: ${row.allowed_modes.join(', ')})`,
+        `${entry.src}: license ${entry.license} (${row.policy}) forbids mode=${entry.mode} (allowed: ${row.allowed_modes.join(', ') || 'none — summarize at ingestion instead'})`,
       );
     }
     if (entry.license_file) {

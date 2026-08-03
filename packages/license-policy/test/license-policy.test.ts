@@ -7,6 +7,7 @@ import {
   bundledPolicy,
   bundledPolicyPath,
   bundledPolicyText,
+  declaresVerbatimCarry,
   isValidLicenseId,
   licenseIds,
   loadLicensePolicy,
@@ -96,9 +97,15 @@ describe('table invariants — what makes a row meaningful', () => {
     }
   });
 
-  it('gives every row at least one mode it permits', () => {
+  // Scoped to verbatim-ok rows. An own-words-only row permitting nothing is now the point rather
+  // than a defect: no mode makes such content lawful to pass through. Its emptiness is asserted
+  // directly in `own-words-only rows permit no pass-through mode`, so between the two every row
+  // is pinned to an exact expectation instead of merely to a non-empty one.
+  it('gives every verbatim-ok row at least one mode it permits', () => {
     for (const [id, row] of rows) {
-      expect(row.allowed_modes.length, `${id} permits no mode at all`).toBeGreaterThan(0);
+      if (row.policy === 'verbatim-ok') {
+        expect(row.allowed_modes.length, `${id} permits no mode at all`).toBeGreaterThan(0);
+      }
     }
   });
 
@@ -201,5 +208,46 @@ describe('locating a table on disk', () => {
 
   it('throws a path-naming error when the directory has no table', () => {
     expect(() => loadLicensePolicy('/definitely/not/a/repo')).toThrow(/definitely/);
+  });
+});
+
+describe('declaresVerbatimCarry', () => {
+  // Every distinct `derived` value in the corpus this was lifted from, so the regex is pinned to
+  // real postures rather than to invented ones.
+  it.each([
+    ['own-words-summary', false],
+    ['abstract-only-own-words-summary', false],
+    ['attribution-check-own-words', false],
+    ['license-aware-summary', true],
+    ['faithful-summary-with-quotes', true],
+    [
+      'Verbatim load-bearing quotes permitted (CC-BY). Quotes in section 7 are exact from the preprint.',
+      true,
+    ],
+    [
+      'own-words paraphrase (license is non-CC); functional strings (formulas, parameter names, numeric thresholds) kept verbatim as facts',
+      false,
+    ],
+  ])('reads %s as carrying=%s', (derived, expected) => {
+    expect(declaresVerbatimCarry(derived as string)).toBe(expected);
+  });
+
+  // Not an authored note — a vendored schema, an upstream doc. Pass-through by default.
+  it('treats an absent posture as pass-through', () => {
+    expect(declaresVerbatimCarry(undefined)).toBe(true);
+    expect(declaresVerbatimCarry(null)).toBe(true);
+  });
+});
+
+describe('own-words-only rows permit no pass-through mode', () => {
+  // `[condense]` named a mode no instance implements, and condensing at cast time would still
+  // require the restricted text in the repository to condense from.
+  it('leaves every own-words-only row empty', () => {
+    const policy = bundledPolicy();
+    const rows = [...Object.entries(policy.licenses), ['default', policy.default] as const];
+    const offenders = rows
+      .filter(([, row]) => row.policy === 'own-words-only' && row.allowed_modes.length > 0)
+      .map(([id]) => id);
+    expect(offenders).toEqual([]);
   });
 });
