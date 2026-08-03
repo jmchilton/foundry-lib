@@ -28,6 +28,8 @@ export {
 
 export { copyVerbatim, gitHead, pruneEmptyDirs } from './bundle.js';
 
+export { applyLicensePolicy } from './license.js';
+
 export {
   PROVENANCE_SCHEMA_VERSION,
   readProvenanceCarryOver,

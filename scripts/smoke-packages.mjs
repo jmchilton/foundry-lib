@@ -302,7 +302,7 @@ const SMOKE = {
       rmSync(docsDir, { recursive: true, force: true });
     }
   },
-  '@galaxy-foundry/cast': (mod) => {
+  '@galaxy-foundry/cast': (mod, _peer, unpacked) => {
     // No bundled data — targets and their layouts are per-instance — so what this proves is
     // that the placement rules and the drift decision survive packing.
     if (mod.resolveBundlePath('skills/{mold}', 'a') !== 'skills/a') {
@@ -336,6 +336,28 @@ const SMOKE = {
     }
     if (mod.PROVENANCE_SCHEMA_VERSION !== 4) {
       throw new Error('packed package emits a different provenance version');
+    }
+
+    // license-policy is a runtime dependency, so the packed tarball has to reach the table.
+    // Nothing but an install proves that: the source tree resolves it through the workspace.
+    const ref = {
+      kind: 'research',
+      mode: 'verbatim',
+      ref: '[[n]]',
+      src: 'content/research/n.md',
+      dst: 'references/notes/n.md',
+      used_at: 'runtime',
+      load: 'upfront',
+      src_hash: 'a',
+      dst_hash: 'a',
+      source: 'deterministic',
+      license: 'CC-BY-NC-4.0',
+    };
+    if (mod.applyLicensePolicy([ref], unpacked).length !== 1) {
+      throw new Error('packed policy check did not refuse a noncommercial verbatim carry');
+    }
+    if (mod.applyLicensePolicy([{ ...ref, license: undefined }], unpacked).length !== 0) {
+      throw new Error('packed policy check flagged a Foundry-authored ref');
     }
   },
 };
