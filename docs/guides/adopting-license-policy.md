@@ -42,14 +42,18 @@ unknown or missing values return the default row with `defect: true`.
 
 ## 3. Keep coherence local
 
-The policy row answers what redistribution modes a license permits. It does not know whether
+The policy row answers whether a license permits redistribution at all. It does not know whether
 an instance's note shape, derivation metadata, or sidecar files are internally coherent.
 
-```ts
-import { allowsMode } from '@galaxy-foundry/license-policy';
+Note what it is NOT asked: how a bundle is assembled. A license constrains what a note may
+contain, never whether the result is copied or rendered — so the question keys off the note's
+recorded `derived` posture, not off a casting mode.
 
-if (!allowsMode(row, reference.mode)) {
-  issues.push(`${reference.mode} is not allowed by ${reference.license}`);
+```ts
+import { declaresVerbatimCarry } from '@galaxy-foundry/license-policy';
+
+if (declaresVerbatimCarry(note.derived) && row.policy === 'own-words-only') {
+  issues.push(`${note.license} does not permit carrying this source's text`);
 }
 ```
 

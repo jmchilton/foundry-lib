@@ -40,12 +40,18 @@ that built the schemas, so the peer must not be duplicated.
 ## Resolve a license policy
 
 ```ts
-import { allowsMode, bundledPolicy, resolveLicenseRow } from '@galaxy-foundry/license-policy';
+import {
+  bundledPolicy,
+  declaresVerbatimCarry,
+  resolveLicenseRow,
+} from '@galaxy-foundry/license-policy';
 
 const policy = bundledPolicy();
 const row = resolveLicenseRow(policy, 'CC-BY-4.0');
 
-if (!allowsMode(row, 'verbatim')) {
+// Only content that reproduces upstream expression is governed. A note written in your own
+// words about this source is your prose, whatever the source's license says.
+if (declaresVerbatimCarry(note.derived) && row.policy === 'own-words-only') {
   throw new Error('This source must be rewritten in your own words');
 }
 ```

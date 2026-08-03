@@ -3,10 +3,10 @@ import { describe, it, expect } from 'vitest';
 import {
   LICENSE_POLICY_FILE,
   LICENSE_REF_RE,
-  allowsMode,
   bundledPolicy,
   bundledPolicyPath,
   bundledPolicyText,
+  declaresVerbatimCarry,
   isValidLicenseId,
   licenseIds,
   loadLicensePolicy,
@@ -78,35 +78,21 @@ describe('table invariants — what makes a row meaningful', () => {
   const policy = bundledPolicy();
   const rows = Object.entries(policy.licenses);
 
-  it('never lets an own-words-only row permit a carry that copies text', () => {
-    for (const [id, row] of rows) {
-      if (row.policy === 'own-words-only') {
-        expect(allowsMode(row, 'verbatim'), `${id} is own-words-only`).toBe(false);
-        expect(allowsMode(row, 'sidecar'), `${id} is own-words-only`).toBe(false);
-      }
-    }
-  });
-
-  it('always lets a verbatim-ok row permit verbatim carry, and demands its notice', () => {
+  it('demands a notice from every verbatim-ok row', () => {
     for (const [id, row] of rows) {
       if (row.policy === 'verbatim-ok') {
-        expect(allowsMode(row, 'verbatim'), `${id} is verbatim-ok`).toBe(true);
         expect(row.license_file, `${id} is verbatim-ok`).toBe(true);
       }
     }
   });
 
-  it('gives every row at least one mode it permits', () => {
-    for (const [id, row] of rows) {
-      expect(row.allowed_modes.length, `${id} permits no mode at all`).toBeGreaterThan(0);
-    }
-  });
-
-  it('never lets a copyleft row permit condense', () => {
-    for (const [id, row] of rows) {
-      if (row.copyleft) {
-        expect(allowsMode(row, 'condense'), `${id} is copyleft`).toBe(false);
-      }
+  // A row says what a license permits; it does not name casting transforms. `allowed_modes` used
+  // to, and it was derivable from (`policy`, `copyleft`) on every row — two other fields restated
+  // in a vocabulary borrowed from casting. Asserted rather than merely deleted so the column
+  // cannot reappear one row at a time.
+  it('names no casting transform on any row', () => {
+    for (const [id, row] of [...rows, ['default', policy.default] as const]) {
+      expect(Object.keys(row), `${id}`).not.toContain('allowed_modes');
     }
   });
 
@@ -133,14 +119,12 @@ licenses:
   MIT:
     name: MIT
     policy: verbatim-ok
-    allowed_modes: [verbatim, condense, sidecar]
     license_file: true
     copyleft: false
     obligations: keep the notice
 default:
   name: unresolved
   policy: own-words-only
-  allowed_modes: [condense]
   license_file: false
   copyleft: false
   defect: true
@@ -165,14 +149,6 @@ default:
   it('rejects a row with an unknown policy value', () => {
     const invalidPolicy = minimal.replace('policy: verbatim-ok', 'policy: whatever-ok');
     expect(() => parseLicensePolicy(invalidPolicy)).toThrow(/whatever-ok/);
-  });
-
-  it('rejects a row with an unknown cast mode', () => {
-    const invalidPolicy = minimal.replace(
-      '[verbatim, condense, sidecar]',
-      '[verbatim, paraphrase]',
-    );
-    expect(() => parseLicensePolicy(invalidPolicy)).toThrow(/paraphrase/);
   });
 
   it('rejects a row missing a required field', () => {
@@ -201,5 +177,33 @@ describe('locating a table on disk', () => {
 
   it('throws a path-naming error when the directory has no table', () => {
     expect(() => loadLicensePolicy('/definitely/not/a/repo')).toThrow(/definitely/);
+  });
+});
+
+describe('declaresVerbatimCarry', () => {
+  // Every distinct `derived` value in the corpus this was lifted from, so the regex is pinned to
+  // real postures rather than to invented ones.
+  it.each([
+    ['own-words-summary', false],
+    ['abstract-only-own-words-summary', false],
+    ['attribution-check-own-words', false],
+    ['license-aware-summary', true],
+    ['faithful-summary-with-quotes', true],
+    [
+      'Verbatim load-bearing quotes permitted (CC-BY). Quotes in section 7 are exact from the preprint.',
+      true,
+    ],
+    [
+      'own-words paraphrase (license is non-CC); functional strings (formulas, parameter names, numeric thresholds) kept verbatim as facts',
+      false,
+    ],
+  ])('reads %s as carrying=%s', (derived, expected) => {
+    expect(declaresVerbatimCarry(derived as string)).toBe(expected);
+  });
+
+  // Not an authored note — a vendored schema, an upstream doc. Pass-through by default.
+  it('treats an absent posture as pass-through', () => {
+    expect(declaresVerbatimCarry(undefined)).toBe(true);
+    expect(declaresVerbatimCarry(null)).toBe(true);
   });
 });

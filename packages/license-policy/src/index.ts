@@ -4,14 +4,11 @@ import { fileURLToPath } from 'node:url';
 
 import yaml from 'js-yaml';
 
-export type CastMode = 'verbatim' | 'condense' | 'sidecar';
-
 export type RedistributionPolicy = 'verbatim-ok' | 'own-words-only';
 
 export interface LicenseRow {
   name: string;
   policy: RedistributionPolicy;
-  allowed_modes: CastMode[];
   license_file: boolean;
   copyleft: boolean;
   defect?: boolean;
@@ -30,7 +27,6 @@ export const LICENSE_POLICY_FILE = 'license-policy.yml';
 
 export const LICENSE_REF_RE = /^LicenseRef-[A-Za-z0-9.-]+$/;
 
-const CAST_MODES: readonly string[] = ['verbatim', 'condense', 'sidecar'];
 const POLICIES: readonly string[] = ['verbatim-ok', 'own-words-only'];
 
 function throwValidationError(sourcePath: string | undefined, message: string): never {
@@ -62,19 +58,6 @@ function validateRow(rowPath: string, rawRow: unknown, sourcePath: string | unde
       sourcePath,
       `${rowPath} has unknown policy \`${String(fields['policy'])}\` (expected ${POLICIES.join(' | ')})`,
     );
-  }
-
-  const allowedModes = fields['allowed_modes'];
-  if (!Array.isArray(allowedModes)) {
-    throwValidationError(sourcePath, `${rowPath} missing required field \`allowed_modes\``);
-  }
-  for (const castMode of allowedModes as unknown[]) {
-    if (typeof castMode !== 'string' || !CAST_MODES.includes(castMode)) {
-      throwValidationError(
-        sourcePath,
-        `${rowPath} has unknown cast mode \`${String(castMode)}\` (expected ${CAST_MODES.join(' | ')})`,
-      );
-    }
   }
 }
 
@@ -165,8 +148,31 @@ export function resolveLicenseRow(
   return policy.default;
 }
 
-export function allowsMode(licenseRow: LicenseRow, castMode: CastMode): boolean {
-  return licenseRow.allowed_modes.includes(castMode);
+/**
+ * Whether a note's `derived` posture means it reproduces upstream expression.
+ *
+ * This implements `global_rules.foundry_content_out_of_scope` — "this table governs third-party
+ * pass-through content only." A note that summarizes a paper in its own words is the Foundry's
+ * prose; redistributing it redistributes the Foundry's work, not the paper's, and the row for the
+ * paper's license has nothing to say about it. A note that keeps load-bearing quotes does carry
+ * protected expression, and the row governs it.
+ *
+ * The question is about the SOURCE and is settled when the note is written, which is why it keys
+ * off `derived` rather than off a cast's `mode`. A cast cannot judge whether a quotation was fair;
+ * that editorial call was already made, and `derived` plus `attribution` record it.
+ *
+ * `own-words` beats a verbatim signal rather than losing to it, so a posture like "own-words
+ * paraphrase; functional strings kept verbatim as facts" reads as own-words. That is
+ * `global_rules.functional_strings_verbatim`: facts and short identifiers are not copyrightable
+ * expression, and own-words-only constrains prose, never facts.
+ *
+ * Absent `derived` means the ref is not an authored note at all — a vendored schema, an upstream
+ * doc — so it is pass-through, and the caller applies the row. Deny-by-default, per
+ * `global_rules.default_deny`.
+ */
+export function declaresVerbatimCarry(derived: string | undefined | null): boolean {
+  if (typeof derived !== 'string') return true;
+  return /license-aware|with-quotes|verbatim/i.test(derived) && !/own-words/i.test(derived);
 }
 
 export {

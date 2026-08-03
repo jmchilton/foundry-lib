@@ -47,17 +47,21 @@ describe('refs the policy does not cover', () => {
   });
 });
 
-describe('the mode a license permits', () => {
+describe('what a license permits', () => {
   it('accepts a permissive license carried verbatim', () => {
     expect(applyLicensePolicy([entry({ license: 'CC-BY-4.0' })], dir)).toEqual([]);
   });
 
-  it('names the license, its policy, the mode and the alternatives', () => {
+  // The message names the source, the license, and what to do instead. It deliberately does NOT
+  // name a mode: no mode would have made this carry lawful, so offering one as the remedy sent
+  // authors looking for a different transform when the fix is to summarize the source.
+  it('names the license and the remedy, not a mode', () => {
     const errors = applyLicensePolicy([entry({ license: 'CC-BY-NC-4.0' })], dir);
     expect(errors).toHaveLength(1);
     expect(errors[0]).toContain('content/research/note.md');
     expect(errors[0]).toContain('CC-BY-NC-4.0');
-    expect(errors[0]).toContain('mode=verbatim');
+    expect(errors[0]).toContain('summarize it in the note');
+    expect(errors[0]).not.toContain('mode=');
   });
 
   it('refuses an unknown license, because it resolves to the defect row', () => {
@@ -94,5 +98,104 @@ describe('stamping the license file', () => {
       dir,
     );
     expect(errors).toHaveLength(2);
+  });
+});
+
+describe('own-words notes about a licensed source', () => {
+  // The corpus this was written against records the SOURCE's license on notes that are the
+  // Foundry's own summaries of it — 33 all-rights-reserved and 20 NC sources, none of whose text
+  // survives into the note. Keying the check on `mode` policed those notes as though they were
+  // the papers, and no mode could satisfy it: own-words-only rows permit nothing to pass through.
+  it('carries an own-words summary of an all-rights-reserved paper', () => {
+    const errors = applyLicensePolicy(
+      [entry({ license: 'LicenseRef-all-rights-reserved', derived: 'own-words-summary' })],
+      dir,
+    );
+    expect(errors).toEqual([]);
+  });
+
+  it('carries an abstract-only summary of an NC paper', () => {
+    const errors = applyLicensePolicy(
+      [entry({ license: 'CC-BY-NC-ND-4.0', derived: 'abstract-only-own-words-summary' })],
+      dir,
+    );
+    expect(errors).toEqual([]);
+  });
+
+  // functional_strings_verbatim: facts and short identifiers are not copyrightable expression, so
+  // a posture naming both readings resolves to own-words rather than to the verbatim signal.
+  it('reads own-words as winning over a verbatim signal in the same posture', () => {
+    const errors = applyLicensePolicy(
+      [
+        entry({
+          license: 'LicenseRef-arXiv-nonexclusive-distrib-1.0',
+          derived:
+            'own-words paraphrase (license is non-CC); functional strings (formulas, parameter names, numeric thresholds) kept verbatim as facts',
+        }),
+      ],
+      dir,
+    );
+    expect(errors).toEqual([]);
+  });
+});
+
+describe('notes that do reproduce upstream expression', () => {
+  // The exemption is not a bypass. A posture that keeps load-bearing quotes carries protected
+  // expression, and the row still governs it.
+  it('refuses quote-bearing carry under an own-words-only license', () => {
+    const errors = applyLicensePolicy(
+      [entry({ license: 'CC-BY-NC-4.0', derived: 'faithful-summary-with-quotes' })],
+      dir,
+    );
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/own-words-only/);
+  });
+
+  it('allows quote-bearing carry under a permissive license', () => {
+    const errors = applyLicensePolicy(
+      [entry({ license: 'CC-BY-4.0', derived: 'faithful-summary-with-quotes' })],
+      dir,
+    );
+    expect(errors).toEqual([]);
+  });
+
+  // A vendored schema or upstream doc is not an authored note, so it declares no posture. It must
+  // stay pass-through by default rather than inheriting the exemption — global_rules.default_deny.
+  it('still polices a ref that declares no posture at all', () => {
+    const errors = applyLicensePolicy([entry({ license: 'LicenseRef-all-rights-reserved' })], dir);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toMatch(/summarize it in the note/);
+  });
+});
+
+describe('license_file hashing is provenance, not permission', () => {
+  // 64 notes in the second instance's corpus are own-words summaries that still declare a
+  // license_file. Exempting them from the MODE check must not stop recording what they cite —
+  // lifting the whole entry out of the function would have dropped every one of those hashes.
+  it('stamps the hash for an exempt own-words note', () => {
+    mkdirSync(path.join(dir, 'LICENSES'), { recursive: true });
+    writeFileSync(path.join(dir, 'LICENSES', 'CC-BY-NC-4.0.txt'), 'nc terms\n');
+    const entries = [
+      entry({
+        license: 'CC-BY-NC-4.0',
+        derived: 'own-words-summary',
+        license_file: 'LICENSES/CC-BY-NC-4.0.txt',
+      }),
+    ];
+    expect(applyLicensePolicy(entries, dir)).toEqual([]);
+    expect(entries[0]?.license_file_hash).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it('still reports a license_file that does not exist', () => {
+    const entries = [
+      entry({
+        license: 'CC-BY-NC-4.0',
+        derived: 'own-words-summary',
+        license_file: 'LICENSES/missing.txt',
+      }),
+    ];
+    expect(applyLicensePolicy(entries, dir)).toEqual([
+      'content/research/note.md: license_file missing: LICENSES/missing.txt',
+    ]);
   });
 });
