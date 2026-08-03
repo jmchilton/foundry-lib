@@ -12,4 +12,6 @@ Comparison results are typed mismatches carrying an `error` or `warning` severit
 drift no longer enters the manual-review queue beside a disputed identity. Author lists are split
 and compared with an overlap check that abstains rather than guessing on short or truncated lists.
 Reference-section lines the extractor could not read are recorded, and the report states extraction
-coverage and per-artifact findings alongside the verdict counts.
+coverage and per-artifact findings alongside the verdict counts. A DOI Crossref does not register
+is retried through DOI content negotiation, so a deposited dataset no longer shares the unresolved
+verdict with a fabricated identifier.

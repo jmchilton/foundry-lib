@@ -128,7 +128,14 @@ Provider evidence has three states:
 A successful HTTP status is not sufficient for `resolved`: normalized metadata must contain a
 nonblank title, and identifier lookups must return the requested DOI, arXiv-derived DOI, PMID, or
 PMCID. Malformed or identity-inconsistent provider payloads are `unavailable`, while the arXiv
-resolver may continue to its Atom-feed fallback. Incremental evidence checkpoints use atomic file
+resolver may continue to its Atom-feed fallback.
+
+A single provider missing a record is not the same as no record existing. Crossref registers most
+scholarly DOIs but not all of them — DataCite covers deposited datasets and software, and further
+agencies cover their own regions and disciplines — so a DOI Crossref does not know is retried
+through content negotiation, which resolves it through whichever agency registered it. Only a DOI
+no agency recognizes is `unresolved`, and a second check that could not run leaves the citation
+`unavailable` rather than borrowing the first provider's miss. Incremental evidence checkpoints use atomic file
 replacement so an interrupted refresh leaves either the prior valid snapshot or the next one.
 
 The citation evaluator produces four verdicts:

@@ -11,6 +11,8 @@ import { scholarlyMetadataSchema } from './schema.js';
 const DEFAULT_USER_AGENT =
   '@galaxy-foundry/audit-citations (https://github.com/jmchilton/foundry-lib)';
 
+const CSL_JSON_MEDIA_TYPE = 'application/vnd.citationstyles.csl+json';
+
 export interface FetchResponse {
   ok: boolean;
   status: number;
@@ -83,7 +85,41 @@ export class ScholarlyResolver {
       assertIdentifier(metadata, query.identifier, 'Crossref');
       return this.#resolved(query, 'crossref', metadata, url, metadata.identifiers[0]);
     } catch (error) {
-      return this.#failure(query, 'crossref', url, error);
+      const crossref = this.#failure(query, 'crossref', url, error);
+      if (crossref.state !== 'unresolved') return crossref;
+      return this.#resolveDoiByContentNegotiation(query, crossref);
+    }
+  }
+
+  /**
+   * Crossref registers most scholarly DOIs but not all of them: DataCite covers deposited datasets
+   * and software, and other agencies cover their own regions and disciplines. Treating a Crossref
+   * miss as the final answer would report every such citation as unresolved, which is the same
+   * verdict a fabricated DOI receives. Content negotiation resolves a DOI through whichever agency
+   * registered it, so only a DOI no agency knows stays unresolved.
+   */
+  async #resolveDoiByContentNegotiation(
+    query: EvidenceQuery & { type: 'identifier' },
+    crossref: CitationEvidence,
+  ): Promise<CitationEvidence> {
+    const url = `https://doi.org/${encodeURI(query.identifier.value)}`;
+    try {
+      const response = await this.#request(url, CSL_JSON_MEDIA_TYPE);
+      if (!response.ok) throw new HttpError(response.status, response.statusText);
+      const metadata = cslMetadata(asRecord(await response.json()));
+      assertIdentifier(metadata, query.identifier, 'DOI content negotiation');
+      return this.#resolved(
+        query,
+        'doi-content-negotiation',
+        metadata,
+        url,
+        metadata.identifiers[0],
+      );
+    } catch (error) {
+      const negotiated = this.#failure(query, 'doi-content-negotiation', url, error);
+      // Crossref not registering a DOI says nothing once no agency recognizes it either, so the
+      // unresolved verdict is reported against the query rather than against either provider.
+      return negotiated.state === 'unresolved' ? crossref : negotiated;
     }
   }
 
@@ -399,6 +435,34 @@ function crossrefMetadata(message: Record<string, unknown>): ScholarlyMetadata {
     ...numberField('year', crossrefYear(message)),
     identifiers: doi ? [{ kind: 'doi', value: doi }] : [],
   };
+}
+
+/**
+ * Normalizes a CSL JSON record, the format every DOI registration agency serves through content
+ * negotiation. Organisational authors carry `literal` where people carry `given`/`family`.
+ */
+function cslMetadata(record: Record<string, unknown>): ScholarlyMetadata {
+  const doi = stringValue(record['DOI']).toLocaleLowerCase();
+  return {
+    title: firstString(record['title']),
+    authors: asArray(record['author'])
+      .map(asRecord)
+      .map((author) => {
+        const literal = stringValue(author['literal']);
+        if (literal) return literal;
+        return [stringValue(author['given']), stringValue(author['family'])]
+          .filter(Boolean)
+          .join(' ');
+      })
+      .filter(Boolean),
+    ...numberField('year', cslYear(record)),
+    identifiers: doi ? [{ kind: 'doi', value: doi }] : [],
+  };
+}
+
+function cslYear(record: Record<string, unknown>): unknown {
+  const issued = asRecord(record['issued']);
+  return asArray(asArray(issued['date-parts'])[0])[0];
 }
 
 function crossrefYear(message: Record<string, unknown>): unknown {

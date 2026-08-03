@@ -67,6 +67,67 @@ describe('scholarly resolvers', () => {
     expect(failed.state).toBe('unavailable');
   });
 
+  it('resolves a DOI Crossref does not register through content negotiation', async () => {
+    const query: EvidenceQuery = {
+      type: 'identifier',
+      identifier: { kind: 'doi', value: '10.5281/zenodo.1234567' },
+    };
+    const requested: string[] = [];
+    const fetch: FetchLike = async (url) => {
+      requested.push(url);
+      if (url.includes('api.crossref.org')) return jsonResponse({}, 404);
+      return jsonResponse({
+        DOI: '10.5281/ZENODO.1234567',
+        title: 'A deposited dataset',
+        author: [{ given: 'Ada', family: 'Lovelace' }, { literal: 'Example Consortium' }],
+        issued: { 'date-parts': [[2024, 3, 1]] },
+      });
+    };
+    const evidence = await new ScholarlyResolver({
+      fetch,
+      crossrefDelayMs: 0,
+      now: () => '2026-08-02T00:00:00.000Z',
+    }).resolve(query);
+    expect(requested.some((url) => url.startsWith('https://doi.org/'))).toBe(true);
+    expect(evidence).toMatchObject({
+      state: 'resolved',
+      provider: 'doi-content-negotiation',
+      metadata: {
+        title: 'A deposited dataset',
+        authors: ['Ada Lovelace', 'Example Consortium'],
+        year: 2024,
+        identifiers: [{ kind: 'doi', value: '10.5281/zenodo.1234567' }],
+      },
+    });
+  });
+
+  it('keeps a DOI no registration agency knows unresolved', async () => {
+    const query: EvidenceQuery = {
+      type: 'identifier',
+      identifier: { kind: 'doi', value: '10.1000/invented' },
+    };
+    const evidence = await new ScholarlyResolver({
+      fetch: async () => jsonResponse({}, 404),
+      crossrefDelayMs: 0,
+    }).resolve(query);
+    expect(evidence.state).toBe('unresolved');
+  });
+
+  it('does not call a DOI unresolved when the second agency check could not run', async () => {
+    const query: EvidenceQuery = {
+      type: 'identifier',
+      identifier: { kind: 'doi', value: '10.5281/zenodo.1234567' },
+    };
+    const evidence = await new ScholarlyResolver({
+      fetch: async (url) => {
+        if (url.includes('api.crossref.org')) return jsonResponse({}, 404);
+        throw new Error('network offline');
+      },
+      crossrefDelayMs: 0,
+    }).resolve(query);
+    expect(evidence.state).toBe('unavailable');
+  });
+
   it('rejects Crossref payloads with missing metadata or the wrong DOI', async () => {
     const query: EvidenceQuery = {
       type: 'identifier',
