@@ -2,15 +2,20 @@
 
 <p class="doc-lede">
 The shared TypeScript substrate for Foundry-pattern instances: small contracts that have
-earned a common home through use in more than one independent Foundry.
+earned a common home through use in more than one independent Foundry, plus explicitly marked
+experimental design extractions that are still earning that status.
 </p>
 
 `foundry-lib` packages the pieces that genuinely transfer between Foundry instances without
-making either instance depend on the other. Today that means four focused contracts: two
-ship shared vocabulary or policy, and two standardize a format while leaving domain content
-with each instance.
+making either instance depend on the other. `audit-citations` is the first deliberate exception:
+an experimental N=1 extraction used to make a prospective contract inspectable before its second
+adopter.
 
 <div class="doc-index">
+  <div>
+    <strong>@galaxy-foundry/audit-citations</strong>
+    <p>Extract and resolve scholarly citations, replay normalized evidence, and review exact-span findings.</p>
+  </div>
   <div>
     <strong>@galaxy-foundry/license-policy</strong>
     <p>Resolve a declared license into the redistribution modes and obligations a Foundry permits.</p>
@@ -39,8 +44,9 @@ with each instance.
   the guide for [license policy](guides/adopting-license-policy.md),
   [kind manifests](guides/producing-kind-manifests.md),
   [reference contracts](guides/composing-reference-contracts.md),
-  [tag registries](guides/adopting-tag-registry.md), or
-  [wiki links](guides/adopting-wiki-links.md).
+  [tag registries](guides/adopting-tag-registry.md),
+  [wiki links](guides/adopting-wiki-links.md), or the
+  [citation-audit architecture](architecture/audit-citations.md).
 - **Deciding whether code belongs here?** Read
   [The shared substrate](concepts/shared-substrate.md) and
   [Package boundaries](architecture/package-boundaries.md).
@@ -55,7 +61,7 @@ with each instance.
 [The Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/) defines an inspectable
 knowledge base of Molds that can be deterministically cast into frozen, provenance-bearing
 artifacts. Each Foundry instance owns its corpus, registries, kind schemas, validator, and
-static site. This repository owns only the contracts that two or more instances have
+static site. This repository normally owns only the contracts that two or more instances have
 independently converged on.
 
 That boundary is deliberate. Similar-looking code is not automatically shared code. A
@@ -65,10 +71,15 @@ removes duplicated maintenance without erasing a real local decision.
 > The governing test is evidence, not aspiration: two instances must already be maintaining
 > the same contract before `foundry-lib` becomes its home.
 
+An experimental package is not represented as having passed that test. It remains `0.x`, names its
+first implementation, and exists to expose a design to falsification. Read the
+[citation-audit architecture](architecture/audit-citations.md) for the first such exception.
+
 ## Packages
 
 | Package                                                                                                  | Use it when you need to…                                          |
 | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`@galaxy-foundry/audit-citations`](https://www.npmjs.com/package/@galaxy-foundry/audit-citations)       | verify scholarly citation identity with replayable evidence       |
 | [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy)         | interpret a note's license as an allowed redistribution posture   |
 | [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds |
 | [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them  |

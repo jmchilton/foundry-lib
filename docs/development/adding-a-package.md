@@ -14,6 +14,12 @@ that the contract already exists in more than one independent Foundry.
 If only one instance needs the behavior, keep it there until another instance independently
 arrives at the same contract.
 
+The narrow exception is an **experimental design extraction**: packaging an N=1 implementation to
+make its contract inspectable. Such a package stays `0.x`, names its source implementation, cannot
+become a dependency of admitted substrate packages, and must document what a second adopter is
+expected to challenge. Do not create speculative base packages around it. See
+[The shared substrate](concepts/shared-substrate.md#experimental-design-extractions).
+
 ## Package shape
 
 Use the existing packages as the baseline:

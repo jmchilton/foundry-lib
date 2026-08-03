@@ -20,6 +20,7 @@ release cadences.
 
 | Package                                                             | What it carries                                                                                           |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [`@galaxy-foundry/audit-citations`](packages/audit-citations)       | Experimental scholarly-citation extraction, normalized evidence, adjudication, and reporting              |
 | [`@galaxy-foundry/license-policy`](packages/license-policy)         | The shared license → redistribution-policy table, and its loader                                          |
 | [`@galaxy-foundry/kind-manifest`](packages/kind-manifest)           | The kind-manifest format: types, zod reader, and the zod-shape-to-fields deriver                          |
 | [`@galaxy-foundry/reference-contract`](packages/reference-contract) | The four typed-reference vocabularies every instance inherits, and the composer that adds its own `kinds` |
@@ -37,6 +38,11 @@ Some things look shared and are not, and the evidence says so:
 The rule this repo follows: a thing moves here once two instances have independently arrived
 at it, not because it seems like it should be shared. Abstracting from N=1 is how you ship a
 shared decision nobody has taken.
+
+`audit-citations` is the explicit experimental exception: an N=1 design extraction whose purpose
+is to make the contract inspectable before a second adopter tests it. Its `0.x` API is provisional,
+it cannot become a dependency of the converged substrate packages, and the first structurally
+different adoption must be allowed to revise it rather than conform to it.
 
 ## Development
 

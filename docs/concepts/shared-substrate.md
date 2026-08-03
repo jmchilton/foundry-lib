@@ -19,6 +19,22 @@ A proposed package belongs in `foundry-lib` only when all of these are true:
 Byte-identical copied files are strong evidence. Similar names, parallel folder structures,
 or a belief that projects _should_ converge are not.
 
+### Experimental design extractions
+
+An explicitly experimental `0.x` package may enter before the first condition when packaging is
+itself the instrument used to understand a prospective contract. That exception must:
+
+- name the N=1 implementation it was extracted from;
+- document which decisions remain provisional;
+- avoid becoming a dependency of packages that have passed the admission test;
+- keep instance paths, vocabularies, and acceptance policy outside its API; and
+- treat the first structurally different adopter as a falsification exercise, not a migration to a
+  settled design.
+
+`audit-citations` is the first such exception. Its citation-specific types are not evidence that
+S2 tool checks or S3 threshold checks share a base schema. Any `audit-base` or `audit-schemas`
+package must still pass the normal admission test after another checker exists.
+
 ## What is shared today
 
 ### Redistribution policy
@@ -74,6 +90,7 @@ Library functions accept the information only the instance can know:
 - Policy helpers accept a policy value instead of reading module state.
 - `buildReferenceContract` accepts the instance's `kinds`.
 - `tagRegistry` accepts an already-parsed instance registry.
+- `extractCitations` accepts explicit source documents and carries artifact kinds opaquely.
 - The producer supplies repository identity.
 - The consumer supplies the fetched revision.
 

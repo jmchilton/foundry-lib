@@ -5,6 +5,21 @@ TypeScript entry point and package README.
 
 [Open the TypeDoc reference](api/typedoc/index.html ':ignore')
 
+## `@galaxy-foundry/audit-citations`
+
+The public surface includes:
+
+- strict Zod schemas and parsers for scans, evidence snapshots, adjudications, and runs;
+- extraction: `extractCitations` and `extractIdentifiers`;
+- evidence: `collectEvidence`, `evidenceQueries`, `evidenceId`, and the `CitationResolver`
+  interface;
+- provider resolution: `ScholarlyResolver`;
+- evaluation and reporting: `evaluateCitation`, `buildCitationAuditRun`, and
+  `renderCitationAuditMarkdown`; and
+- CLI configuration parsing and explicit source-document loading.
+
+Start with [Citation audit architecture and schemas](architecture/audit-citations.md).
+
 ## `@galaxy-foundry/license-policy`
 
 The public surface includes:

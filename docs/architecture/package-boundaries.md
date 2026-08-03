@@ -21,12 +21,16 @@ already converged across instances.
 | Registry and schema construction  | does not own          | owns             |
 | Producer repository identity      | validates and carries | declares         |
 | Vendored snapshot revision        | carries               | consumer records |
+| Citation-audit wire formats       | owns experimentally   | consumes         |
+| Citation source paths/kinds       | carries opaquely      | declares         |
+| Citation-page host trust          | enforces allowlist    | declares hosts   |
+| Audit release/acceptance policy   | does not own          | owns             |
 
 ## Explicit inputs over ambient context
 
 Shared functions do not discover an instance's application container. The caller passes the
-resolved policy, schema shape, reference kinds, tag-registry contents, source identity, or
-revision.
+resolved policy, schema shape, reference kinds, tag-registry contents, source identity, revision,
+or explicit citation source documents.
 
 That makes the package:
 
@@ -75,6 +79,8 @@ Dependencies stay narrow:
 - `license-policy` owns YAML parsing through `js-yaml`.
 - `kind-manifest` uses a Zod peer so it reflects the caller's schema instance.
 - `reference-contract` and `tag-registry` own YAML parsing through `js-yaml`.
+- `audit-citations` owns Zod validation for its JSON wire documents and `fast-glob` only in its CLI
+  filesystem adapter.
 - packages do not depend on each other merely because they share a repository.
 
 The monorepo coordinates testing and publication, not runtime coupling.
