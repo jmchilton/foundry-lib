@@ -81,6 +81,20 @@ when, under what note, what was left open. None of it is derivable from the sour
 caster that rebuilt the record from scratch would drop it silently — and a drift gate cannot
 catch that, because the gate compares against exactly what the caster would write.
 
+## Licences are checked against what the cast did
+
+`applyLicensePolicy` runs the shared redistribution-policy table over the assembled refs,
+keyed off each ref's `mode` — carrying a note verbatim under an own-words-only licence is the
+violation; paraphrasing the same note is not. It stamps the content hash of the licence file
+each redistributed ref travels under, so the record says which licence text was in force.
+
+It returns one message per violation rather than throwing. A cast reports all its problems
+together, and a licence failure has to combine with the unresolved refs and drifted artifacts
+found in the same run.
+
+Which notes must declare a `license_file` at all stays with your validator: only an instance
+can tell a Foundry-authored licence annotation from genuine third-party redistribution.
+
 ## Install
 
 ```sh
