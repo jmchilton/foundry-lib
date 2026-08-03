@@ -302,6 +302,42 @@ const SMOKE = {
       rmSync(docsDir, { recursive: true, force: true });
     }
   },
+  '@galaxy-foundry/cast': (mod) => {
+    // No bundled data — targets and their layouts are per-instance — so what this proves is
+    // that the placement rules and the drift decision survive packing.
+    if (mod.resolveBundlePath('skills/{mold}', 'a') !== 'skills/a') {
+      throw new Error('packed resolver did not substitute the bundle name');
+    }
+    for (const template of ['skills', '../{mold}', '/abs/{mold}']) {
+      let refused = false;
+      try {
+        mod.resolveBundlePath(template, 'a');
+      } catch {
+        refused = true;
+      }
+      if (!refused) throw new Error(`packed resolver accepted ${template}`);
+    }
+    // `bundle_path: {mold}` is YAML flow-mapping syntax, so the loader hands back an object.
+    let named = false;
+    try {
+      mod.bundlePathOf({ mold: null }, 'casts/claude/_target.yml');
+    } catch (e) {
+      named = e.message.startsWith('casts/claude/_target.yml:');
+    }
+    if (!named) throw new Error('packed validator did not name the declaring file');
+
+    // A drifted artifact under --check records what was on disk, not what was wanted.
+    const drifted = { reason: 'drifted', currentHash: 'found', expectedHash: 'wanted' };
+    if (mod.recordedHash(drifted, true) !== 'found') {
+      throw new Error('packed recorder reported the expected hash for a failed check');
+    }
+    if (mod.recordedHash(drifted, false) !== 'wanted') {
+      throw new Error('packed recorder did not report the written hash');
+    }
+    if (mod.PROVENANCE_SCHEMA_VERSION !== 4) {
+      throw new Error('packed package emits a different provenance version');
+    }
+  },
 };
 
 let failures = 0;

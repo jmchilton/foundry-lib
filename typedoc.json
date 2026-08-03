@@ -6,7 +6,8 @@
     "packages/reference-contract",
     "packages/tag-registry",
     "packages/site-kit",
-    "packages/wiki-links"
+    "packages/wiki-links",
+    "packages/cast"
   ],
   "entryPointStrategy": "packages",
   "highlightLanguages": ["ts", "js", "json", "bash", "sh", "css", "yaml", "astro"],
