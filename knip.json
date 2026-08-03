@@ -5,6 +5,10 @@
       "entry": ["scripts/*.mjs"],
       "project": ["scripts/*.mjs"]
     },
+    "packages/cast": {
+      "entry": ["test/**/*.test.ts"],
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
     "packages/kind-manifest": {
       "entry": ["test/**/*.test.ts"],
       "project": ["src/**/*.ts", "test/**/*.ts"]

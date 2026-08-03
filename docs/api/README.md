@@ -70,6 +70,23 @@ The public surface includes:
 
 Start with [Adopt wiki links](guides/adopting-wiki-links.md).
 
+## `@galaxy-foundry/cast`
+
+The public surface includes:
+
+- placement: `bundleDir`, `bundlePathTemplate`, `resolveBundlePath`, `bundlePathOf`,
+  `castsTargetDir`, `DEFAULT_BUNDLE_PATH`, and `CASTS_DIR`;
+- reconciliation: `reconcile`, `reconcileText`, `driftOf`, `recordedHash`, and the `Drift`
+  type;
+- hashing: `sha256Text` and `sha256File`;
+- bundle hygiene: `copyVerbatim`, `pruneEmptyDirs`, and `gitHead`; and
+- the provenance record: `PROVENANCE_SCHEMA_VERSION`, `readProvenanceCarryOver`, and the
+  `Provenance`, `ProvenanceRefEntry`, `ProvenanceArtifacts`, and `ValidationResult` types.
+
+The package renders nothing and resolves no references. What a bundle contains is the
+instance's; what a bundle _is_ — where it sits, whether it is current, what it records — is
+here.
+
 ## Source and package documentation
 
 TypeDoc links symbols back to the GitHub source and presents each package README at its
