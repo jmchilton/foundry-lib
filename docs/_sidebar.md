@@ -13,6 +13,7 @@
   - [Adopt wiki links](guides/adopting-wiki-links.md)
   - [Migrate a vendored contract](guides/migrating-vendored-contracts.md)
 - **Architecture**
+  - [Citation audits](architecture/audit-citations.md)
   - [Package boundaries](architecture/package-boundaries.md)
   - [Manifest provenance](architecture/manifest-provenance.md)
 - **API**

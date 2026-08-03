@@ -1,5 +1,18 @@
 # Choose a package
 
+## Experimental: `@galaxy-foundry/audit-citations`
+
+Choose `audit-citations` to extract scholarly citations from explicit text artifacts, resolve them
+through normalized provider evidence, replay an audit offline, and record exact-span manual review.
+The consuming repository supplies source rules, artifact kinds, trusted citation-page hosts, and
+acceptance policy.
+
+This package is an intentional N=1 design extraction and remains `0.x`. It does not define generic
+audit candidates or verdicts for future tool and threshold checks. Read
+[Citation audit architecture and schemas](architecture/audit-citations.md).
+
+## Admitted shared-substrate packages
+
 The packages solve adjacent but separate cross-instance problems. Install one without
 bringing in the other.
 

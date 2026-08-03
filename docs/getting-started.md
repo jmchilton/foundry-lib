@@ -15,7 +15,8 @@ different responsibilities.
 
 ## Choose a package
 
-Use `license-policy` when a tool needs to decide how licensed source material may be carried
+Use `audit-citations` when a repository needs deterministic scholarly-citation extraction,
+normalized evidence replay, and exact-span findings. Use `license-policy` when a tool needs to decide how licensed source material may be carried
 into a Foundry. Use `kind-manifest` when an instance needs to publish its kind catalog or a
 consumer needs to validate one. Use `reference-contract` to compose the shared casting
 vocabularies with an instance's reference kinds. Use `tag-registry` to validate and query
@@ -24,6 +25,7 @@ that instance's own tag facets. Use `wiki-links` when a renderer or a validator 
 is how the two drift apart.
 
 ```sh
+pnpm add @galaxy-foundry/audit-citations
 pnpm add @galaxy-foundry/license-policy
 
 # Only when producing manifests from zod 3 schemas:
@@ -36,6 +38,23 @@ pnpm add @galaxy-foundry/wiki-links
 
 `zod` is a peer dependency of `kind-manifest`. The package reflects the same Zod instance
 that built the schemas, so the peer must not be duplicated.
+
+## Audit scholarly citations
+
+The library accepts explicit source documents; repository paths and artifact kinds stay in the
+consumer. The packaged CLI can instead read them from a strict JSON configuration.
+
+```ts
+import { extractCitations } from '@galaxy-foundry/audit-citations';
+
+const scan = extractCitations([
+  { path: 'notes/paper.md', artifactKind: 'research-note', text: markdown },
+]);
+```
+
+Start with the package README and the
+[citation-audit architecture](architecture/audit-citations.md). The package is experimental and
+does not define generic S2/S3 audit types.
 
 ## Resolve a license policy
 

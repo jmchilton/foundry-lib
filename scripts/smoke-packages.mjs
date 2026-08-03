@@ -29,6 +29,61 @@ const packagesDir = path.join(root, 'packages');
 // Each entry names an export the unpacked tarball must actually produce. A tarball
 // that imports but exposes nothing is not a working package.
 const SMOKE = {
+  '@galaxy-foundry/audit-citations': async (mod, peer, unpacked) => {
+    const { z } = await peer('zod');
+
+    const scan = mod.extractCitations([
+      {
+        path: 'notes/example.md',
+        artifactKind: 'note',
+        text: 'Example A. "An example citation." (2024). ' + 'https://doi.org/10.1000/example',
+      },
+    ]);
+    if (scan.candidates.length !== 1) {
+      throw new Error(`packed citation extractor found ${scan.candidates.length} candidates`);
+    }
+    const query = mod.evidenceQueries(scan.candidates[0])[0];
+    const evidence = {
+      id: mod.evidenceId(query),
+      query,
+      provider: 'smoke-fixture',
+      state: 'resolved',
+      observedAt: '2026-08-02T00:00:00.000Z',
+      metadata: {
+        title: 'An example citation',
+        authors: ['Ada Example'],
+        year: 2024,
+        identifiers: [{ kind: 'doi', value: '10.1000/example' }],
+      },
+    };
+    const snapshot = mod.parseCitationEvidenceSnapshot({ schemaVersion: 1, evidence: [evidence] });
+    const run = mod.buildCitationAuditRun(scan, snapshot, {
+      generatedAt: '2026-08-02T00:00:00.000Z',
+    });
+    if (run.summary.resolved !== 1 || mod.parseCitationAuditRun(run).summary.total !== 1) {
+      throw new Error(`packed citation audit produced ${JSON.stringify(run.summary)}`);
+    }
+    if (!mod.renderCitationAuditMarkdown(run, snapshot).includes('10.1000/example')) {
+      throw new Error('packed citation report omitted resolver evidence');
+    }
+    if (!existsSync(path.join(unpacked, 'dist', 'cli.js'))) {
+      throw new Error('tarball has no CLI entrypoint');
+    }
+    const config = await import(pathToFileURL(path.join(unpacked, 'dist', 'config.js')).href);
+    if (typeof config.loadConfiguredDocuments !== 'function') {
+      throw new Error('tarball does not expose the ./config filesystem adapter');
+    }
+    // The package exports its wire schemas, so zod is a peer. Composing an exported schema into
+    // one built from the consumer's own zod is what the peer exists to keep working — a bundled
+    // copy would put two instances in the same tree. Both directions, so neither is vacuous.
+    const envelope = z.object({ run: mod.citationAuditRunSchema });
+    if (!envelope.safeParse({ run }).success) {
+      throw new Error('composed schema rejected a valid run across zod instances');
+    }
+    if (envelope.safeParse({ run: { ...run, schemaVersion: 2 } }).success) {
+      throw new Error('composed schema accepted an unknown schema version');
+    }
+  },
   '@galaxy-foundry/license-policy': (mod) => {
     const policy = mod.bundledPolicy();
     if (!policy || policy.version !== 1)
