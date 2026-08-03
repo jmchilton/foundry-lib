@@ -69,10 +69,4 @@ export type { BuildAuditRunOptions, CorpusProvenance } from './audit.js';
 
 export { renderCitationAuditMarkdown } from './report.js';
 
-export {
-  citationAuditConfigSchema,
-  loadCitationAuditConfig,
-  loadConfiguredDocuments,
-  referenceHeadingPattern,
-} from './config.js';
-export type { CitationAuditConfig } from './config.js';
+export { candidateCorpusDigest, sourceTextDigest } from './identity.js';

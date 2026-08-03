@@ -1,4 +1,4 @@
-import { evidenceId } from './evidence.js';
+import { evidenceId } from './identity.js';
 import { firstAuthorFamily, titleSimilarity } from './match.js';
 import type {
   CitationEvidence,
@@ -15,6 +15,8 @@ export interface FetchResponse {
   ok: boolean;
   status: number;
   statusText: string;
+  /** Final URL after redirects, when the transport reports one. */
+  url?: string;
   json(): Promise<unknown>;
   text(): Promise<string>;
 }
@@ -160,7 +162,7 @@ export class ScholarlyResolver {
     const url = query.identifier.value;
     try {
       const parsed = new URL(url);
-      if (!this.#scholarlyPageHosts.includes(parsed.hostname)) {
+      if (!this.#allowedHost(parsed)) {
         return this.#unavailable(
           query,
           'citation-metadata-page',
@@ -170,6 +172,17 @@ export class ScholarlyResolver {
       }
       const response = await this.#request(url, 'text/html');
       if (!response.ok) throw new HttpError(response.status, response.statusText);
+      // The allowlist is a trust boundary, so a redirect off it does not inherit the trust the
+      // requested host was granted.
+      const finalHost = finalHostname(response, url);
+      if (finalHost && !this.#allowedHost(finalHost)) {
+        return this.#unavailable(
+          query,
+          'citation-metadata-page',
+          `Redirected to a host that is not allowed: ${finalHost.hostname}`,
+          url,
+        );
+      }
       const values = citationMeta(await response.text());
       const title = values.get('citation_title')?.[0];
       if (!title) {
@@ -181,13 +194,11 @@ export class ScholarlyResolver {
         );
       }
       const doi = values.get('citation_doi')?.[0]?.toLocaleLowerCase();
-      const date = values.get('citation_publication_date')?.[0];
+      const year = scholarlyPageYear(url, values.get('citation_publication_date')?.[0]);
       const metadata: ScholarlyMetadata = {
         title,
         authors: values.get('citation_author') ?? [],
-        ...(scholarlyPageYear(url, date) !== undefined
-          ? { year: scholarlyPageYear(url, date) }
-          : {}),
+        ...(year !== undefined ? { year } : {}),
         identifiers: doi ? [{ kind: 'doi', value: doi }] : [query.identifier],
       };
       return this.#resolved(
@@ -294,6 +305,10 @@ export class ScholarlyResolver {
 
   #request(url: string, accept: string): Promise<FetchResponse> {
     return this.#fetch(url, { headers: { 'User-Agent': this.#userAgent, Accept: accept } });
+  }
+
+  #allowedHost(url: URL): boolean {
+    return this.#scholarlyPageHosts.includes(url.hostname);
   }
 
   #resolved(
@@ -447,6 +462,15 @@ function citationMeta(html: string): Map<string, string[]> {
     }
   }
   return values;
+}
+
+function finalHostname(response: FetchResponse, requestedUrl: string): URL | undefined {
+  if (!response.url || response.url === requestedUrl) return undefined;
+  try {
+    return new URL(response.url);
+  } catch {
+    return undefined;
+  }
 }
 
 function scholarlyPageYear(url: string, citationDate: string | undefined): number | undefined {

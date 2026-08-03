@@ -82,12 +82,12 @@ export function renderCitationAuditMarkdown(
   else {
     for (const finding of falsePositives) {
       const candidate = candidates.get(finding.candidateId);
+      if (!candidate)
+        throw new Error(`finding references unknown candidate ${finding.candidateId}`);
       const review = reviews.get(finding.candidateId);
-      if (candidate) {
-        lines.push(
-          `- \`${candidate.span.artifactPath}:${candidate.span.startLine}\` — ${escapeCell(review?.note ?? '')}`,
-        );
-      }
+      lines.push(
+        `- \`${candidate.span.artifactPath}:${candidate.span.startLine}\` — ${escapeCell(review?.note ?? '')}`,
+      );
     }
     lines.push('');
   }

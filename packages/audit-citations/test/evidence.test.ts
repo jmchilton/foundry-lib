@@ -83,6 +83,79 @@ describe('evidence collection', () => {
     expect(persisted[0]?.evidence[0]?.state).toBe('unresolved');
   });
 
+  it('scopes the run snapshot to the candidates while keeping unrelated evidence cached', async () => {
+    const orphanQuery = {
+      type: 'identifier' as const,
+      identifier: { kind: 'doi', value: '10.1000/removed-citation' },
+    };
+    const existing: CitationEvidenceSnapshot = {
+      schemaVersion: CITATION_AUDIT_SCHEMA_VERSION,
+      evidence: [
+        {
+          id: evidenceId(orphanQuery),
+          query: orphanQuery,
+          provider: 'fixture',
+          state: 'unresolved',
+          observedAt: '2026-08-02T00:00:00.000Z',
+          error: 'not found',
+        },
+      ],
+    };
+    const collected = await collectEvidence(scan.candidates, existing, {
+      observedAt: () => '2026-08-02T00:00:00.000Z',
+    });
+    expect(collected.snapshot.evidence.map((record) => record.id)).toEqual([
+      evidenceId({ type: 'identifier', identifier: { kind: 'doi', value: '10.1000/example' } }),
+    ]);
+    expect(collected.cache.evidence.map((record) => record.id)).toContain(evidenceId(orphanQuery));
+  });
+
+  it('produces the same run snapshot regardless of unrelated cache history', async () => {
+    const noise = {
+      type: 'identifier' as const,
+      identifier: { kind: 'doi', value: '10.1000/unrelated' },
+    };
+    const withHistory = await collectEvidence(
+      scan.candidates,
+      {
+        schemaVersion: CITATION_AUDIT_SCHEMA_VERSION,
+        evidence: [
+          {
+            id: evidenceId(noise),
+            query: noise,
+            provider: 'fixture',
+            state: 'unresolved',
+            observedAt: '2026-08-02T00:00:00.000Z',
+            error: 'not found',
+          },
+        ],
+      },
+      { observedAt: () => '2026-08-02T00:00:00.000Z' },
+    );
+    const withoutHistory = await collectEvidence(scan.candidates, undefined, {
+      observedAt: () => '2026-08-02T00:00:00.000Z',
+    });
+    expect(withHistory.snapshot).toEqual(withoutHistory.snapshot);
+  });
+
+  it('rejects a resolver record that does not validate as evidence', async () => {
+    await expect(
+      collectEvidence(scan.candidates, undefined, {
+        refresh: true,
+        resolver: {
+          resolve: async (query) =>
+            ({
+              id: evidenceId(query),
+              query,
+              provider: 'fixture',
+              state: 'resolved',
+              observedAt: '2026-08-02T00:00:00.000Z',
+            }) as never,
+        },
+      }),
+    ).rejects.toThrow(/metadata/u);
+  });
+
   it('refreshes a shared query once and reuses the final record for every candidate', async () => {
     let calls = 0;
     const duplicateCandidates = [

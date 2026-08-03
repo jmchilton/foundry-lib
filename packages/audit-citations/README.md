@@ -111,6 +111,22 @@ const markdownReport = renderCitationAuditMarkdown(run, collected.snapshot);
 Omit `refresh` and the resolver to replay from the evidence snapshot. A missing cached query becomes
 `unavailable`; it is never silently interpreted as a nonexistent citation.
 
+`collectEvidence` returns both `snapshot` and `cache`. Persist `cache`, which retains evidence for
+queries no current candidate references; pass `snapshot`, which holds exactly the evidence the
+candidates reference, to `buildCitationAuditRun` and `renderCitationAuditMarkdown` so a run's
+identity does not depend on the cache's history.
+
+The main entry point never touches the filesystem. The glob and `git` adapter that turns a config
+file into `SourceDocument[]` lives behind a subpath, so importing the library does not pull in
+`fast-glob` or `node:child_process`:
+
+```ts
+import {
+  loadCitationAuditConfig,
+  loadConfiguredDocuments,
+} from '@galaxy-foundry/audit-citations/config';
+```
+
 ## CLI
 
 Create `audit-citations.config.json` in the consuming repository:
@@ -134,6 +150,11 @@ Create `audit-citations.config.json` in the consuming repository:
   "userAgent": "my-foundry-citation-audit/1.0 (https://example.org/contact)"
 }
 ```
+
+`include` and `exclude` are always matched as globs. `trackedOnly` intersects that match with
+`git ls-files`, so it only ever narrows the corpus — it never reinterprets the patterns as git
+pathspecs, which would widen them (a pathspec `*` crosses directory separators; a glob `*` does
+not).
 
 Extract without network access:
 

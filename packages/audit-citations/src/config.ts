@@ -6,9 +6,12 @@ import { promisify } from 'node:util';
 import fg from 'fast-glob';
 import { z } from 'zod';
 
+import { compareCodePoints } from './digest.js';
+import { normalizeArtifactPath } from './extract.js';
 import type { SourceDocument } from './extract.js';
 
 const execFileAsync = promisify(execFile);
+const GIT_LS_FILES_MAX_BUFFER = 64 * 1024 * 1024;
 
 export const citationAuditConfigSchema = z
   .object({
@@ -43,17 +46,17 @@ export async function loadConfiguredDocuments(
   config: CitationAuditConfig,
 ): Promise<SourceDocument[]> {
   const documentKinds = new Map<string, string>();
+  const tracked = config.trackedOnly ? await trackedPaths(root) : undefined;
   for (const source of config.sources) {
-    const paths = config.trackedOnly
-      ? await trackedPaths(root, source.include, source.exclude ?? [])
-      : await fg(source.include, {
-          cwd: root,
-          ignore: source.exclude ?? [],
-          onlyFiles: true,
-          unique: true,
-        });
-    for (const artifactPath of paths) {
-      const normalized = artifactPath.split(path.sep).join('/');
+    const matched = await fg(source.include, {
+      cwd: root,
+      ignore: source.exclude ?? [],
+      onlyFiles: true,
+      unique: true,
+    });
+    for (const artifactPath of matched) {
+      const normalized = normalizeArtifactPath(artifactPath);
+      if (tracked && !tracked.has(normalized)) continue;
       const priorKind = documentKinds.get(normalized);
       if (priorKind && priorKind !== source.artifactKind) {
         throw new Error(
@@ -65,7 +68,7 @@ export async function loadConfiguredDocuments(
   }
   return Promise.all(
     [...documentKinds]
-      .sort(([left], [right]) => left.localeCompare(right))
+      .sort(([left], [right]) => compareCodePoints(left, right))
       .map(async ([artifactPath, artifactKind]) => ({
         path: artifactPath,
         artifactKind,
@@ -81,16 +84,21 @@ export function referenceHeadingPattern(config: CitationAuditConfig): RegExp | u
     : undefined;
 }
 
-async function trackedPaths(
-  root: string,
-  include: readonly string[],
-  exclude: readonly string[],
-): Promise<string[]> {
-  const { stdout } = await execFileAsync('git', ['-C', root, 'ls-files', '--', ...include]);
-  const candidates = stdout.split(/\r?\n/u).filter(Boolean);
-  if (exclude.length === 0) return candidates;
-  const excluded = new Set(await fg([...exclude], { cwd: root, onlyFiles: true, unique: true }));
-  return candidates.filter((candidate) => !excluded.has(candidate));
+/**
+ * The tracked set is only ever intersected with the glob match, never substituted for it. Git
+ * pathspecs and glob patterns do not agree — a pathspec `*` crosses directory separators while a
+ * glob `*` does not — so matching stays with one matcher and `trackedOnly` only narrows.
+ */
+async function trackedPaths(root: string): Promise<Set<string>> {
+  const { stdout } = await execFileAsync('git', ['-C', root, 'ls-files', '-z', '--cached'], {
+    maxBuffer: GIT_LS_FILES_MAX_BUFFER,
+  });
+  return new Set(
+    stdout
+      .split('\0')
+      .filter(Boolean)
+      .map((entry) => normalizeArtifactPath(entry)),
+  );
 }
 
 function escapeRegExp(value: string): string {

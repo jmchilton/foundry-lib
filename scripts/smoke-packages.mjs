@@ -67,6 +67,10 @@ const SMOKE = {
     if (!existsSync(path.join(unpacked, 'dist', 'cli.js'))) {
       throw new Error('tarball has no CLI entrypoint');
     }
+    const config = await import(pathToFileURL(path.join(unpacked, 'dist', 'config.js')).href);
+    if (typeof config.loadConfiguredDocuments !== 'function') {
+      throw new Error('tarball does not expose the ./config filesystem adapter');
+    }
   },
   '@galaxy-foundry/license-policy': (mod) => {
     const policy = mod.bundledPolicy();

@@ -19,9 +19,12 @@ policy.
 | Adjudication format and stale check | owns                      | performs review            |
 | Release or acceptance policy        | does not own              | declares                   |
 
-The library entry point receives `SourceDocument[]`. It never searches a repository. The CLI is an
-adapter that turns configured glob rules—or `git ls-files` when `trackedOnly` is set—into explicit
-documents.
+The library entry point receives `SourceDocument[]`. It never searches a repository, and it does not
+pull the glob or `git` machinery into consumers: the filesystem adapter lives behind the
+`@galaxy-foundry/audit-citations/config` subpath. That adapter turns configured glob rules into
+explicit documents, and `trackedOnly` intersects the result with `git ls-files` rather than matching
+through git. Git pathspecs and globs disagree—a pathspec `*` crosses directory separators—so one
+matcher decides membership and `trackedOnly` only ever narrows the corpus.
 
 ## Component flow
 
@@ -89,6 +92,12 @@ CitationAuditRun
   ├─ corpus/evidence digests
   └─ partitions and extractor diagnostics
 ```
+
+`collectEvidence` returns two snapshots. `cache` is everything known, including evidence no current
+candidate references, and is what belongs on disk. `snapshot` is exactly the evidence the supplied
+candidates reference, so `evidenceSnapshotDigest` identifies the run rather than the cache's
+history: the same corpus digests identically whether or not the cache has accumulated evidence for
+citations that have since been deleted.
 
 The normalized shape is intentional. Evidence appears once in the snapshot and findings reference
 it by ID. A run retains its candidate snapshot so a repaired source tree can still replay a

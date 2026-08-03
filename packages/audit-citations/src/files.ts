@@ -31,7 +31,7 @@ async function removeTemporaryFile(pathname: string): Promise<void> {
   }
 }
 
-function isMissingFile(error: unknown): boolean {
+export function isMissingFile(error: unknown): boolean {
   return (
     error !== null &&
     typeof error === 'object' &&

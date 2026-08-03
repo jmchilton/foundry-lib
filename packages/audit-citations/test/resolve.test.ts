@@ -149,6 +149,28 @@ describe('scholarly resolvers', () => {
     });
   });
 
+  it('re-checks the allowlist after redirects before reading citation meta tags', async () => {
+    const query: EvidenceQuery = {
+      type: 'identifier',
+      identifier: { kind: 'url', value: 'https://trusted.example/paper.html' },
+    };
+    const evidence = await new ScholarlyResolver({
+      scholarlyPageHosts: ['trusted.example'],
+      now: () => '2026-08-02T00:00:00.000Z',
+      fetch: async () => ({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        url: 'https://elsewhere.example/paper.html',
+        json: async () => ({}),
+        text: async () => '<meta name="citation_title" content="Redirected paper">',
+      }),
+    }).resolve(query);
+    expect(evidence).toMatchObject({ state: 'unavailable' });
+    expect(evidence.error).toMatch(/elsewhere\.example/u);
+    expect(evidence.metadata).toBeUndefined();
+  });
+
   it('requires an allowlisted host before reading citation meta tags', async () => {
     const query: EvidenceQuery = {
       type: 'identifier',

@@ -14,7 +14,7 @@ import {
 } from './config.js';
 import { collectEvidence } from './evidence.js';
 import { extractCitations } from './extract.js';
-import { writeJsonAtomic, writeTextAtomic } from './files.js';
+import { isMissingFile, writeJsonAtomic, writeTextAtomic } from './files.js';
 import { renderCitationAuditMarkdown } from './report.js';
 import { ScholarlyResolver } from './resolve.js';
 import {
@@ -74,12 +74,11 @@ export async function runCitationCli(arguments_: readonly string[]): Promise<voi
     ...(resolver ? { resolver } : {}),
     ...(argumentsParsed.refresh
       ? {
-          onEvidence: (snapshot: CitationEvidenceSnapshot) =>
-            writeJsonAtomic(evidencePath, snapshot),
+          onEvidence: (cache: CitationEvidenceSnapshot) => writeJsonAtomic(evidencePath, cache),
         }
       : {}),
   });
-  if (argumentsParsed.refresh) await writeJsonAtomic(evidencePath, collected.snapshot);
+  if (argumentsParsed.refresh) await writeJsonAtomic(evidencePath, collected.cache);
   const adjudications = argumentsParsed.adjudications
     ? parseCitationAdjudications(await readJson(path.resolve(root, argumentsParsed.adjudications)))
     : undefined;
@@ -183,15 +182,6 @@ async function gitProvenance(
   } catch {
     return {};
   }
-}
-
-function isMissingFile(error: unknown): boolean {
-  return (
-    error !== null &&
-    typeof error === 'object' &&
-    'code' in error &&
-    (error as { code?: unknown }).code === 'ENOENT'
-  );
 }
 
 if (isDirectExecution()) {

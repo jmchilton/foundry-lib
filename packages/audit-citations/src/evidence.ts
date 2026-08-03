@@ -1,3 +1,4 @@
+import { compareCodePoints } from './digest.js';
 import { evidenceId } from './identity.js';
 import type {
   CitationCandidate,
@@ -5,7 +6,11 @@ import type {
   CitationEvidenceSnapshot,
   EvidenceQuery,
 } from './schema.js';
-import { CITATION_AUDIT_SCHEMA_VERSION, parseCitationEvidenceSnapshot } from './schema.js';
+import {
+  CITATION_AUDIT_SCHEMA_VERSION,
+  citationEvidenceSchema,
+  parseCitationEvidenceSnapshot,
+} from './schema.js';
 
 export { evidenceId, evidenceSnapshotDigest } from './identity.js';
 
@@ -17,12 +22,21 @@ export interface CollectEvidenceOptions {
   refresh?: boolean;
   resolver?: CitationResolver;
   observedAt?: () => string;
-  /** Persist or inspect each newly collected record; useful for interruption-safe refreshes. */
-  onEvidence?: (snapshot: CitationEvidenceSnapshot) => void | Promise<void>;
+  /**
+   * Persist or inspect the cache after each newly collected record; useful for interruption-safe
+   * refreshes. Receives the full cache, which is what belongs on disk.
+   */
+  onEvidence?: (cache: CitationEvidenceSnapshot) => void | Promise<void>;
 }
 
 export interface CollectedEvidence {
+  /**
+   * Exactly the evidence the supplied candidates reference, so a run's identity is a function of
+   * its candidates and their evidence rather than of the cache's history.
+   */
   snapshot: CitationEvidenceSnapshot;
+  /** Every known record, including evidence no current candidate references. Persist this. */
+  cache: CitationEvidenceSnapshot;
   byCandidate: Map<string, CitationEvidence[]>;
 }
 
@@ -61,65 +75,67 @@ export async function collectEvidence(
   const records = new Map(existing.evidence.map((record) => [record.id, record]));
   const byCandidate = new Map<string, CitationEvidence[]>();
   const refreshed = new Set<string>();
+  const referenced = new Set<string>();
   const observedAt = options.observedAt ?? (() => new Date().toISOString());
 
   for (const candidate of candidates) {
+    const queries = evidenceQueries(candidate);
+    if (queries.length === 0) {
+      throw new Error(
+        `candidate ${candidate.id} has no resolvable identifier or bibliographic title`,
+      );
+    }
     const candidateEvidence: CitationEvidence[] = [];
-    for (const query of evidenceQueries(candidate)) {
+    for (const query of queries) {
       const id = evidenceId(query);
+      referenced.add(id);
       let record = records.get(id);
       if (record === undefined || (options.refresh === true && !refreshed.has(id))) {
         record = options.resolver
-          ? await options.resolver.resolve(query)
+          ? validateEvidence(await options.resolver.resolve(query), id)
           : unavailableEvidence(
               query,
               observedAt(),
               'No resolver is configured; supply one for refresh or provide cached evidence.',
             );
-        if (record.id !== id) {
-          throw new Error(
-            `resolver returned evidence id ${record.id} for query ${id}; use evidenceId(query)`,
-          );
-        }
         records.set(id, record);
         refreshed.add(id);
-        await options.onEvidence?.(snapshotFrom(records));
+        // Records are validated as they arrive, so the checkpoint does not revalidate the
+        // whole cache once per collected record.
+        await options.onEvidence?.(snapshotOf(records.values()));
       }
-      candidateEvidence.push(record);
-    }
-    if (candidateEvidence.length === 0) {
-      const query: EvidenceQuery = {
-        type: 'bibliographic',
-        title: `candidate:${candidate.id}`,
-      };
-      const record = unavailableEvidence(
-        query,
-        observedAt(),
-        'Candidate has no resolvable identifier or bibliographic title.',
-      );
-      records.set(record.id, record);
-      await options.onEvidence?.(snapshotFrom(records));
       candidateEvidence.push(record);
     }
     byCandidate.set(candidate.id, candidateEvidence);
   }
 
-  const snapshot = snapshotFrom(records);
-  const normalizedById = new Map(snapshot.evidence.map((record) => [record.id, record]));
+  const cache = parseCitationEvidenceSnapshot(snapshotOf(records.values()));
+  const byId = new Map(cache.evidence.map((record) => [record.id, record]));
+  const snapshot = snapshotOf(cache.evidence.filter((record) => referenced.has(record.id)));
   for (const [candidateId, candidateEvidence] of byCandidate) {
     byCandidate.set(
       candidateId,
-      candidateEvidence.map((record) => normalizedById.get(record.id)!),
+      candidateEvidence.map((record) => byId.get(record.id)!),
     );
   }
-  return { snapshot, byCandidate };
+  return { snapshot, cache, byCandidate };
 }
 
-function snapshotFrom(records: ReadonlyMap<string, CitationEvidence>): CitationEvidenceSnapshot {
-  return parseCitationEvidenceSnapshot({
+function validateEvidence(record: CitationEvidence, id: string): CitationEvidence {
+  const parsed = citationEvidenceSchema.parse(record);
+  if (parsed.id !== id) {
+    throw new Error(
+      `resolver returned evidence id ${parsed.id} for query ${id}; use evidenceId(query)`,
+    );
+  }
+  return parsed;
+}
+
+function snapshotOf(records: Iterable<CitationEvidence>): CitationEvidenceSnapshot {
+  return {
     schemaVersion: CITATION_AUDIT_SCHEMA_VERSION,
-    evidence: [...records.values()].sort((left, right) => left.id.localeCompare(right.id)),
-  });
+    evidence: [...records].sort((left, right) => compareCodePoints(left.id, right.id)),
+  };
 }
 
 function unavailableEvidence(

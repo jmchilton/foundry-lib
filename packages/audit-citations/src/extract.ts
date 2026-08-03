@@ -168,7 +168,7 @@ function extractDescription(
 ): DescribedCitation | undefined {
   const title = extractTitle(sourceText, bibliographyEntry);
   const authorText = title ? extractAuthorText(sourceText, title) : undefined;
-  let year = title || bibliographyEntry ? extractYear(sourceText) : undefined;
+  let year = title !== undefined || bibliographyEntry ? extractYear(sourceText) : undefined;
   if (
     identifiers.some((identifier) => identifier.kind === 'arxiv') &&
     !identifiers.some(
@@ -254,7 +254,8 @@ function isScholarlyPage(url: string, hosts: readonly string[]): boolean {
   }
 }
 
-function normalizeArtifactPath(value: string): string {
+/** Artifact paths are compared and digested as POSIX-separated strings on every platform. */
+export function normalizeArtifactPath(value: string): string {
   return value.split(path.sep).join('/');
 }
 
