@@ -1,0 +1,33 @@
+---
+import { CONTAINER, shellBase, shellHref, type ShellLink } from '../index.js';
+
+interface Props {
+  base: string;
+  fullName: string;
+  repoUrl: string;
+  footerLinks: ShellLink[];
+}
+
+const { base: baseUrl, fullName, repoUrl, footerLinks } = Astro.props;
+const base = shellBase(baseUrl);
+
+const link =
+  'text-(--color-text-on-dark) no-underline hover:text-(--color-accent) transition-colors';
+---
+<footer class="mt-auto bg-(--color-galaxy-dark) text-(--color-text-on-dark)">
+  <div class={`${CONTAINER} mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-4 text-sm opacity-70`}>
+    <div class="flex items-center gap-2">
+      <div class="w-1 h-4 bg-(--color-accent) rounded-full"></div>
+      {/* No year. `new Date().getFullYear()` runs at BUILD time, so the notice reports whenever the
+          site was last deployed rather than anything about the work — and it puts a clock in the
+          output, which rendered-output diffing cannot tell from a real change. */}
+      <span>&copy; {fullName}</span>
+    </div>
+    <div class="flex items-center gap-4">
+      {footerLinks.map(entry => (
+        <a href={shellHref(base, entry)} class={link}>{entry.label}</a>
+      ))}
+      <a href={repoUrl} class={link}>GitHub</a>
+    </div>
+  </div>
+</footer>

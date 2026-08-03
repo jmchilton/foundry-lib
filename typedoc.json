@@ -5,9 +5,11 @@
     "packages/kind-manifest",
     "packages/reference-contract",
     "packages/tag-registry",
+    "packages/site-kit",
     "packages/wiki-links"
   ],
   "entryPointStrategy": "packages",
+  "highlightLanguages": ["ts", "js", "json", "bash", "sh", "css", "yaml", "astro"],
   "packageOptions": {
     "entryPoints": ["src/index.ts"],
     "readme": "README.md",
