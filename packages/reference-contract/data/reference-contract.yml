@@ -13,6 +13,11 @@
 # instances consume it rather than each keeping a copy. Changing a row is a cross-instance
 # change: a version bump here, not an edit in two repos.
 #
+# A `modes` term earns its place by having a renderer somewhere. A mode an author can spell
+# and no caster can perform is worse than a missing one: it parses, it reaches production,
+# and it is refused far from where it was written — if anything refuses it at all. Add a
+# term when the first instance implements it, not when the first design document imagines it.
+#
 # Glosses were reconciled from the two instances that had independently written them. Where
 # they differed, the more specific reading won — three of these descriptions name a rule the
 # validator already enforces (`on-demand` needs a trigger, `hypothesis` needs a verification,
@@ -51,9 +56,6 @@ modes:
   verbatim:
     label: Verbatim
     description: Copied without LLM rewrite. License must permit verbatim carry.
-  condense:
-    label: Condense
-    description: LLM condensation before final packaging.
   sidecar:
     label: Sidecar
     description: Transformed into a structured runtime artifact beside the generated skill.

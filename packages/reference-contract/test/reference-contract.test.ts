@@ -37,7 +37,7 @@ describe('the bundled vocabularies', () => {
   it('ships the terms both instances actually author against', () => {
     expect(Object.keys(inherited.used_at)).toEqual(['cast-time', 'runtime', 'both']);
     expect(Object.keys(inherited.load)).toEqual(['upfront', 'on-demand']);
-    expect(Object.keys(inherited.modes)).toEqual(['verbatim', 'condense', 'sidecar']);
+    expect(Object.keys(inherited.modes)).toEqual(['verbatim', 'sidecar']);
     expect(Object.keys(inherited.evidence)).toEqual([
       'hypothesis',
       'corpus-observed',
@@ -94,8 +94,8 @@ describe('composing an instance contract', () => {
   });
 
   it('narrows an inherited group to what the instance supports', () => {
-    const contract = buildReferenceContract({ kinds, narrow: { modes: ['verbatim', 'sidecar'] } });
-    expect(contractKeys(contract, 'modes')).toEqual(['verbatim', 'sidecar']);
+    const contract = buildReferenceContract({ kinds, narrow: { modes: ['verbatim'] } });
+    expect(contractKeys(contract, 'modes')).toEqual(['verbatim']);
     expect(contractKeys(contract, 'evidence')).toHaveLength(3);
   });
 
@@ -113,8 +113,17 @@ describe('composing an instance contract', () => {
 
   it('refuses narrowing to a term the vocabulary does not have', () => {
     expect(() => buildReferenceContract({ kinds, narrow: { modes: ['verbatm'] } })).toThrow(
-      /cannot narrow `modes` to unknown term\(s\) verbatm \(available: verbatim, condense, sidecar\)/,
+      /cannot narrow `modes` to unknown term\(s\) verbatm \(available: verbatim, sidecar\)/,
     );
+  });
+
+  // An instance cannot keep the LLM mode by asking for it. `narrow` selects from what ships,
+  // so the retired term reads as a typo — which is the whole point of retiring it here rather
+  // than leaving every instance to decline it separately and one to forget.
+  it('refuses `condense`, which no longer ships', () => {
+    expect(() =>
+      buildReferenceContract({ kinds, narrow: { modes: ['verbatim', 'condense'] } }),
+    ).toThrow(/cannot narrow `modes` to unknown term\(s\) condense/);
   });
 
   it('refuses narrowing a group to nothing', () => {

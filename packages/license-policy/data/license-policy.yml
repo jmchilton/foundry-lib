@@ -24,7 +24,7 @@
 # a missing license) resolves to the `default` row: own-words-only + defect.
 #
 # There is no `allowed_modes` column. A row used to map a license to the casting
-# transforms (`verbatim | condense | sidecar`) a ref under it could use, and that
+# transforms a ref under it could use, and that
 # was the wrong axis: a license constrains WHAT A NOTE CONTAINS, never how a bundle
 # is assembled from it. `policy` is the whole answer — pass-through content under
 # an own-words-only row may not be carried in any form, and under a verbatim-ok row
