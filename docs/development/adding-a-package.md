@@ -77,6 +77,18 @@ The package README remains the canonical npm landing page. `pnpm docs:check` der
 package list and verifies all required indexes, the TypeDoc configuration, and the cover count, so a
 new package cannot merge with one of those surfaces missing.
 
+The README must also make four architectural facts inspectable, either directly or through a linked
+page under `docs/architecture/`:
+
+- the ownership boundary between package and consumer;
+- the component or data flow when more than one phase participates;
+- the failure posture, including what throws, returns findings, or owns process exit; and
+- the compatibility/versioning rule for persisted data or consumer-compiled source.
+
+A list of exports is API coverage, not architecture coverage. Prefer a dedicated architecture page
+for a multi-phase package, a package with persisted wire documents, or a package that spans build and
+browser runtime boundaries.
+
 ## Release setup
 
 Add a Changeset for the first version and extend the smoke script before publishing. A new npm

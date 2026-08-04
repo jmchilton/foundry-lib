@@ -39,9 +39,11 @@ package must still pass the normal admission test after another checker exists.
 
 ### Redistribution policy
 
-Both existing instances need the same mapping from a license identifier to permitted casting
-modes and obligations. Shipping the table with a parser makes drift a dependency update
-instead of a cross-repository manual edit.
+Both existing instances need the same mapping from a license identifier to a redistribution
+posture and its obligations. The table deliberately does not name casting modes: a licence
+constrains whose expression a note carries, not how a bundle is assembled from that note.
+Shipping the table with a parser makes drift a dependency update instead of a cross-repository
+manual edit.
 
 ### Kind-manifest format
 

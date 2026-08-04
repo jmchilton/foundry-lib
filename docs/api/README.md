@@ -93,7 +93,8 @@ The public surface includes:
 
 Astro compiles the components from shipped source. Read the
 [`site-kit` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)
-for the required Tailwind source directive and style tokens.
+for the required Tailwind source directive and style tokens, and
+[Site-kit runtime architecture](architecture/site-kit-runtime.md) for the build/browser boundary.
 
 ## `@galaxy-foundry/tag-registry`
 
@@ -137,7 +138,8 @@ The public surface includes:
 
 The package renders nothing and resolves no references. What a bundle contains is the
 instance's; what a bundle _is_ — where it sits, whether it is current, what it records — is
-here.
+here. Read [Deterministic casting architecture](architecture/cast.md) for the ownership and
+composition flow.
 
 ## Source and package documentation
 

@@ -107,6 +107,74 @@ async function checkPackageCoverage(packages) {
   }
 }
 
+async function checkArchitectureConsistency(packages, documentationFiles) {
+  const packageReadmes = packages.map(({ directory }) =>
+    path.join(packagesRoot, directory, 'README.md'),
+  );
+  const activeDocumentation = [...documentationFiles, ...packageReadmes].filter((candidate) =>
+    candidate.endsWith('.md'),
+  );
+  const retiredClaims = [
+    {
+      pattern: /permitted casting\s+modes/iu,
+      message: 'license policy describes redistribution posture, not permitted casting modes',
+    },
+    {
+      pattern: /keyed off each ref['’]s `mode`/iu,
+      message: 'cast licensing keys off `derived`, not `mode`',
+    },
+    {
+      pattern: /astro-pagefind`?\s+1\.9\+/iu,
+      message: 'site-kit uses the astro-pagefind 2 component contract',
+    },
+    {
+      pattern: /hosting is not\s+finalized/iu,
+      message: 'the Foundry Pattern documentation now has a rendered site URL',
+    },
+  ];
+
+  for (const sourcePath of activeDocumentation) {
+    const contents = await readFile(sourcePath, 'utf8');
+    for (const retired of retiredClaims) {
+      if (retired.pattern.test(contents)) {
+        failures.push(
+          `${path.relative(repoRoot, sourcePath)}: stale architecture claim: ${retired.message}`,
+        );
+      }
+    }
+  }
+
+  const siteKitManifestPath = path.join(packagesRoot, 'site-kit', 'package.json');
+  const siteKitManifest = JSON.parse(await readFile(siteKitManifestPath, 'utf8'));
+  if (siteKitManifest.peerDependencies?.['astro-pagefind'] !== '>=2') {
+    failures.push(
+      'packages/site-kit/package.json: astro-pagefind peer must match the documented 2+ runtime',
+    );
+  }
+
+  const patternAnatomyUrl =
+    'https://galaxyproject.github.io/foundry-pattern/pattern/anatomy-of-an-instance/';
+  const referenceDataPath = path.join(
+    packagesRoot,
+    'reference-contract',
+    'data',
+    'reference-contract.yml',
+  );
+  const referenceData = await readFile(referenceDataPath, 'utf8');
+  const configuredSpecUrl = /^spec_url:\s*(\S+)\s*$/mu.exec(referenceData)?.[1];
+  if (configuredSpecUrl !== patternAnatomyUrl) {
+    failures.push(
+      `packages/reference-contract/data/reference-contract.yml: spec_url is ${configuredSpecUrl ?? 'missing'}, expected rendered Pattern URL`,
+    );
+  }
+
+  const referenceReadmePath = path.join(packagesRoot, 'reference-contract', 'README.md');
+  const referenceReadme = await readFile(referenceReadmePath, 'utf8');
+  if (!referenceReadme.includes(patternAnatomyUrl)) {
+    failures.push('packages/reference-contract/README.md: does not document the shipped spec_url');
+  }
+}
+
 async function checkTarget(source, rawTarget) {
   const target = markdownTarget(rawTarget);
   if (!target || isExternal(target)) {
@@ -138,6 +206,7 @@ async function checkTarget(source, rawTarget) {
 const files = await walk(docsRoot);
 const packages = await workspacePackages();
 await checkPackageCoverage(packages);
+await checkArchitectureConsistency(packages, files);
 for (const file of files.filter((candidate) => candidate.endsWith('.md'))) {
   const contents = await readFile(file, 'utf8');
   const links = contents.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/gu);

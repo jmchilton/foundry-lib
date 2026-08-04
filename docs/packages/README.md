@@ -42,8 +42,9 @@ instance still owns its kinds, slug map, validation, reference resolution, and r
 Only one Foundry casts today. The package was extracted early because that Foundry's committed
 bundles provide a byte-identity oracle; adoption by a second caster is the test of the boundary.
 
-[Read the package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/cast)
-or inspect the [generated API](api/typedoc/index.html ':ignore').
+[Read the architecture](architecture/cast.md), the
+[package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/cast), or the
+[generated API](api/typedoc/index.html ':ignore').
 
 ## Admitted shared-substrate packages
 
@@ -123,8 +124,9 @@ Choose this package for:
 The instance supplies its identity, navigation values, styles, and corpus. Consumers must point
 Tailwind at the package's shipped Astro source and define the documented style contract.
 
-[Read the package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)
-or inspect the [generated API](api/typedoc/index.html ':ignore').
+[Read the runtime architecture](architecture/site-kit-runtime.md), the
+[package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit), or
+the [generated API](api/typedoc/index.html ':ignore').
 
 ## `@galaxy-foundry/tag-registry`
 

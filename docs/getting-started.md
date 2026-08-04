@@ -65,7 +65,7 @@ pnpm add @galaxy-foundry/wiki-links
 
 `zod@^4` is a peer of `audit-citations`, `kind-manifest`, and `kind-schema`; schema composition and
 reflection must use the consumer's instance. `site-kit` expects an existing Astro 6+ project with
-`astro-pagefind` 1.9+.
+`astro-pagefind` 2+.
 
 ## Audit citations without adopting a Foundry stack
 
@@ -145,8 +145,9 @@ const observedHash = recordedHash(drift, true);
 ```
 
 The instance still owns what it renders and how references resolve. Read the
-[`cast` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/cast)
-for placement, tree reconciliation, license-policy integration, and provenance.
+[`cast` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/cast) and
+[deterministic casting architecture](architecture/cast.md) for placement, tree reconciliation,
+license-policy integration, and provenance.
 
 ## Resolve a license policy
 
@@ -288,7 +289,9 @@ and define every token and class in the shell style contract.
 
 Use `shellStyleGaps` against emitted CSS so either silent omission becomes a failing test. Read the
 [`site-kit` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)
-for the complete Astro and Tailwind setup.
+for the complete Astro and Tailwind setup, then
+[Site-kit runtime architecture](architecture/site-kit-runtime.md) for the package-owned theme,
+search, and overflow-menu behavior.
 
 ## Load an instance tag registry
 

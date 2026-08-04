@@ -28,10 +28,9 @@
 # rather than one per term: they are defined together, in one place, and repeating the same
 # link twelve times is noise the loader can supply instead.
 #
-# A repository URL, not a site URL, because foundry-pattern's hosting is not finalized —
-# `astro.config.mjs` still carries placeholder `site`/`base` values. Point this at the
-# rendered page, with a per-term anchor, once that lands.
-spec_url: https://github.com/galaxyproject/foundry-pattern/blob/main/content/pattern/anatomy-of-an-instance.md
+# The rendered Pattern page is the reader-facing definition. Keep the URL at the page level until
+# the vocabulary terms themselves have stable rendered anchors; every term inherits this value.
+spec_url: https://galaxyproject.github.io/foundry-pattern/pattern/anatomy-of-an-instance/
 
 used_at:
   cast-time:
