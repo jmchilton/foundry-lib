@@ -32,12 +32,12 @@ list is a value you can check rather than a paragraph you can read carefully.
 
 ```css
 @theme {
-  --color-chrome: #2c3143;        /* the dark bar: header, More menu, footer */
+  --color-chrome: #2c3143; /* the dark bar: header, More menu, footer */
   --color-accent: #e8c547;
   --color-surface: #ffffff;
   --color-text-primary: #2c3143;
   --color-text-on-dark: #f8f9fa;
-  --font-sans: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible', system-ui, sans-serif;
 }
 ```
 
@@ -123,14 +123,17 @@ Parameterizing a difference is how an accident becomes a policy.
 
 ## Exports
 
-| Import                                     | What                                                                                                                 |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `@galaxy-foundry/site-kit`                 | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER` |
-| `@galaxy-foundry/site-kit/SiteShell.astro` | the shell component                                                                                                  |
+| Import                                     | What                                                                                                                                                                    |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@galaxy-foundry/site-kit`                 | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps` |
+| `@galaxy-foundry/site-kit/SiteShell.astro` | the shell component                                                                                                                                                     |
 
-`resolveNav` is exported because it is the only part with behaviour worth asserting on: a
-destination is active on its own page and everything beneath it, compared on whole path segments,
-so `/tag/` does not light up on `/tags/`.
+`resolveNav` is exported because it is the only part of the shell with behaviour worth asserting
+on: a destination is active on its own page and everything beneath it, compared on whole path
+segments, so `/tag/` does not light up on `/tags/`.
+
+`shellStyleGaps` is exported for the opposite reason — it asserts on something the kit deliberately
+does NOT do. See "Define the tokens" above.
 
 ## Peer dependencies
 

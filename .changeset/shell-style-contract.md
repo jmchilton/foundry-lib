@@ -1,5 +1,5 @@
 ---
-"@galaxy-foundry/site-kit": minor
+'@galaxy-foundry/site-kit': minor
 ---
 
 **Consumers must rename one token.** The shell's dark bar reads `--color-chrome`, not
