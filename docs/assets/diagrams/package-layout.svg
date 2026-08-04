@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 530" width="960" height="530" role="img" aria-labelledby="title desc">
+  <title id="title">Workspace package layout</title>
+  <desc id="desc">A package directory contains optional runtime data, a source directory with index.ts, tests, package and TypeScript configuration, README, changelog, and license files.</desc>
+  <defs>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .root { fill: #262b32; stroke: #0e1013; stroke-width: 2; }
+      .folder { fill: #f6ded4; stroke: #e2552b; stroke-width: 2; }
+      .file { fill: #ffffff; stroke: #b9b1a2; stroke-width: 1.5; }
+      .label { fill: #1a1d22; font: 700 15px Arial, sans-serif; }
+      .label-dark { fill: #fbfaf6; font: 700 18px Arial, sans-serif; }
+      .detail { fill: #555b63; font: 12px Arial, sans-serif; }
+      .line { fill: none; stroke: #b9b1a2; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="1" y="1" width="958" height="528" rx="14"/>
+  <rect class="root" x="40" y="35" width="880" height="62" rx="8"/>
+  <text class="label-dark" x="480" y="73" text-anchor="middle">packages/&lt;name&gt;/</text>
+
+  <path class="line" d="M 480 97 V 125 M 105 125 H 842"/>
+  <path class="line" d="M 105 125 V 150 M 285 125 V 150 M 465 125 V 150 M 645 125 V 150 M 842 125 V 150"/>
+
+  <rect class="folder" x="35" y="150" width="140" height="70" rx="7"/>
+  <text class="label" x="105" y="181" text-anchor="middle">data/</text>
+  <text class="detail" x="105" y="202" text-anchor="middle">optional runtime assets</text>
+
+  <rect class="folder" x="215" y="150" width="140" height="70" rx="7"/>
+  <text class="label" x="285" y="181" text-anchor="middle">src/</text>
+  <text class="detail" x="285" y="202" text-anchor="middle">public implementation</text>
+  <path class="line" d="M 285 220 V 248"/>
+  <rect class="file" x="225" y="248" width="120" height="48" rx="6"/>
+  <text class="label" x="285" y="278" text-anchor="middle">index.ts</text>
+
+  <rect class="folder" x="395" y="150" width="140" height="70" rx="7"/>
+  <text class="label" x="465" y="181" text-anchor="middle">test/</text>
+  <text class="detail" x="465" y="202" text-anchor="middle">focused unit tests</text>
+
+  <rect class="folder" x="560" y="150" width="170" height="70" rx="7"/>
+  <text class="label" x="645" y="181" text-anchor="middle">Configuration</text>
+  <text class="detail" x="645" y="202" text-anchor="middle">package + TypeScript</text>
+  <path class="line" d="M 645 220 V 248 M 645 296 V 318 M 645 366 V 388"/>
+  <rect class="file" x="575" y="248" width="140" height="48" rx="6"/>
+  <text class="label" x="645" y="278" text-anchor="middle">package.json</text>
+  <rect class="file" x="575" y="318" width="140" height="48" rx="6"/>
+  <text class="label" x="645" y="348" text-anchor="middle">tsconfig.json</text>
+  <rect class="file" x="575" y="388" width="140" height="48" rx="6"/>
+  <text class="detail" x="645" y="418" text-anchor="middle" style="font-size: 14px; font-weight: 700; fill: #1a1d22">tsconfig.test.json</text>
+
+  <rect class="folder" x="760" y="150" width="165" height="70" rx="7"/>
+  <text class="label" x="842" y="181" text-anchor="middle">Package docs</text>
+  <text class="detail" x="842" y="202" text-anchor="middle">published with package</text>
+  <path class="line" d="M 842 220 V 248 M 842 296 V 318 M 842 366 V 388"/>
+  <rect class="file" x="772" y="248" width="140" height="48" rx="6"/>
+  <text class="label" x="842" y="278" text-anchor="middle">README.md</text>
+  <rect class="file" x="772" y="318" width="140" height="48" rx="6"/>
+  <text class="label" x="842" y="348" text-anchor="middle">CHANGELOG.md</text>
+  <rect class="file" x="772" y="388" width="140" height="48" rx="6"/>
+  <text class="label" x="842" y="418" text-anchor="middle">LICENSE</text>
+
+  <text class="detail" x="40" y="500">Every published entry point, runtime asset, test surface, and package contract has an explicit home.</text>
+</svg>

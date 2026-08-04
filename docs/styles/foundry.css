@@ -451,6 +451,16 @@ a {
   line-height: 1.65;
 }
 
+.markdown-section img[src$='.svg'] {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.75rem 0 2.25rem;
+  background: var(--paper-raised);
+  border-radius: 0.45rem;
+  box-shadow: 0 20px 44px -34px rgb(32 35 31 / 0.65);
+}
+
 .docsify-copy-code-button {
   top: 0.85rem !important;
   right: 0.85rem !important;

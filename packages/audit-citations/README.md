@@ -56,24 +56,7 @@ entries, and arbitrary scholarly URLs are not currently extracted. Author–year
 
 ## Data flow
 
-```text
-instance config ──> CLI filesystem adapter ──> SourceDocument[]
-                                                   │
-                                                   ▼
-                                            extractCitations
-                                                   │
-                                            CitationScan
-                                                   │
-                    normalized cache ─────> collectEvidence <──── provider resolver
-                                                   │
-                                      CitationEvidenceSnapshot
-                                                   │
-                          adjudications ──> buildCitationAuditRun
-                                                   │
-                                             CitationAuditRun
-                                                   │
-                                      JSON output + Markdown report
-```
+![Citation audit pipeline from repository configuration through extraction, normalized evidence, evaluation, and JSON and Markdown reports.](https://raw.githubusercontent.com/jmchilton/foundry-lib/main/docs/assets/diagrams/audit-citations-flow.svg)
 
 Evidence acquisition and evaluation remain separate. A timeout is `unavailable`; a completed
 lookup with no record is `unresolved`; a resolved record describing another work is

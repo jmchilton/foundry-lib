@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc">
+  <title id="title">Citation audit entity relationships</title>
+  <desc id="desc">CitationScan contains citation candidates and their source spans. CitationEvidenceSnapshot stores normalized evidence once. CitationAuditRun retains candidates and references evidence IDs from findings, while also carrying adjudications, digests, partitions, and diagnostics.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e2552b"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .card { fill: #ffffff; stroke: #b9b1a2; stroke-width: 2; }
+      .head { fill: #262b32; }
+      .head-accent { fill: #e2552b; }
+      .title { fill: #fbfaf6; font: 700 18px Arial, sans-serif; }
+      .field { fill: #1a1d22; font: 15px Arial, sans-serif; }
+      .type { fill: #777e87; font: 13px Arial, sans-serif; }
+      .edge { fill: none; stroke: #e2552b; stroke-width: 3; marker-end: url(#arrow); }
+      .edge-label { fill: #9a3a1f; font: 700 12px Arial, sans-serif; letter-spacing: 0.8px; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="1" y="1" width="958" height="558" rx="14"/>
+
+  <rect class="card" x="35" y="35" width="275" height="220" rx="8"/>
+  <path class="head" d="M43 35h259a8 8 0 0 1 8 8v44H35V43a8 8 0 0 1 8-8z"/>
+  <text class="title" x="172" y="68" text-anchor="middle">CitationScan</text>
+  <text class="field" x="55" y="118">candidates[]</text>
+  <text class="type" x="55" y="141">CitationCandidate</text>
+  <text class="field" x="75" y="172">id</text>
+  <text class="field" x="75" y="199">span</text>
+  <text class="type" x="130" y="199">ArtifactSpan</text>
+  <text class="field" x="75" y="226">identifiers[] · described?</text>
+
+  <rect class="card" x="650" y="35" width="275" height="250" rx="8"/>
+  <path class="head" d="M658 35h259a8 8 0 0 1 8 8v44H650V43a8 8 0 0 1 8-8z"/>
+  <text class="title" x="787" y="68" text-anchor="middle">Evidence snapshot</text>
+  <text class="field" x="670" y="118">evidence[]</text>
+  <text class="type" x="670" y="141">CitationEvidence</text>
+  <text class="field" x="690" y="172">id · query</text>
+  <text class="field" x="690" y="199">provider · state · observedAt</text>
+  <text class="field" x="690" y="226">metadata?</text>
+  <text class="type" x="790" y="226">ScholarlyMetadata</text>
+  <text class="field" x="690" y="253">locator / error</text>
+
+  <rect class="card" x="280" y="330" width="400" height="195" rx="8"/>
+  <path class="head-accent" d="M288 330h384a8 8 0 0 1 8 8v44H280v-44a8 8 0 0 1 8-8z"/>
+  <text class="title" x="480" y="363" text-anchor="middle">CitationAuditRun</text>
+  <text class="field" x="305" y="414">candidates[]</text>
+  <text class="field" x="305" y="444">findings[]</text>
+  <text class="type" x="430" y="444">candidateId · evidenceIds[] · verdict</text>
+  <text class="field" x="305" y="474">adjudications[]</text>
+  <text class="type" x="430" y="474">candidateId · sourceDigest · decision</text>
+  <text class="field" x="305" y="504">corpus/evidence digests · partitions · diagnostics</text>
+
+  <path class="edge" d="M 172 255 V 302 H 405 V 324"/>
+  <text class="edge-label" x="235" y="295">RETAINS SNAPSHOT</text>
+  <path class="edge" d="M 787 285 V 302 H 555 V 324"/>
+  <text class="edge-label" x="665" y="295">REFERENCES IDS</text>
+</svg>

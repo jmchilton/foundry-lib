@@ -33,23 +33,7 @@ instance's corpus and policy.
 There is deliberately no top-level `cast()` function. A consuming command composes the helpers
 around its local resolver and renderer:
 
-```text
-Mold + instance schemas + target renderer
-                  │
-                  ├──────────────> expected artifact bytes
-                  │                          │
-target/_target.yml ──> bundle placement      ├──> file reconciliation ──> Drift[]
-                                             │
-resolved references ─────────────────────────┼──> tree reconciliation ──> stale files
-        │                                    │
-        └──> redistribution policy ──────────┼──> violations + licence hashes
-                                             │
-existing provenance ──> carry-over ──────────┴──> assembled provenance
-                                                        │
-                                                        ▼
-                                     consumer aggregates every verdict
-                                     and chooses write/check exit policy
-```
+![Casting composition flow from consumer-owned renderers, target declarations, and existing provenance through placement, reconciliation, licensing, and aggregated verdicts.](assets/diagrams/cast-flow.svg)
 
 The arrows describe information ownership, not a mandatory call order. For example, a consumer may
 resolve every reference before rendering anything so it can report all unresolved inputs together.

@@ -29,34 +29,7 @@ matcher decides membership and `trackedOnly` only ever narrows the corpus.
 
 ## Component flow
 
-```text
-┌───────────────────── consuming repository ─────────────────────┐
-│ source rules · artifact kinds · heading terms · trusted hosts  │
-└────────────────────────────┬────────────────────────────────────┘
-                             │ CitationAuditConfig
-                             ▼
-┌──────────────┐       ┌───────────────┐       ┌────────────────┐
-│ CLI adapter  │──────>│   extractor   │──────>│ CitationScan   │
-│ files + Git  │ docs  │ identifiers + │       │ candidates +   │
-└──────────────┘       │ bibliography  │       │ diagnostics    │
-                       └───────────────┘       └───────┬────────┘
-                                                      │ queries
-                         ┌────────────────────────────┼───────────────┐
-                         ▼                            ▼               ▼
-                  ┌────────────┐              ┌────────────┐  ┌────────────┐
-                  │ normalized │<────────────>│ resolver   │  │ offline    │
-                  │ evidence   │              │ providers  │  │ replay     │
-                  └──────┬─────┘              └────────────┘  └────────────┘
-                         │ evidence IDs
-                         ▼
-                  ┌────────────┐     ┌────────────────┐
-                  │ evaluator  │<────│ adjudications  │
-                  └──────┬─────┘     └────────────────┘
-                         ▼
-                  ┌──────────────────┐
-                  │ CitationAuditRun │───> JSON + Markdown
-                  └──────────────────┘
-```
+![Citation audit component flow from consumer configuration through extraction, evidence acquisition or replay, evaluation, adjudication, and reports.](assets/diagrams/audit-citations-flow.svg)
 
 Extraction, evidence acquisition, evaluation, and review are separate phases. This prevents a
 provider outage from becoming an `unresolved` citation and prevents manual review from rewriting
@@ -70,29 +43,7 @@ extractor diagnostic and is never promoted to a candidate.
 
 ## Entity relationships
 
-```text
-CitationScan
-  └─ candidates[]: CitationCandidate
-       ├─ id
-       ├─ span: ArtifactSpan
-       ├─ identifiers[]: CitationIdentifier
-       └─ described?: DescribedCitation
-
-CitationEvidenceSnapshot
-  └─ evidence[]: CitationEvidence
-       ├─ id
-       ├─ query: identifier | bibliographic
-       ├─ provider + state + observedAt
-       ├─ metadata?: ScholarlyMetadata
-       └─ locator/error
-
-CitationAuditRun
-  ├─ candidates[]
-  ├─ findings[]: candidateId + evidenceIds[] + verdict
-  ├─ adjudications[]: candidateId + sourceDigest + decision
-  ├─ corpus/evidence digests
-  └─ partitions and extractor diagnostics
-```
+![CitationScan and CitationEvidenceSnapshot entities feeding a CitationAuditRun that retains candidates and references normalized evidence by ID.](assets/diagrams/audit-citations-entities.svg)
 
 `collectEvidence` returns two snapshots. `cache` is everything known, including evidence no current
 candidate references, and is what belongs on disk. `snapshot` is exactly the evidence the supplied
