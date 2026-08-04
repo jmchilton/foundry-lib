@@ -2,13 +2,14 @@
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": [
     "packages/audit-citations",
-    "packages/license-policy",
+    "packages/cast",
     "packages/kind-manifest",
+    "packages/kind-schema",
+    "packages/license-policy",
     "packages/reference-contract",
-    "packages/tag-registry",
     "packages/site-kit",
-    "packages/wiki-links",
-    "packages/cast"
+    "packages/tag-registry",
+    "packages/wiki-links"
   ],
   "entryPointStrategy": "packages",
   "highlightLanguages": ["ts", "js", "json", "bash", "sh", "css", "yaml", "astro"],

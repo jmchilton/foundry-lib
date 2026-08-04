@@ -5,32 +5,40 @@ already converged across instances.
 
 ## Ownership map
 
-| Concern                           | `foundry-lib`         | Foundry instance |
-| --------------------------------- | --------------------- | ---------------- |
-| Redistribution-policy table       | owns                  | consumes         |
-| License-to-mode resolution        | owns                  | consumes         |
-| License coherence with note shape | does not own          | owns             |
-| Kind-manifest wire format         | owns                  | consumes         |
-| Field derivation from a Zod shape | owns                  | supplies shape   |
-| Reference casting vocabularies    | owns four shared ones | consumes         |
-| Reference kinds                   | does not own          | declares         |
-| Reference-entry coherence         | documents terms only  | validates        |
-| Tag-registry format               | owns                  | consumes         |
-| Tag facets and values             | does not own          | declares         |
-| Corpus-to-registry drift checks   | cannot observe        | owns             |
-| Registry and schema construction  | does not own          | owns             |
-| Producer repository identity      | validates and carries | declares         |
-| Vendored snapshot revision        | carries               | consumer records |
-| Citation-audit wire formats       | owns experimentally   | consumes         |
-| Citation source paths/kinds       | carries opaquely      | declares         |
-| Citation-page host trust          | enforces allowlist    | declares hosts   |
-| Audit release/acceptance policy   | does not own          | owns             |
+| Concern                            | `foundry-lib`         | Foundry instance       |
+| ---------------------------------- | --------------------- | ---------------------- |
+| Redistribution-policy table        | owns                  | consumes               |
+| License-to-policy resolution       | owns                  | consumes               |
+| License coherence with note shape  | does not own          | owns                   |
+| Kind-manifest wire format          | owns                  | consumes               |
+| Field derivation from a Zod shape  | owns                  | supplies shape         |
+| Kind definition/assembly machinery | owns                  | supplies kinds/context |
+| Kind definitions and field values  | does not own          | owns                   |
+| Reference casting vocabularies     | owns four shared ones | consumes               |
+| Reference kinds                    | does not own          | declares               |
+| Reference-entry coherence          | documents terms only  | validates              |
+| Tag-registry format                | owns                  | consumes               |
+| Tag facets and values              | does not own          | declares               |
+| Corpus-to-registry drift checks    | cannot observe        | owns                   |
+| Wiki-link grammar and transforms   | owns                  | consumes               |
+| Wiki-link targets and addresses    | cannot observe        | owns                   |
+| Reading-shell markup and nav rule  | owns                  | consumes               |
+| Site identity, styles, and pages   | does not own          | owns                   |
+| Cast placement/drift/provenance    | owns                  | consumes               |
+| Cast renderers and target policy   | does not own          | owns                   |
+| Producer repository identity       | validates and carries | declares               |
+| Vendored snapshot revision         | carries               | consumer records       |
+| Citation-audit wire formats        | owns experimentally   | consumes               |
+| Citation source paths/kinds        | carries opaquely      | declares               |
+| Citation-page host trust           | enforces allowlist    | declares hosts         |
+| Audit release/acceptance policy    | does not own          | owns                   |
 
 ## Explicit inputs over ambient context
 
 Shared functions do not discover an instance's application container. The caller passes the
-resolved policy, schema shape, reference kinds, tag-registry contents, source identity, revision,
-or explicit citation source documents.
+resolved policy, schema shape or context, collection table, reference kinds, tag-registry contents,
+wiki-link map, site identity, cast paths and bytes, source identity, revision, or explicit citation
+source documents.
 
 That makes the package:
 
@@ -69,16 +77,23 @@ relationships among policy fields and the ownership boundary between shared and 
 vocabulary.
 
 Keeping data and validation in one versioned package makes a vocabulary or policy release an
-auditable contract change. `kind-manifest` and `tag-registry` intentionally ship no domain
-data; their product is the format.
+auditable contract change. `kind-manifest`, `kind-schema`, `tag-registry`, `site-kit`, and
+`wiki-links` intentionally ship no domain vocabulary; their product is a format, mechanism, or
+shell contract.
 
 ## Dependency posture
 
 Dependencies stay narrow:
 
 - `license-policy` owns YAML parsing through `js-yaml`.
-- `kind-manifest` uses a Zod peer so it reflects the caller's schema instance.
+- `kind-manifest` and `kind-schema` use a Zod 4 peer so they operate on the caller's schema
+  instance; `kind-schema` has a real runtime dependency on `kind-manifest` for the shared manifest
+  vocabulary and bridge.
 - `reference-contract` and `tag-registry` own YAML parsing through `js-yaml`.
+- `cast` depends on `license-policy` because applying redistribution policy is part of a concrete
+  cast, and owns YAML parsing for target layout.
+- `site-kit` peers on Astro and `astro-pagefind` because the consumer compiles its shipped source.
+- `wiki-links` remains dependency-free, including its Markdown transforms.
 - `audit-citations` exports the Zod schemas for its JSON wire documents, so it uses a Zod peer for
   the same reason `kind-manifest` does: a caller composing those schemas must get its own instance.
   Its `fast-glob` and `git` filesystem adapter sits behind the `./config` subpath, so the main entry

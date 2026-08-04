@@ -19,15 +19,25 @@ the package consumers actually install.
 
 ## Unit tests
 
-Package tests should focus on observable contract behavior and invariants.
+Package tests should focus on observable contract behavior and invariants:
 
-For `license-policy`, that includes strict YAML parsing, fallback behavior, policy
-relationships, and resolution helpers. For `kind-manifest`, that includes representative Zod
-shapes, deterministic builds, parsing failures, supported versions, and provenance handling.
-For `reference-contract`, test both sides of the inherited/kinds boundary, deterministic
-narrowing, and invariants on the bundled vocabulary. For `tag-registry`, test structural
-validation and declaration-based membership with synthetic registries as well as real
-instance files.
+- `audit-citations`: extraction boundaries, normalized identities, provider evidence, replay,
+  adjudication, and reporting;
+- `cast`: placement, inert check mode, absence and tree reconciliation, hashing, license policy,
+  and provenance carry-over;
+- `kind-manifest`: representative Zod shapes, deterministic builds, parsing failures, format
+  versions, layout, and provenance;
+- `kind-schema`: type-preserving assembly, collection routing, manifest bridging, docs loading,
+  and companion checks;
+- `license-policy`: strict YAML parsing, conservative fallback, table relationships, license-file
+  discovery, and resolution helpers;
+- `reference-contract`: both sides of the inherited/kinds boundary, deterministic narrowing, and
+  bundled-vocabulary invariants;
+- `site-kit`: base-aware navigation, path-segment matching, and the emitted-CSS style contract;
+- `tag-registry`: structural validation and declaration-based membership with synthetic registries
+  as well as real instance files; and
+- `wiki-links`: exact parsing and resolution, code-span protection, raw-Markdown and remark
+  transforms, and glossary anchors.
 
 ```sh
 pnpm test
@@ -95,8 +105,9 @@ These checks sit between a successful TypeScript build and the runtime smoke tes
 pnpm docs:check
 ```
 
-This builds packages, generates TypeDoc, and checks Markdown, sidebar, navbar, cover, and
-generated API links. The GitHub Pages workflow runs the same command before deployment.
+This builds packages, generates TypeDoc, checks Markdown, sidebar, navbar, cover, and generated API
+links, and verifies that every workspace package appears in the required documentation indexes and
+TypeDoc entry points. The GitHub Pages workflow runs the same command before deployment.
 
 For visual editing, use `pnpm docs:dev` in a second terminal.
 

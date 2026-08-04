@@ -49,6 +49,12 @@ Both instances publish their kinds for cross-instance comparison. They share the
 format, validation, and Zod-shape-to-field derivation. They do not share their actual kind
 schemas.
 
+### Kind-schema machinery
+
+Both instances define a kind as metadata plus a strict Zod builder, assemble those definitions
+against local context, and route corpus paths through local collection tables. The definition and
+assembly machinery is shared; the kinds, field primitives, context, and collection routes are not.
+
 ### Typed-reference contract
 
 Every Mold reference names five controlled values. Four describe casting machinery and are
@@ -69,14 +75,35 @@ different.
 The package therefore ships a parser and accessors, not a registry. Each instance keeps its
 own YAML and corpus-level drift checks.
 
+### Wiki-link grammar
+
+Renderers and validators share exact `[[Target]]` parsing, slugging, and resolution, plus transforms
+for parsed and raw Markdown. The package ships no link map because only an instance knows which
+notes exist and what names address them.
+
+### Reading shell
+
+The Astro document shell, header, footer, and navigation rules converged across two instances. The
+package ships that markup and behavior as source. Each instance supplies its identity, navigation,
+stylesheet, and corpus, and asserts that its emitted CSS satisfies the shell's style contract.
+
+### Deterministic casting mechanics
+
+Bundle placement, drift reconciliation, license-policy application, and provenance recording do
+not name a domain. `cast` owns those mechanics while renderers, validators, kinds, and the slug map
+stay local. Only one instance casts today, so this package is explicitly an early extraction whose
+existing byte-stable bundle corpus provides the first oracle; a second adopter remains the boundary
+test.
+
 ## What stays with an instance
 
 - The base note envelope and its required metadata
-- Kind schemas and registries
+- Kind definitions, field vocabularies, and schema context
 - Reference kinds and cross-field reference coherence
 - Tag facets, tag vocabulary, and corpus drift checks
 - License coherence rules
-- Site rendering and navigation
+- Site identity, navigation values, styles, pages, and domain renderers
+- Cast renderers, target policy, reference resolution, and process-level verdicts
 - Corpus-specific migrations
 
 These areas differ in behavior today. Moving them into a common package would disguise that
@@ -87,9 +114,14 @@ difference rather than remove duplication.
 Library functions accept the information only the instance can know:
 
 - `buildKindManifest` accepts already-resolved Zod shapes.
+- `assemble` accepts the instance's kind context, while collection helpers accept its routing table.
 - Policy helpers accept a policy value instead of reading module state.
 - `buildReferenceContract` accepts the instance's `kinds`.
 - `tagRegistry` accepts an already-parsed instance registry.
+- Wiki-link resolvers accept the instance's link map or resolution callback.
+- `SiteShell` accepts site identity, base, and pathname; `shellStyleGaps` accepts emitted CSS.
+- Cast reconciliation accepts paths and expected bytes but does not choose what to render or when to
+  exit.
 - `extractCitations` accepts explicit source documents and carries artifact kinds opaquely.
 - The producer supplies repository identity.
 - The consumer supplies the fetched revision.

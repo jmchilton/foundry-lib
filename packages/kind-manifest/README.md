@@ -135,15 +135,15 @@ A test pins that: two builds of the same kinds are byte-identical.
 
 ## The zod pin
 
-`describeType` reads `_def.typeName`, which is zod 3 internals, and `zod` is a
-**peer dependency pinned to `^3.25`**.
+`describeType` reads `_zod.def.type`, which is Zod 4 internals, and `zod` is a
+**peer dependency pinned to `^4`**. Zod 3 is not supported.
 
 This is deliberate rather than an oversight: zod exposes no public reflection API, and the
-alternative — a hand-written field table beside each schema — is the second encoding this
-package exists to prevent. zod 4 replaces `_def.typeName` entirely; the test suite fails
-loudly rather than silently rendering every field as `any`.
+alternative — a hand-written field table beside each schema — is the second encoding this package
+exists to prevent. A future Zod release that changes those internals should fail the focused
+reflection tests instead of silently rendering every field as `any`.
 
-The peer range also matters for a second reason: the deriver must read the _same_ zod
+The peer range also matters for a second reason: the deriver must read the _same_ Zod
 instance the schemas were built with. A duplicated zod in the tree renders every field
 `any`.
 

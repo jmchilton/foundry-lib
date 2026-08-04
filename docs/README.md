@@ -7,9 +7,9 @@ experimental design extractions that are still earning that status.
 </p>
 
 `foundry-lib` packages the pieces that genuinely transfer between Foundry instances without
-making either instance depend on the other. `audit-citations` is the first deliberate exception:
-an experimental N=1 extraction used to make a prospective contract inspectable before its second
-adopter.
+making either instance depend on the other. Two packages state their N=1 status explicitly:
+`audit-citations` is an experimental design extraction, while `cast` was extracted early so an
+existing byte-stable bundle corpus can test the boundary before a second caster adopts it.
 
 <div class="doc-index">
   <div>
@@ -17,16 +17,28 @@ adopter.
     <p>Extract and resolve scholarly citations, replay normalized evidence, and review exact-span findings.</p>
   </div>
   <div>
-    <strong>@galaxy-foundry/license-policy</strong>
-    <p>Resolve a declared license into the redistribution modes and obligations a Foundry permits.</p>
+    <strong>@galaxy-foundry/cast</strong>
+    <p>Place bundles, reconcile drift, apply license policy, and record reproducible provenance.</p>
   </div>
   <div>
     <strong>@galaxy-foundry/kind-manifest</strong>
     <p>Derive, publish, validate, and compare the kinds an instance exposes.</p>
   </div>
   <div>
+    <strong>@galaxy-foundry/kind-schema</strong>
+    <p>Define and assemble kind schemas while keeping each instance's kinds local.</p>
+  </div>
+  <div>
+    <strong>@galaxy-foundry/license-policy</strong>
+    <p>Resolve a declared license into its redistribution posture and obligations.</p>
+  </div>
+  <div>
     <strong>@galaxy-foundry/reference-contract</strong>
     <p>Compose shared casting vocabularies with the reference kinds an instance owns.</p>
+  </div>
+  <div>
+    <strong>@galaxy-foundry/site-kit</strong>
+    <p>Render the reading shell from a site's identity, instead of copying a header.</p>
   </div>
   <div>
     <strong>@galaxy-foundry/tag-registry</strong>
@@ -36,16 +48,13 @@ adopter.
     <strong>@galaxy-foundry/wiki-links</strong>
     <p>Resolve <code>[[Target]]</code> the same way in the renderer and the validator.</p>
   </div>
-  <div>
-    <strong>@galaxy-foundry/site-kit</strong>
-    <p>Render the reading shell from a site's identity, instead of copying a header.</p>
-  </div>
 </div>
 
 ## Choose your path
 
-- **Integrating a package?** Start with [Getting started](getting-started.md), then follow
-  the guide for [license policy](guides/adopting-license-policy.md),
+- **Integrating a package?** Start with [Getting started](getting-started.md) and
+  [Choose a package](packages/README.md), then follow the guide for
+  [license policy](guides/adopting-license-policy.md),
   [kind manifests](guides/producing-kind-manifests.md),
   [reference contracts](guides/composing-reference-contracts.md),
   [tag registries](guides/adopting-tag-registry.md),
@@ -64,9 +73,9 @@ adopter.
 
 [The Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/) defines an inspectable
 knowledge base of Molds that can be deterministically cast into frozen, provenance-bearing
-artifacts. Each Foundry instance owns its corpus, registries, kind schemas, validator, and
-static site. This repository normally owns only the contracts that two or more instances have
-independently converged on.
+artifacts. Each Foundry instance owns its corpus, registries, kind definitions, validation policy,
+site identity, styles, and renderers. This repository normally owns only the contracts that two or
+more instances have independently converged on.
 
 That boundary is deliberate. Similar-looking code is not automatically shared code. A
 contract moves here only when the instances already agree in behavior and the extraction
@@ -77,18 +86,22 @@ removes duplicated maintenance without erasing a real local decision.
 
 An experimental package is not represented as having passed that test. It remains `0.x`, names its
 first implementation, and exists to expose a design to falsification. Read the
-[citation-audit architecture](architecture/audit-citations.md) for the first such exception.
+[citation-audit architecture](architecture/audit-citations.md) for that model, and the
+[`cast` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/cast)
+for its separately justified early extraction.
 
 ## Packages
 
 | Package                                                                                                  | Use it when you need to…                                          |
 | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | [`@galaxy-foundry/audit-citations`](https://www.npmjs.com/package/@galaxy-foundry/audit-citations)       | verify scholarly citation identity with replayable evidence       |
-| [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy)         | interpret a note's license as an allowed redistribution posture   |
+| [`@galaxy-foundry/cast`](https://www.npmjs.com/package/@galaxy-foundry/cast)                             | place and reconcile reproducible cast bundles                     |
 | [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds |
+| [`@galaxy-foundry/kind-schema`](https://www.npmjs.com/package/@galaxy-foundry/kind-schema)               | assemble kind schemas and route collections without sharing kinds |
+| [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy)         | interpret a note's license as an allowed redistribution posture   |
 | [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them  |
-| [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet |
 | [`@galaxy-foundry/site-kit`](https://www.npmjs.com/package/@galaxy-foundry/site-kit)                     | stand up the reading shell instead of hand-rolling one            |
+| [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet |
 | [`@galaxy-foundry/wiki-links`](https://www.npmjs.com/package/@galaxy-foundry/wiki-links)                 | resolve `[[Target]]` links in prose and frontmatter, exactly      |
 
 Every package is an ES module, supports Node.js 20 and later, and publishes from CI with npm

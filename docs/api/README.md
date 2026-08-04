@@ -30,7 +30,9 @@ The public surface includes:
   `findLicensePolicyPath`;
 - resolution helpers: `licenseIds`, `isValidLicenseId`, `resolveLicenseRow`, and
   `declaresVerbatimCarry`; and
-- constants: `LICENSE_POLICY_FILE` and `LICENSE_REF_RE`.
+- license files: `loadLicenseFiles`, `findLicenseFileById`, `licenseIdFromFilePath`, and the
+  `LicenseFile` type; and
+- constants: `LICENSE_POLICY_FILE`, `LICENSE_REF_RE`, and `LICENSE_FILE_EXTENSION`.
 
 Start with [Adopt the license policy](guides/adopting-license-policy.md) for an integration
 sequence.
@@ -43,10 +45,27 @@ The public surface includes:
 - field derivation: `describeFields` and `describeType`;
 - validation: `parseKindManifest` and the exported Zod schemas;
 - the format constant: `KIND_MANIFEST_VERSION`; and
-- manifest, source, field, layer, and builder input types.
+- manifest, source, field, layer, note-shape, companion, and builder input types.
 
 Start with [Produce a kind manifest](guides/producing-kind-manifests.md) or
 [Consume a kind manifest](guides/consuming-kind-manifests.md).
+
+## `@galaxy-foundry/kind-schema`
+
+The public surface includes:
+
+- definition and assembly: `kindDefiner`, `assemble`, `buildKindUnion`, `KindDefinition`,
+  `Assembled`, and `AssembledUnion`;
+- manifest bridging: `manifestKinds` and `ManifestKindExtras`;
+- companion declarations and checks: `companionsOf`, `checkCompanions`, `NOTE_FILE`, and their
+  related types;
+- the `./collections` subpath: `matchesCollection`, `collectionOf`, `collectionsClaiming`,
+  `kindOf`, `CollectionRoute`, and `CollectionTable`; and
+- the `./docs` subpath: `loadKindDocs`.
+
+The kinds and collection table are deliberately not exports. Read the
+[`kind-schema` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/kind-schema)
+for the instance-side assembly pattern.
 
 ## `@galaxy-foundry/reference-contract`
 
@@ -61,6 +80,20 @@ The public surface includes:
   `ReferenceContract`, `InheritedVocabularies`, `ContractTerm`, `KindTerm`, and `RefShape`.
 
 Start with [Compose a reference contract](guides/composing-reference-contracts.md).
+
+## `@galaxy-foundry/site-kit`
+
+The public surface includes:
+
+- shell data types: `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, and `ResolvedNav`;
+- navigation helpers: `resolveNav`, `shellBase`, and `shellHref`;
+- the fixed reading measure: `CONTAINER`;
+- the style contract: `SHELL_TOKENS`, `SHELL_CLASSES`, and `shellStyleGaps`; and
+- the shipped `./SiteShell.astro` component entry point.
+
+Astro compiles the components from shipped source. Read the
+[`site-kit` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)
+for the required Tailwind source directive and style tokens.
 
 ## `@galaxy-foundry/tag-registry`
 
@@ -80,6 +113,8 @@ The public surface includes:
 - the grammar: `slugify`, `stripBrackets`, `parseWikiLink`, `WIKI_LINK_RE`, and
   `WIKI_LINK_SCAN_RE`;
 - resolution: `resolveWikiLink`, generic in the instance's target type; and
+- raw-markdown and glossary helpers: `resolveWikiLinksInMarkdown`, `addBoldTermAnchors`, and
+  `slugifyTerm`; and
 - the `./remark` subpath: the default-exported transform plus `MdNode`,
   `WikiLinkDestination`, and `RemarkWikiLinksOptions`.
 
@@ -91,10 +126,12 @@ The public surface includes:
 
 - placement: `bundleDir`, `bundlePathTemplate`, `resolveBundlePath`, `bundlePathOf`,
   `castsTargetDir`, `DEFAULT_BUNDLE_PATH`, and `CASTS_DIR`;
-- reconciliation: `reconcile`, `reconcileText`, `driftOf`, `recordedHash`, and the `Drift`
-  type;
+- reconciliation: `reconcile`, `reconcileText`, `reconcileAbsent`, `driftOf`, `recordedHash`,
+  and the `Drift` and `Absence` types;
 - hashing: `sha256Text` and `sha256File`;
-- bundle hygiene: `copyVerbatim`, `pruneEmptyDirs`, and `gitHead`; and
+- bundle hygiene: `copyVerbatim`, `listFilesUnder`, `reconcileTreeTo`, `pruneEmptyDirs`, and
+  `gitHead`;
+- license enforcement: `applyLicensePolicy`; and
 - the provenance record: `PROVENANCE_SCHEMA_VERSION`, `readProvenanceCarryOver`, and the
   `Provenance`, `ProvenanceRefEntry`, `ProvenanceArtifacts`, and `ValidationResult` types.
 
