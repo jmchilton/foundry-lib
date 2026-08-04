@@ -24,19 +24,7 @@ expected to challenge. Do not create speculative base packages around it. See
 
 Use the existing packages as the baseline:
 
-```text
-packages/<name>/
-├── data/              # optional runtime assets
-├── src/
-│   └── index.ts
-├── test/
-├── package.json
-├── tsconfig.json
-├── tsconfig.test.json
-├── README.md
-├── CHANGELOG.md
-└── LICENSE
-```
+![Standard workspace package layout, including optional runtime data, source, tests, configuration, and published package documentation.](assets/diagrams/package-layout.svg)
 
 The package should:
 

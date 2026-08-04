@@ -5,19 +5,7 @@ right time.
 
 ## The lifecycle
 
-```text
-producer repository
-  resolves local schemas
-  declares repo + path
-  builds and commits manifest
-            |
-            | fetch at immutable commit
-            v
-consumer repository
-  parses untrusted manifest
-  records fetched revision
-  renders catalog or comparison
-```
+![Manifest provenance lifecycle: the producer builds a deterministic manifest, while a consumer fetches it at an immutable commit and records that observed revision.](assets/diagrams/manifest-provenance.svg)
 
 ## Producer facts
 

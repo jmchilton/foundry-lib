@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" role="img" aria-labelledby="title desc">
+  <title id="title">Deterministic casting composition flow</title>
+  <desc id="desc">A consumer combines a Mold, instance schemas, renderer, target layout, resolved references, and prior provenance. Package helpers reconcile files and trees, apply redistribution policy, carry provenance forward, and return findings. The consumer aggregates every verdict and owns exit policy.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e2552b"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .input { fill: #f6ded4; stroke: #e2552b; stroke-width: 2; }
+      .helper { fill: #262b32; stroke: #0e1013; stroke-width: 2; }
+      .output { fill: #ffffff; stroke: #b9b1a2; stroke-width: 2; }
+      .consumer { fill: #e2552b; stroke: #9a3a1f; stroke-width: 2; }
+      .label { fill: #1a1d22; font: 700 16px Arial, sans-serif; }
+      .label-dark { fill: #fbfaf6; font: 700 16px Arial, sans-serif; }
+      .detail { fill: #555b63; font: 13px Arial, sans-serif; }
+      .detail-dark { fill: #d9dde2; font: 13px Arial, sans-serif; }
+      .eyebrow { fill: #9a3a1f; font: 700 12px Arial, sans-serif; letter-spacing: 1.5px; }
+      .edge { fill: none; stroke: #e2552b; stroke-width: 3; marker-end: url(#arrow); }
+      .edge-muted { fill: none; stroke: #777e87; stroke-width: 2.5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="1" y="1" width="958" height="618" rx="14"/>
+  <text class="eyebrow" x="40" y="35">CONSUMER INPUTS</text>
+
+  <rect class="input" x="40" y="55" width="260" height="76" rx="8"/>
+  <text class="label" x="170" y="85" text-anchor="middle">Mold + local renderer</text>
+  <text class="detail" x="170" y="108" text-anchor="middle">schemas · reference resolver · bytes</text>
+
+  <rect class="input" x="350" y="55" width="260" height="76" rx="8"/>
+  <text class="label" x="480" y="85" text-anchor="middle">Target declaration</text>
+  <text class="detail" x="480" y="108" text-anchor="middle">target directory · _target.yml</text>
+
+  <rect class="input" x="660" y="55" width="260" height="76" rx="8"/>
+  <text class="label" x="790" y="85" text-anchor="middle">Existing record</text>
+  <text class="detail" x="790" y="108" text-anchor="middle">hand-authored provenance fields</text>
+
+  <path class="edge" d="M 170 131 V 176"/>
+  <path class="edge" d="M 480 131 V 181"/>
+  <path class="edge" d="M 790 131 V 176"/>
+
+  <rect class="helper" x="60" y="182" width="250" height="96" rx="8"/>
+  <text class="label-dark" x="185" y="215" text-anchor="middle">Reconciliation</text>
+  <text class="detail-dark" x="185" y="239" text-anchor="middle">expected files + owned trees</text>
+  <text class="detail-dark" x="185" y="259" text-anchor="middle">write or inert check</text>
+
+  <rect class="helper" x="355" y="182" width="250" height="96" rx="8"/>
+  <text class="label-dark" x="480" y="215" text-anchor="middle">Bundle placement</text>
+  <text class="detail-dark" x="480" y="239" text-anchor="middle">resolve {mold} inside target</text>
+  <text class="detail-dark" x="480" y="259" text-anchor="middle">reject escape or bad YAML shape</text>
+
+  <rect class="helper" x="650" y="182" width="250" height="96" rx="8"/>
+  <text class="label-dark" x="775" y="215" text-anchor="middle">Carry-over</text>
+  <text class="detail-dark" x="775" y="239" text-anchor="middle">method · agent · history</text>
+  <text class="detail-dark" x="775" y="259" text-anchor="middle">questions · validation results</text>
+
+  <path class="edge-muted" d="M 355 230 H 316"/>
+  <path class="edge-muted" d="M 185 278 V 343"/>
+  <path class="edge-muted" d="M 170 131 V 150 H 25 V 320 H 480 V 343"/>
+  <text class="eyebrow" x="350" y="313" text-anchor="middle">RESOLVED REFERENCES</text>
+  <path class="edge-muted" d="M 775 278 V 343"/>
+
+  <rect class="output" x="60" y="349" width="250" height="92" rx="8"/>
+  <text class="label" x="185" y="382" text-anchor="middle">Drift + stale files</text>
+  <text class="detail" x="185" y="406" text-anchor="middle">current and expected hashes</text>
+  <text class="detail" x="185" y="426" text-anchor="middle">nothing exits here</text>
+
+  <rect class="helper" x="355" y="349" width="250" height="92" rx="8"/>
+  <text class="label-dark" x="480" y="382" text-anchor="middle">License policy</text>
+  <text class="detail-dark" x="480" y="406" text-anchor="middle">derived posture · conservative default</text>
+  <text class="detail-dark" x="480" y="426" text-anchor="middle">violations + licence hashes</text>
+
+  <rect class="output" x="650" y="349" width="250" height="92" rx="8"/>
+  <text class="label" x="775" y="382" text-anchor="middle">Provenance record</text>
+  <text class="detail" x="775" y="406" text-anchor="middle">generated + carried fields</text>
+  <text class="detail" x="775" y="426" text-anchor="middle">describes observed bytes</text>
+
+  <path class="edge" d="M 185 441 V 489 H 390"/>
+  <path class="edge" d="M 480 441 V 489"/>
+  <path class="edge" d="M 775 441 V 489 H 570"/>
+
+  <rect class="consumer" x="220" y="490" width="520" height="88" rx="8"/>
+  <text class="label-dark" x="480" y="524" text-anchor="middle">Consumer aggregates every verdict</text>
+  <text class="detail-dark" x="480" y="549" text-anchor="middle">drift · orphaned files · policy violations · local validation failures</text>
+  <text class="detail-dark" x="480" y="568" text-anchor="middle">owns process exit and release policy</text>
+</svg>

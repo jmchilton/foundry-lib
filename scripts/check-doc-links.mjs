@@ -142,6 +142,20 @@ async function checkArchitectureConsistency(packages, documentationFiles) {
         );
       }
     }
+
+    const textBlocks = contents.matchAll(/```text\s*\n([\s\S]*?)```/gu);
+    for (const block of textBlocks) {
+      const body = block[1] ?? '';
+      const looksLikeDiagram =
+        /[┌┐└┘├┤┬┴┼│─▼▶]/u.test(body) ||
+        /(?:--+>|<--+)/u.test(body) ||
+        /^\s*[|v]\s*(?:\S.*)?$/mu.test(body);
+      if (looksLikeDiagram) {
+        failures.push(
+          `${path.relative(repoRoot, sourcePath)}: text diagram should be an accessible SVG`,
+        );
+      }
+    }
   }
 
   const siteKitManifestPath = path.join(packagesRoot, 'site-kit', 'package.json');
@@ -172,6 +186,40 @@ async function checkArchitectureConsistency(packages, documentationFiles) {
   const referenceReadme = await readFile(referenceReadmePath, 'utf8');
   if (!referenceReadme.includes(patternAnatomyUrl)) {
     failures.push('packages/reference-contract/README.md: does not document the shipped spec_url');
+  }
+
+  const diagramRoot = path.join(docsRoot, 'assets', 'diagrams');
+  const diagramEntries = await readdir(diagramRoot, { withFileTypes: true });
+  for (const diagramEntry of diagramEntries) {
+    if (!diagramEntry.isFile() || !diagramEntry.name.endsWith('.svg')) continue;
+    const diagramPath = path.join(diagramRoot, diagramEntry.name);
+    const svg = await readFile(diagramPath, 'utf8');
+    for (const [token, description] of [
+      ['<title', 'title'],
+      ['<desc', 'description'],
+      ['role="img"', 'image role'],
+      ['aria-labelledby=', 'accessible-name binding'],
+      ['viewBox=', 'responsive viewBox'],
+    ]) {
+      if (!svg.includes(token)) {
+        failures.push(`${path.relative(repoRoot, diagramPath)}: missing SVG ${description}`);
+      }
+    }
+  }
+
+  for (const sourcePath of packageReadmes) {
+    const contents = await readFile(sourcePath, 'utf8');
+    const rawDiagramLinks = contents.matchAll(
+      /https:\/\/raw\.githubusercontent\.com\/jmchilton\/foundry-lib\/main\/docs\/(assets\/diagrams\/[^)\s]+\.svg)/gu,
+    );
+    for (const link of rawDiagramLinks) {
+      const localDiagram = path.join(docsRoot, link[1] ?? '');
+      if (!(await exists(localDiagram))) {
+        failures.push(
+          `${path.relative(repoRoot, sourcePath)}: missing local source for published diagram: ${link[1]}`,
+        );
+      }
+    }
   }
 }
 

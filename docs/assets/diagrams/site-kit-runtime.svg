@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-labelledby="title desc">
+  <title id="title">Site-kit build and browser runtime</title>
+  <desc id="desc">A consumer layout imports global CSS and passes site identity, deployment base, and pathname into SiteShell Astro source. During the build Astro compiles component markup and styles, Tailwind scans package source, and consumer CSS supplies tokens. In the browser inline scripts manage theme and overflow navigation while Pagefind provides search.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e2552b"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .input { fill: #f6ded4; stroke: #e2552b; stroke-width: 2; }
+      .stage { fill: #262b32; stroke: #0e1013; stroke-width: 2; }
+      .output { fill: #ffffff; stroke: #b9b1a2; stroke-width: 2; }
+      .label { fill: #1a1d22; font: 700 17px Arial, sans-serif; }
+      .label-dark { fill: #fbfaf6; font: 700 17px Arial, sans-serif; }
+      .detail { fill: #555b63; font: 13px Arial, sans-serif; }
+      .detail-dark { fill: #d9dde2; font: 13px Arial, sans-serif; }
+      .eyebrow { fill: #9a3a1f; font: 700 12px Arial, sans-serif; letter-spacing: 1.5px; }
+      .edge { fill: none; stroke: #e2552b; stroke-width: 3; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="1" y="1" width="958" height="498" rx="14"/>
+  <text class="eyebrow" x="40" y="36">CONSUMER</text>
+  <rect class="input" x="40" y="55" width="880" height="82" rx="8"/>
+  <text class="label" x="480" y="86" text-anchor="middle">Local Astro layout renders SiteShell.astro</text>
+  <text class="detail" x="480" y="110" text-anchor="middle">imports global.css · passes SiteIdentity · BASE_URL · pathname · page slot</text>
+
+  <path class="edge" d="M 480 137 V 181"/>
+  <text class="eyebrow" x="40" y="179">BUILD</text>
+
+  <rect class="stage" x="40" y="195" width="270" height="105" rx="8"/>
+  <text class="label-dark" x="175" y="229" text-anchor="middle">Astro compiler</text>
+  <text class="detail-dark" x="175" y="253" text-anchor="middle">document + header + footer</text>
+  <text class="detail-dark" x="175" y="274" text-anchor="middle">component-scoped structural CSS</text>
+
+  <rect class="stage" x="345" y="195" width="270" height="105" rx="8"/>
+  <text class="label-dark" x="480" y="229" text-anchor="middle">Tailwind 4 scan</text>
+  <text class="detail-dark" x="480" y="253" text-anchor="middle">reads shipped package source</text>
+  <text class="detail-dark" x="480" y="274" text-anchor="middle">emits referenced utilities</text>
+
+  <rect class="stage" x="650" y="195" width="270" height="105" rx="8"/>
+  <text class="label-dark" x="785" y="229" text-anchor="middle">Consumer CSS</text>
+  <text class="detail-dark" x="785" y="253" text-anchor="middle">six role tokens</text>
+  <text class="detail-dark" x="785" y="274" text-anchor="middle">three global classes</text>
+
+  <path class="edge" d="M 175 300 V 344 H 330"/>
+  <path class="edge" d="M 480 300 V 344"/>
+  <path class="edge" d="M 785 300 V 344 H 630"/>
+  <text class="eyebrow" x="40" y="354">BROWSER</text>
+
+  <rect class="output" x="170" y="365" width="620" height="96" rx="8"/>
+  <text class="label" x="480" y="398" text-anchor="middle">Reader-facing shell</text>
+  <text class="detail" x="480" y="423" text-anchor="middle">theme state + Pagefind palette · active navigation · overflow controls</text>
+  <text class="detail" x="480" y="445" text-anchor="middle">plain inline scripts · no client framework runtime</text>
+</svg>

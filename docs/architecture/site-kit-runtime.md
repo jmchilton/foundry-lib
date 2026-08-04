@@ -25,17 +25,7 @@ deployment root.
 
 ## Build and runtime flow
 
-```text
-consumer layout
-  ├─ imports global.css
-  ├─ passes SiteIdentity + BASE_URL + pathname
-  └─ renders SiteShell.astro from package source
-                 │
-                 ├─ Astro build compiles component markup and scoped styles
-                 ├─ Tailwind scans package source and emits referenced utilities
-                 ├─ consumer CSS supplies tokens and global classes
-                 └─ browser runs inline theme and overflow-menu controls
-```
+![Site-kit flow from a consumer Astro layout through Astro compilation, Tailwind scanning, and consumer CSS to the browser runtime.](assets/diagrams/site-kit-runtime.svg)
 
 The components ship as `.astro` source instead of precompiled JavaScript. This keeps Astro's normal
 component compilation and scoped-style behavior at the consumer boundary, but it also means the
