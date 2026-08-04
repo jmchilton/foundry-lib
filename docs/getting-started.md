@@ -1,30 +1,58 @@
-# Getting started
+# Getting started with `foundry-lib`
 
-Install only the contracts your Foundry needs. The packages are independent and have
-different responsibilities.
+This page is an integration guide for the packages in this repository. It is not the canonical
+sequence for designing a new Foundry.
 
-> New to the architecture? Read
-> [The Foundry Pattern](https://galaxyproject.github.io/foundry-pattern/) first, then return
-> here for the shared TypeScript contracts used by multiple instances.
+## Starting a new Foundry
 
-## Prerequisites
+Start in the Foundry Pattern documentation:
+
+- [Setting up a Foundry](https://galaxyproject.github.io/foundry-pattern/pattern/setting-up-a-foundry/)
+  is the stack-agnostic sequence: bring the domain corpus, pin its vocabulary, identify and author
+  Molds, choose targets, define the external check, and add composition only when the work is
+  sequential.
+- [One Worked Example: the Astro Stack](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/)
+  maps those commitments onto the concrete Astro, TypeScript, Zod, Vitest, and GitHub Pages stack
+  used by the current instances.
+
+Those pages own the full setup story. Return here after choosing an implementation seam and use
+this page for package-level composition.
+
+## Compose only what you need
+
+`foundry-lib` is not an application framework or an all-or-nothing stack. Most packages are small
+Node.js contracts that can be adopted independently. `site-kit` is the only Astro-specific package;
+omit it when a Foundry has another reading surface.
+
+| Capability                                      | Package(s)                     | What remains with the consumer                            |
+| ----------------------------------------------- | ------------------------------ | --------------------------------------------------------- |
+| Audit scholarly citations                       | `audit-citations`              | source selection, trusted hosts, and acceptance policy    |
+| Reconcile and record deterministic cast bundles | `cast`                         | renderers, targets, reference resolution, and exit policy |
+| Define, assemble, and publish kinds             | `kind-schema`, `kind-manifest` | kind definitions, Zod context, docs, and collection map   |
+| Resolve redistribution posture                  | `license-policy`               | note-level license coherence                              |
+| Compose typed-reference vocabularies            | `reference-contract`           | reference kinds and cross-field validation                |
+| Render the shared Astro reading shell           | `site-kit`                     | site identity, styles, corpus, and note renderers         |
+| Parse and query a tag catalog                   | `tag-registry`                 | facets, values, and corpus drift checks                   |
+| Parse and rewrite `[[Target]]` links            | `wiki-links`                   | link map and unresolved-link policy                       |
+
+Two dependency relationships are intentional: `kind-schema` uses `kind-manifest` for its manifest
+bridge, and `cast` uses `license-policy` when checking redistributed references. Installing either
+top-level package brings that dependency with it; no Astro package is pulled into either path.
+
+If an implementation does not use TypeScript or Zod, use the Pattern pages above as the contract
+and implement those invariants in the chosen stack. This repository is one reusable TypeScript
+substrate, not the definition of a Foundry.
+
+## Package prerequisites
 
 - Node.js 20 or later
 - An ES module project
 - pnpm, npm, or another package manager
 
-## Choose a package
-
-Use `audit-citations` for replayable scholarly-citation audits and `cast` for deterministic bundle
-placement, reconciliation, licensing, and provenance. Use `kind-schema` to define and assemble
-instance-owned kinds, then `kind-manifest` to publish their resolved catalog. Use `license-policy`
-to decide how licensed source material may be carried into a Foundry, and `reference-contract` to
-compose shared casting vocabularies with instance-owned reference kinds. Use `site-kit` for the
-shared Astro reading shell, `tag-registry` for an instance's tag facets, and `wiki-links` when a
-renderer and validator must agree on where `[[Target]]` points.
+## Install by capability
 
 ```sh
-pnpm add @galaxy-foundry/audit-citations zod@^4
+pnpm add --save-dev @galaxy-foundry/audit-citations zod@^4
 pnpm add @galaxy-foundry/cast
 pnpm add @galaxy-foundry/kind-manifest zod@^4
 pnpm add @galaxy-foundry/kind-schema zod@^4
@@ -39,10 +67,52 @@ pnpm add @galaxy-foundry/wiki-links
 reflection must use the consumer's instance. `site-kit` expects an existing Astro 6+ project with
 `astro-pagefind` 1.9+.
 
-## Audit scholarly citations
+## Audit citations without adopting a Foundry stack
 
-The library accepts explicit source documents; repository paths and artifact kinds stay in the
-consumer. The packaged CLI can instead read them from a strict JSON configuration.
+`audit-citations` is also a standalone CLI. It needs Node.js and a JSON configuration, but it does
+not need Astro, `site-kit`, a Foundry directory layout, or even Git unless `trackedOnly` is enabled.
+Scanning and offline replay make no network requests; only `audit --refresh` contacts scholarly
+metadata providers.
+
+After the development install above, create `audit-citations.config.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "include": ["docs/**/*.md"],
+      "exclude": ["build/**"],
+      "artifactKind": "documentation"
+    }
+  ],
+  "referenceHeadingTerms": ["references"]
+}
+```
+
+Extract candidates locally:
+
+```sh
+pnpm exec foundry-audit-citations scan \
+  --config audit-citations.config.json \
+  --output build/citation-scan.json
+```
+
+Then acquire normalized provider evidence and render an audit report:
+
+```sh
+pnpm exec foundry-audit-citations audit \
+  --config audit-citations.config.json \
+  --refresh \
+  --evidence audit/provider-evidence.json \
+  --output build/citation-audit.json \
+  --markdown build/citation-audit.md
+```
+
+Commit the evidence cache when reproducible offline replay matters, then omit `--refresh` in CI.
+The consuming repository decides whether unresolved citations or findings should fail its gate.
+
+The same package remains usable as a library when the caller already has document text in memory:
 
 ```ts
 import { extractCitations } from '@galaxy-foundry/audit-citations';
@@ -111,7 +181,7 @@ boundary:
 import { buildKindManifest } from '@galaxy-foundry/kind-manifest';
 import { z } from 'zod';
 
-const shape = z.object({
+const frontmatter = z.object({
   title: z.string(),
   tags: z.array(z.string()).default([]),
 }).shape;
@@ -124,7 +194,9 @@ const manifest = buildKindManifest({
       title: 'Pattern',
       layer: 'substrate',
       summary: 'A reusable solution backed by evidence.',
-      shape,
+      shape: 'file',
+      companions: [],
+      frontmatter,
       doc: 'Patterns capture a solution that can be applied again.',
     },
   ],
@@ -258,6 +330,8 @@ Continue with [Adopt wiki links](guides/adopting-wiki-links.md).
 
 ## Next steps
 
+- Follow the Pattern's [stack-agnostic setup sequence](https://galaxyproject.github.io/foundry-pattern/pattern/setting-up-a-foundry/)
+  or its [worked Astro implementation](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/).
 - Compare the packages in [Choose a package](packages/README.md).
 - Understand the admission rule in [The shared substrate](concepts/shared-substrate.md).
 - Browse all public exports in the [API reference](api/README.md).

@@ -4,7 +4,7 @@ Extract scholarly citations from text artifacts, resolve them against public met
 and produce reproducible citation-integrity findings with exact source spans.
 
 ```sh
-npm install @galaxy-foundry/audit-citations
+npm install @galaxy-foundry/audit-citations zod@^4
 ```
 
 > **Experimental contract:** this package is an intentional N=1 design extraction from the Bio
@@ -158,6 +158,10 @@ import {
 
 ## CLI
 
+The npm package publishes `foundry-audit-citations` as a standalone Node.js CLI. It does not require
+Astro, a Foundry repository, or any other `@galaxy-foundry` package. Git is optional and is consulted
+only when the configuration enables `trackedOnly`.
+
 Create `audit-citations.config.json` in the consuming repository:
 
 ```json
@@ -181,6 +185,18 @@ Create `audit-citations.config.json` in the consuming repository:
 }
 ```
 
+Install the package in the repository as shown above, or run the scan once without adding a
+dependency:
+
+```sh
+npx --yes \
+  --package=@galaxy-foundry/audit-citations \
+  --package=zod@^4 \
+  foundry-audit-citations scan \
+  --config audit-citations.config.json \
+  --output build/citation-scan.json
+```
+
 `include` and `exclude` are always matched as globs. `trackedOnly` intersects that match with
 `git ls-files`, so it only ever narrows the corpus — it never reinterprets the patterns as git
 pathspecs, which would widen them (a pathspec `*` crosses directory separators; a glob `*` does
@@ -189,7 +205,7 @@ not).
 Extract without network access:
 
 ```sh
-foundry-audit-citations scan \
+npx foundry-audit-citations scan \
   --config audit-citations.config.json \
   --output build/citation-scan.json
 ```
@@ -197,7 +213,7 @@ foundry-audit-citations scan \
 Refresh evidence and audit:
 
 ```sh
-foundry-audit-citations audit \
+npx foundry-audit-citations audit \
   --config audit-citations.config.json \
   --refresh \
   --evidence audit/provider-evidence.json \
