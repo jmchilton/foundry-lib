@@ -1,5 +1,44 @@
 # @galaxy-foundry/reference-contract
 
+## 0.2.0
+
+### Minor Changes
+
+- [#49](https://github.com/jmchilton/foundry-lib/pull/49) [`4e3f1d7`](https://github.com/jmchilton/foundry-lib/commit/4e3f1d70983262c58c6824969ea9e7daedc74198) Thanks [@jmchilton](https://github.com/jmchilton)! - Retire `modes.condense`.
+
+  **Breaking:** `condense` is no longer a term in the inherited `modes` vocabulary. An instance
+  that narrows to it now gets the unknown-term error, which is the intended reading — the word is
+  gone, not deprecated.
+
+  It was kept on the argument that the shared vocabulary belongs to the pattern rather than to any
+  instance, and that removing a term would say no Foundry may ever have an LLM phase. Two things
+  undid that. The pattern's own model no longer names condensation as a transform mode, so the
+  reason had lost its referent. And both instances had already declined the term through `narrow`,
+  independently, for the same reason: a mode with no renderer is a word an author can spell and no
+  caster can perform. A capacity nobody has built, that every instance separately refuses, is not
+  capacity — it is a term waiting for the one instance that forgets to decline it.
+
+  Nothing casts differently. No instance had a live `condense` reference, and both were already
+  narrowing it away; this removes the narrowing's reason to exist rather than any behaviour. An
+  instance that wants an LLM phase adds the term back with the renderer that performs it, which is
+  the same bargain every other mode is under.
+
+  The narrowing examples in the README and guide move to `sidecar`, which is a live one: one
+  instance implements it, the other narrows it out having written no renderer.
+
+  Two pieces of prose that named the retired term are corrected with it — the license table's note
+  on the `allowed_modes` column it no longer has, and a README paragraph still counting four
+  shipped-table invariants when three of the four went with that column.
+
+### Patch Changes
+
+- [#52](https://github.com/jmchilton/foundry-lib/pull/52) [`26d830d`](https://github.com/jmchilton/foundry-lib/commit/26d830d852c2ba0148f61bfb89ef04eee08d973d) Thanks [@jmchilton](https://github.com/jmchilton)! - Point reference-contract term documentation at the rendered Foundry Pattern page, and correct
+  site-kit's peer metadata to the Pagefind 2 component contract its shipped Astro source uses.
+  Replace audit-citations' text pipeline with the accessible SVG used by the architecture guide.
+
+  The Pagefind range correction excludes no published compatible version: `astro-pagefind` moved from
+  1.8.6 directly to 2.0.0, so the former `>=1.9` range already resolved only to 2.x releases.
+
 ## 0.1.0
 
 ### Minor Changes
