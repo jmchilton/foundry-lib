@@ -66,8 +66,58 @@ const SMOKE = {
     if (!mod.renderCitationAuditMarkdown(run, snapshot).includes('10.1000/example')) {
       throw new Error('packed citation report omitted resolver evidence');
     }
-    if (!existsSync(path.join(unpacked, 'dist', 'cli.js'))) {
+    const cliEntry = path.join(unpacked, 'dist', 'cli.js');
+    if (!existsSync(cliEntry)) {
       throw new Error('tarball has no CLI entrypoint');
+    }
+    if (!readFileSync(cliEntry, 'utf8').startsWith('#!/usr/bin/env node')) {
+      throw new Error('packed CLI entrypoint has no Node.js shebang');
+    }
+    const packedManifest = JSON.parse(readFileSync(path.join(unpacked, 'package.json'), 'utf8'));
+    if (packedManifest.bin?.['foundry-audit-citations'] !== './dist/cli.js') {
+      throw new Error('tarball does not map foundry-audit-citations to the CLI entrypoint');
+    }
+
+    // Prove the shipped command is usable without a Foundry or Astro tree. Package managers expose
+    // `bin` through a symlink, which is load-bearing here: the direct-execution guard must resolve
+    // that link rather than mistake the command for an import and silently do nothing.
+    const cliRoot = mkdtempSync(path.join(tmpdir(), 'foundry-smoke-citation-cli-'));
+    try {
+      const cliCommand = path.join(cliRoot, 'foundry-audit-citations');
+      symlinkSync(cliEntry, cliCommand);
+      writeFileSync(
+        path.join(cliRoot, 'audit-citations.config.json'),
+        JSON.stringify({
+          schemaVersion: 1,
+          sources: [{ include: ['*.md'], artifactKind: 'documentation' }],
+        }),
+      );
+      writeFileSync(
+        path.join(cliRoot, 'paper.md'),
+        'Example A. "A cited paper." (2024). https://doi.org/10.1000/example\n',
+      );
+      execFileSync(
+        process.execPath,
+        [
+          cliCommand,
+          'scan',
+          '--root',
+          cliRoot,
+          '--config',
+          'audit-citations.config.json',
+          '--output',
+          'build/citation-scan.json',
+        ],
+        { encoding: 'utf8' },
+      );
+      const cliScan = JSON.parse(
+        readFileSync(path.join(cliRoot, 'build', 'citation-scan.json'), 'utf8'),
+      );
+      if (cliScan.candidates?.length !== 1) {
+        throw new Error('packed standalone CLI did not scan its configured document');
+      }
+    } finally {
+      rmSync(cliRoot, { recursive: true, force: true });
     }
     const config = await import(pathToFileURL(path.join(unpacked, 'dist', 'config.js')).href);
     if (typeof config.loadConfiguredDocuments !== 'function') {

@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
 import { execFile } from 'node:child_process';
+import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { buildCitationAuditRun } from './audit.js';
@@ -196,7 +197,10 @@ if (isDirectExecution()) {
 
 function isDirectExecution(): boolean {
   const entrypoint = process.argv[1];
-  return (
-    entrypoint !== undefined && import.meta.url === pathToFileURL(path.resolve(entrypoint)).href
-  );
+  if (entrypoint === undefined) return false;
+  try {
+    return realpathSync(entrypoint) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
 }
