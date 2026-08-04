@@ -7,7 +7,7 @@
 // comparisons at all, and those verdicts have to combine with these.
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 export function sha256Text(text: string): string {
@@ -97,6 +97,40 @@ export function reconcileText(options: {
       writeFileSync(options.path, options.expected);
     },
   });
+}
+
+/**
+ * The absence of a file, as a reconciliation outcome.
+ *
+ * Deliberately not a `Drift`: that type carries an `expectedHash`, and a file that should not
+ * exist has no expected content to hash. Widening that hash to null would push an impossible
+ * case onto every caller that reads it, in order to describe a state none of them produce.
+ */
+export interface Absence {
+  /** Why the file should not be there, or undefined when it already isn't. */
+  reason?: string;
+}
+
+/**
+ * Reconcile a file to ABSENT — the one desired state `reconcile` cannot express.
+ *
+ * A cast writes what its manifest declares, and a bundle still carrying what the manifest has
+ * dropped is a bundle that disagrees with its own provenance. Nothing else catches it: hash
+ * comparison only ever visits files something still claims, so an undeclared file is invisible
+ * to every check while being the first thing an agent listing the directory finds.
+ *
+ * Same `check` contract as `reconcile` — report the reason, change nothing — and the reason is
+ * returned rather than thrown for the same purpose: one run reconciles many files, and the
+ * verdicts have to combine.
+ */
+export function reconcileAbsent(options: {
+  path: string;
+  reason: string;
+  check: boolean;
+}): Absence {
+  if (!existsSync(options.path)) return {};
+  if (!options.check) unlinkSync(options.path);
+  return { reason: options.reason };
 }
 
 /**

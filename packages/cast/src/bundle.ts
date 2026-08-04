@@ -9,6 +9,8 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, rmdirSync } from 'nod
 import { execSync } from 'node:child_process';
 import path from 'node:path';
 
+import { reconcileAbsent } from './reconcile.js';
+
 /** Copy a source file to its destination, creating the destination's directory. */
 export function copyVerbatim(srcAbs: string, dstAbs: string): void {
   mkdirSync(path.dirname(dstAbs), { recursive: true });
@@ -30,6 +32,62 @@ export function pruneEmptyDirs(dir: string): void {
     pruneEmptyDirs(full);
     if (readdirSync(full).length === 0) rmdirSync(full);
   }
+}
+
+/**
+ * Every file under `dir`, as paths relative to `relativeTo`, sorted and slash-separated.
+ *
+ * Sorted so a sweep over the listing reports in the same order on every platform — an unordered
+ * readdir turns one stale file into a diff that moves between runs.
+ */
+export function listFilesUnder(dir: string, relativeTo: string): string[] {
+  if (!existsSync(dir)) return [];
+  const out: string[] = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name),
+  )) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...listFilesUnder(full, relativeTo));
+    else out.push(path.relative(relativeTo, full).split(path.sep).join('/'));
+  }
+  return out;
+}
+
+/**
+ * Reduce a subtree to exactly the files `declared` names, reporting whatever else was there.
+ *
+ * The bundle holds what the manifest says and nothing else. Casting writes each declared file
+ * and, without this, never looks at what was already there — so a file that stops being declared
+ * stays forever, invisible to every hash comparison because comparison only visits what is still
+ * claimed.
+ *
+ * Scope this to the subtree the caster OWNS. A bundle can also hold things a cast did not put
+ * there — harvested run output, notes a human added — and sweeping those is data loss, not
+ * reconciliation. The caller names the subtree precisely for that reason.
+ *
+ * Empty directories left behind are pruned on the write path only; a `check` run must leave the
+ * tree exactly as it found it.
+ */
+export function reconcileTreeTo(options: {
+  root: string;
+  declared: ReadonlySet<string>;
+  relativeTo: string;
+  reason?: (rel: string) => string;
+  check: boolean;
+}): Array<{ file: string; reason: string }> {
+  const stale: Array<{ file: string; reason: string }> = [];
+  const describe = options.reason ?? (() => 'orphan (nothing declares it)');
+  for (const rel of listFilesUnder(options.root, options.relativeTo)) {
+    if (options.declared.has(rel)) continue;
+    const absence = reconcileAbsent({
+      path: path.join(options.relativeTo, rel),
+      reason: describe(rel),
+      check: options.check,
+    });
+    if (absence.reason) stale.push({ file: rel, reason: absence.reason });
+  }
+  if (!options.check) pruneEmptyDirs(options.root);
+  return stale;
 }
 
 /**

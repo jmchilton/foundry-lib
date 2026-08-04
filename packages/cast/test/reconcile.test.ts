@@ -8,6 +8,7 @@ import {
   driftOf,
   recordedHash,
   reconcile,
+  reconcileAbsent,
   reconcileText,
   sha256Text,
   type Drift,
@@ -88,6 +89,37 @@ describe('reconciling', () => {
 
     reconcileText({ path: nested, expected: 'body', label: 'a.md', check: false });
     expect(readFileSync(nested, 'utf8')).toBe('body');
+  });
+});
+
+describe('reconciling to absent', () => {
+  it('deletes a file that should not be there, and says why', () => {
+    const file = path.join(dir, 'stale.json');
+    writeFileSync(file, 'old');
+    const absence = reconcileAbsent({ path: file, reason: 'no tools required', check: false });
+    expect(absence.reason).toBe('no tools required');
+    expect(existsSync(file)).toBe(false);
+  });
+
+  it('reports without deleting on a check run', () => {
+    const file = path.join(dir, 'stale.json');
+    writeFileSync(file, 'old');
+    const absence = reconcileAbsent({ path: file, reason: 'no tools required', check: true });
+    expect(absence.reason).toBe('no tools required');
+    // The whole contract of `check`: a run that reports must leave the tree as it found it, or
+    // the second check passes for the wrong reason.
+    expect(existsSync(file)).toBe(true);
+  });
+
+  it('is silent when the file is already gone', () => {
+    const absence = reconcileAbsent({
+      path: path.join(dir, 'never.json'),
+      reason: 'no tools required',
+      check: false,
+    });
+    // Absent is the DESIRED state, so arriving at it is not a finding. Reporting here would make
+    // every cast that declares no tools announce a stale manifest it never had.
+    expect(absence.reason).toBeUndefined();
   });
 });
 
