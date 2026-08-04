@@ -73,6 +73,67 @@ export interface SiteIdentity {
  */
 export const CONTAINER = 'max-w-6xl';
 
+/**
+ * The custom properties this shell NAMES and does not define.
+ *
+ * The kit brings no stylesheet: every colour above is `bg-(--color-chrome)` or the like, an
+ * arbitrary-value utility that compiles to `var(--color-chrome)` whether or not anything ever
+ * declares it. Miss one and Tailwind still emits the rule, the browser resolves the property to
+ * nothing, and that region of the shell renders with no background — a green build and a page
+ * that looks like a styling opinion rather than a fault.
+ *
+ * A list is exported rather than stated, because an instance satisfies a prose list by reading it
+ * carefully — which is the same guarantee as none. Assert against a built stylesheet with
+ * {@link shellStyleGaps}.
+ *
+ * Every name here is a ROLE: `--color-chrome` is the dark bar behind the header, the "More" menu
+ * and the footer, and says nothing about whose bar it is. A brand name in this list would be a cost
+ * charged to every instance that is not that brand — it has to declare someone else's identity to
+ * get a header. An instance maps its own palette on in one line, which also leaves its brand token
+ * free to go on meaning the brand.
+ */
+export const SHELL_TOKENS = [
+  '--color-chrome',
+  '--color-accent',
+  '--color-surface',
+  '--color-text-primary',
+  '--color-text-on-dark',
+  '--font-sans',
+] as const;
+
+/**
+ * The classes this shell WEARS and does not define, as selectors.
+ *
+ * Same failure as {@link SHELL_TOKENS} and a different mechanism: these are not utilities, so
+ * Tailwind never had an opinion about them. The markup carries the class, no rule matches it, and
+ * the skip link is invisible to exactly the readers it exists for.
+ */
+export const SHELL_CLASSES = ['.skip-link', '.bg-grid', '.nav-link-active'] as const;
+
+/**
+ * What the shell names that a built stylesheet does not supply. Empty is the passing state.
+ *
+ * Hand the CSS a build emitted — every emitted sheet concatenated, not the source. A token counts
+ * as supplied only when its DECLARATION is present, which is why this looks for `--color-chrome:`
+ * with the colon rather than the bare name. Without it the search matches `var(--color-chrome)`,
+ * the shell's own usage, and the check passes on precisely the sites it exists to fail.
+ *
+ * Tailwind 4 tree-shakes theme variables it finds no reference to, so a declaration reaching the
+ * output is evidence of both halves at once: the instance defined the token, AND something asked
+ * for it. A token defined in `@theme` and used nowhere emits nothing and is reported here.
+ *
+ * Unlike the `min-h-dvh` canary in the instances' shell tests, this is not sensitive to where the
+ * caller lives. Those assert on a UTILITY, which Tailwind creates by scanning source text — a test
+ * naming one inside the scanned root keeps it alive by asserting on it. Nothing here is created by
+ * being mentioned: declarations come from CSS, which is never scanned for candidates.
+ */
+export function shellStyleGaps(css: string): string[] {
+  return [
+    ...SHELL_TOKENS.filter((token) => !css.includes(`${token}:`)),
+    ...SHELL_CLASSES.filter((selector) => !css.includes(selector)),
+  ];
+}
+
 /** The nav, cut into what the bar shows and what "More" holds. */
 export interface ResolvedNav {
   /** Destinations on the bar, in order. */

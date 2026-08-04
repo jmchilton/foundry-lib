@@ -6,12 +6,11 @@ import SiteHeader from './SiteHeader.astro';
 /**
  * The reading shell: document skeleton, header, footer, and the page in between.
  *
- * The kit brings no stylesheet of its own. Every class below is either a Tailwind utility or a
- * token name — `--color-galaxy-dark`, `--color-accent`, `--color-surface`, `--color-text-primary`,
- * `--color-text-on-dark`, `--font-sans` — plus three classes the instance defines: `.skip-link`,
- * `.bg-grid`, `.nav-link-active`. The instance owns all of those, and Tailwind has to be pointed
- * at this package's `src/` or none of the utilities here reach its stylesheet. Both of those fail
- * SILENTLY: a green build and an unstyled page. See the README.
+ * The kit brings no stylesheet of its own. Every class below is either a Tailwind utility or a name
+ * the INSTANCE has to supply — the six in {@link SHELL_TOKENS} and the three in
+ * {@link SHELL_CLASSES}. Tailwind also has to be pointed at this package's `src/`, or none of the
+ * utilities here reach the instance's stylesheet at all. All of it fails SILENTLY: a green build
+ * and an unstyled page. Assert with {@link shellStyleGaps}; see the README.
  */
 interface Props {
   /** The page title, before the site name is appended. */

@@ -26,10 +26,40 @@ A typo here is exactly as silent as omitting the line — `site-kitt` builds as 
 reaches your emitted CSS; `min-h-dvh` is a good canary, because the kit's `<body>` is the only place
 it appears.
 
-**2. Define the tokens.** The kit brings no stylesheet. It names
-`--color-galaxy-dark`, `--color-accent`, `--color-surface`, `--color-text-primary`,
-`--color-text-on-dark` and `--font-sans`, and three classes you define: `.skip-link`, `.bg-grid`,
-`.nav-link-active`. Miss one and that piece of the shell renders unstyled — again, silently.
+**2. Define the tokens.** The kit brings no stylesheet. It names six custom properties and wears
+three classes, and you supply all nine — `SHELL_TOKENS` and `SHELL_CLASSES` are exported so the
+list is a value you can check rather than a paragraph you can read carefully.
+
+```css
+@theme {
+  --color-chrome: #2c3143; /* the dark bar: header, More menu, footer */
+  --color-accent: #e8c547;
+  --color-surface: #ffffff;
+  --color-text-primary: #2c3143;
+  --color-text-on-dark: #f8f9fa;
+  --font-sans: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+```
+
+Plus `.skip-link`, `.bg-grid` and `.nav-link-active`, which are ordinary classes rather than
+utilities — Tailwind never has an opinion about them, so a missing one is markup wearing a class no
+rule matches.
+
+Miss any of the nine and that piece of the shell renders unstyled, silently. Assert on a built
+stylesheet:
+
+```ts
+import { shellStyleGaps } from '@galaxy-foundry/site-kit';
+
+expect(shellStyleGaps(everyEmittedStylesheet)).toEqual([]);
+```
+
+Use the helper rather than writing the loop. A token counts only when its **declaration** is
+present, so the search needs the colon: `--color-chrome` on its own also matches the shell's own
+`var(--color-chrome)`, and the check passes on exactly the sites it exists to fail.
+
+The names are ROLES, not brands. `--color-chrome` is the dark bar; what your instance calls that
+colour is its own business, and one line maps it: `--color-chrome: var(--color-my-brand-dark);`
 
 ## Use
 
@@ -93,14 +123,17 @@ Parameterizing a difference is how an accident becomes a policy.
 
 ## Exports
 
-| Import                                     | What                                                                                                                 |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `@galaxy-foundry/site-kit`                 | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER` |
-| `@galaxy-foundry/site-kit/SiteShell.astro` | the shell component                                                                                                  |
+| Import                                     | What                                                                                                                                                                    |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@galaxy-foundry/site-kit`                 | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps` |
+| `@galaxy-foundry/site-kit/SiteShell.astro` | the shell component                                                                                                                                                     |
 
-`resolveNav` is exported because it is the only part with behaviour worth asserting on: a
-destination is active on its own page and everything beneath it, compared on whole path segments,
-so `/tag/` does not light up on `/tags/`.
+`resolveNav` is exported because it is the only part of the shell with behaviour worth asserting
+on: a destination is active on its own page and everything beneath it, compared on whole path
+segments, so `/tag/` does not light up on `/tags/`.
+
+`shellStyleGaps` is exported for the opposite reason — it asserts on something the kit deliberately
+does NOT do. See "Define the tokens" above.
 
 ## Peer dependencies
 
