@@ -119,7 +119,7 @@ consumers who never called this one.
 ## Manifests
 
 `manifestKinds` describes your kinds for
-[`@galaxy-foundry/kind-manifest`](../kind-manifest):
+[`@galaxy-foundry/kind-manifest`](https://github.com/jmchilton/foundry-lib/tree/main/packages/kind-manifest):
 
 ```ts
 buildKindManifest({
@@ -254,5 +254,5 @@ knows _and_ permit the rest. There is no absent-versus-empty distinction to lear
 npm install @galaxy-foundry/kind-schema
 ```
 
-`zod` (v3) is a peer dependency — the instance owns the version, since its kind definitions are
+`zod` (v4) is a peer dependency — the instance owns the version, since its kind definitions are
 built from the same `z`.

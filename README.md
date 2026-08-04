@@ -21,12 +21,14 @@ release cadences.
 | Package                                                             | What it carries                                                                                           |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | [`@galaxy-foundry/audit-citations`](packages/audit-citations)       | Experimental scholarly-citation extraction, normalized evidence, adjudication, and reporting              |
-| [`@galaxy-foundry/license-policy`](packages/license-policy)         | The shared license → redistribution-policy table, and its loader                                          |
+| [`@galaxy-foundry/cast`](packages/cast)                             | Bundle placement, drift reconciliation, license enforcement, and cast provenance                          |
 | [`@galaxy-foundry/kind-manifest`](packages/kind-manifest)           | The kind-manifest format: types, zod reader, and the zod-shape-to-fields deriver                          |
+| [`@galaxy-foundry/kind-schema`](packages/kind-schema)               | Shared kind-definition, schema-assembly, companion-file, and collection-routing machinery                 |
+| [`@galaxy-foundry/license-policy`](packages/license-policy)         | The shared license → redistribution-policy table, and its loader                                          |
 | [`@galaxy-foundry/reference-contract`](packages/reference-contract) | The four typed-reference vocabularies every instance inherits, and the composer that adds its own `kinds` |
+| [`@galaxy-foundry/site-kit`](packages/site-kit)                     | The Astro reading shell, navigation rules, and style-contract checks                                      |
 | [`@galaxy-foundry/tag-registry`](packages/tag-registry)             | The `meta_tags.yml` format and its accessors — the rules, not the facets                                  |
 | [`@galaxy-foundry/wiki-links`](packages/wiki-links)                 | The `[[Target]]` grammar, the exact resolver, and a dependency-free remark transform                      |
-| [`@galaxy-foundry/cast`](packages/cast)                             | Bundle placement, drift reconciliation, and the provenance record a cast writes                           |
 
 `cast` is the exception to the rule below, and knowingly so. Only one instance casts today;
 the second has declined the LLM phase in its contract and has yet to build a caster at all.
@@ -41,7 +43,9 @@ broken twice.
 Some things look shared and are not, and the evidence says so:
 
 - **The base note envelope.** One instance carries 13 fields, the other carries one. The gap is deliberate — backfilling a `created` date across a corpus you did not author today manufactures provenance rather than recording it.
-- **The kind schemas.** Only `mold` and `pattern` are common to both instances at all, and even those differ threefold in size.
+- **The kind definitions.** `kind-schema` owns how definitions are assembled and routed, but the
+  kinds and their fields remain instance-specific. Only `mold` and `pattern` are common to both
+  instances at all, and even those differ threefold in size.
 - **License _coherence_ rules.** The two instances enforce genuinely different rules. See [the package README](packages/license-policy#what-this-package-does-not-do).
 
 The rule this repo follows: a thing moves here once two instances have independently arrived

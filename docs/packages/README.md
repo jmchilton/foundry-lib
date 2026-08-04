@@ -11,25 +11,41 @@ This package is an intentional N=1 design extraction and remains `0.x`. It does 
 audit candidates or verdicts for future tool and threshold checks. Read
 [Citation audit architecture and schemas](architecture/audit-citations.md).
 
+## Package map
+
+The packages solve adjacent but separate problems. Install only the contracts the consumer needs;
+the status column distinguishes converged substrate from the two explicitly documented N=1 cases.
+
+| Package              | Status             | Question answered                                             | Ships                                        | Key dependency                     |
+| -------------------- | ------------------ | ------------------------------------------------------------- | -------------------------------------------- | ---------------------------------- |
+| `audit-citations`    | experimental N=1   | Does a scholarly citation match replayable provider evidence? | citation schemas and audit behavior          | peer `zod@^4`, plus `fast-glob`    |
+| `cast`               | early-adoption N=1 | Is this cast bundle placed, licensed, and current?            | deterministic casting mechanics              | `license-policy` and `js-yaml`     |
+| `kind-manifest`      | admitted           | What kinds does this instance publish?                        | manifest format, validation, and derivation  | peer `zod@^4`                      |
+| `kind-schema`        | admitted           | How are local kind definitions assembled and routed?          | schema machinery, not kind definitions       | peer `zod@^4` and `kind-manifest`  |
+| `license-policy`     | admitted           | What redistribution posture applies to this license?          | the complete policy table                    | `js-yaml`                          |
+| `reference-contract` | admitted           | What may a Mold's `references[]` entry say?                   | four of five reference vocabularies          | `js-yaml`                          |
+| `site-kit`           | admitted           | How does a Foundry render its common reading shell?           | Astro shell source and navigation rules      | peers `astro` and `astro-pagefind` |
+| `tag-registry`       | admitted           | What may a note's `tags:` say?                                | registry format and accessors, no vocabulary | `js-yaml`                          |
+| `wiki-links`         | admitted           | Where does this `[[Target]]` point?                           | grammar and transforms, no link map          | none                               |
+
+The distinction between data and format matters. A package that ships data makes instances agree
+on content; a package that ships only a format makes them agree on rules while their content stays
+their own. `reference-contract` does both: four vocabularies describe shared casting machinery,
+while the instance supplies the fifth, `kinds`.
+
+## Early adoption: `@galaxy-foundry/cast`
+
+Choose `cast` for deterministic bundle placement, write-or-check reconciliation, pruning a bundle
+tree to its declared files, license-policy enforcement, hashing, and provenance carry-over. The
+instance still owns its kinds, slug map, validation, reference resolution, and renderers.
+
+Only one Foundry casts today. The package was extracted early because that Foundry's committed
+bundles provide a byte-identity oracle; adoption by a second caster is the test of the boundary.
+
+[Read the package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/cast)
+or inspect the [generated API](api/typedoc/index.html ':ignore').
+
 ## Admitted shared-substrate packages
-
-The packages solve adjacent but separate cross-instance problems. Install one without
-bringing in the other.
-
-|                        | `license-policy`                                | `kind-manifest`                              | `reference-contract`                        | `tag-registry`                      | `wiki-links`                         |
-| ---------------------- | ----------------------------------------------- | -------------------------------------------- | ------------------------------------------- | ----------------------------------- | ------------------------------------ |
-| **Question answered**  | What may this license allow us to redistribute? | What kinds does this instance publish?       | What may a Mold's `references[]` entry say? | What may a note's `tags:` say?      | Where does this `[[Target]]` point?  |
-| **Primary input**      | License ID or policy YAML                       | Resolved Zod object shapes or untrusted JSON | The instance's `kinds`                      | The instance's `meta_tags.yml`      | A `[[...]]` payload and the link map |
-| **Primary output**     | Policy row and allowed modes                    | Validated, deterministic manifest            | The composed five-vocabulary contract       | Accessors over a validated registry | The matched target, or nothing       |
-| **Ships vocabulary?**  | Yes — the whole table                           | No — format only                             | Four of the five vocabularies               | No — format only                    | No — grammar only                    |
-| **Runtime dependency** | `js-yaml`                                       | Peer dependency on `zod@^3.25`               | `js-yaml`                                   | `js-yaml`                           | None                                 |
-| **Default posture**    | Unknown license is a defect                     | Unsupported manifest version is rejected     | An unknown term is refused, never ignored   | An undeclared tag is not a tag      | An inexact link does not resolve     |
-
-**Ships vocabulary?** is the row that matters most. A package that ships data makes two
-instances agree on content; a package that ships only a format makes them agree on rules
-while their content stays their own. `reference-contract` is the interesting case: it does
-both, because four of its five vocabularies describe compilation machinery that does not vary
-by domain, and the fifth is exactly what does.
 
 ## `@galaxy-foundry/license-policy`
 
@@ -38,7 +54,7 @@ Choose this package for:
 - loading the bundled redistribution-policy table;
 - validating a repository-local policy file during migration;
 - checking curated SPDX IDs and `LicenseRef-<slug>` values;
-- resolving a license to obligations and allowed modes; or
+- resolving a license to its redistribution posture and obligations; or
 - testing a retained local policy copy against the published source of truth.
 
 The package does not decide whether a specific note is coherent with its declared license.
@@ -51,7 +67,7 @@ That rule belongs to the instance.
 
 Choose this package for:
 
-- deriving field descriptions from Zod 3 shapes;
+- deriving field descriptions from Zod 4 shapes;
 - building a deterministic manifest for an instance;
 - validating a manifest fetched from another repository;
 - rejecting versions the consumer does not understand; or
@@ -63,6 +79,22 @@ does that first and passes the shape in.
 [Follow the producer guide](guides/producing-kind-manifests.md), read the
 [consumer guide](guides/consuming-kind-manifests.md), or inspect the
 [generated API](api/typedoc/index.html ':ignore').
+
+## `@galaxy-foundry/kind-schema`
+
+Choose this package for:
+
+- defining local kinds through a shared `KindDefinition` contract;
+- assembling one strict schema or a type-preserving discriminated union;
+- deriving manifest inputs from definitions, docs, examples, and collection routes;
+- mapping paths to instance-owned collections; or
+- declaring and checking companion files beside directory-shaped notes.
+
+The package owns the machinery, not the kinds, field primitives, context, collection table, or
+cross-field policy. Those remain with the instance.
+
+[Read the package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/kind-schema)
+or inspect the [generated API](api/typedoc/index.html ':ignore').
 
 ## `@galaxy-foundry/reference-contract`
 
@@ -79,6 +111,20 @@ license. Those live in the instance's validator.
 
 [Follow the composition guide](guides/composing-reference-contracts.md) or inspect the
 [generated API](api/typedoc/index.html ':ignore').
+
+## `@galaxy-foundry/site-kit`
+
+Choose this package for:
+
+- rendering the shared Astro document shell, header, and footer;
+- deriving active navigation and the overflow menu from site-owned links; or
+- checking the emitted stylesheet for every token and class the shell expects.
+
+The instance supplies its identity, navigation values, styles, and corpus. Consumers must point
+Tailwind at the package's shipped Astro source and define the documented style contract.
+
+[Read the package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)
+or inspect the [generated API](api/typedoc/index.html ':ignore').
 
 ## `@galaxy-foundry/tag-registry`
 

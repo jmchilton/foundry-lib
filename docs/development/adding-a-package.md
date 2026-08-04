@@ -65,13 +65,17 @@ and smoke-test strategy.
 Add the package to:
 
 - the root README package table;
+- the documentation home and package-count badge;
 - the package chooser in this site;
+- the getting-started package selection and install commands;
 - the TypeDoc entry points;
 - the API overview;
 - the relevant guides; and
 - the documentation link checker expectations, if applicable.
 
-The package README remains the canonical npm landing page.
+The package README remains the canonical npm landing page. `pnpm docs:check` derives the workspace
+package list and verifies all required indexes, the TypeDoc configuration, and the cover count, so a
+new package cannot merge with one of those surfaces missing.
 
 ## Release setup
 

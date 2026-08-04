@@ -3,14 +3,14 @@
 A producer publishes a deterministic description of its kinds. The instance resolves its
 schemas; `kind-manifest` derives the field table and enforces the shared wire format.
 
-## 1. Install against Zod 3
+## 1. Install against Zod 4
 
 ```sh
-pnpm add @galaxy-foundry/kind-manifest zod@^3.25
+pnpm add @galaxy-foundry/kind-manifest zod@^4
 ```
 
-The peer range is intentional. Field descriptions use Zod 3 reflection and must inspect the
-same Zod instance that created the shapes.
+The peer range is intentional. Field descriptions use Zod 4 reflection and must inspect schemas
+created by the consumer's peer dependency. Zod 3 is not supported.
 
 ## 2. Resolve schemas in the instance
 

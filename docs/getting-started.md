@@ -15,29 +15,29 @@ different responsibilities.
 
 ## Choose a package
 
-Use `audit-citations` when a repository needs deterministic scholarly-citation extraction,
-normalized evidence replay, and exact-span findings. Use `license-policy` when a tool needs to decide how licensed source material may be carried
-into a Foundry. Use `kind-manifest` when an instance needs to publish its kind catalog or a
-consumer needs to validate one. Use `reference-contract` to compose the shared casting
-vocabularies with an instance's reference kinds. Use `tag-registry` to validate and query
-that instance's own tag facets. Use `wiki-links` when a renderer or a validator has to turn
-`[[Target]]` into a destination — and especially when both do, since encoding the rule twice
-is how the two drift apart.
+Use `audit-citations` for replayable scholarly-citation audits and `cast` for deterministic bundle
+placement, reconciliation, licensing, and provenance. Use `kind-schema` to define and assemble
+instance-owned kinds, then `kind-manifest` to publish their resolved catalog. Use `license-policy`
+to decide how licensed source material may be carried into a Foundry, and `reference-contract` to
+compose shared casting vocabularies with instance-owned reference kinds. Use `site-kit` for the
+shared Astro reading shell, `tag-registry` for an instance's tag facets, and `wiki-links` when a
+renderer and validator must agree on where `[[Target]]` points.
 
 ```sh
-pnpm add @galaxy-foundry/audit-citations
+pnpm add @galaxy-foundry/audit-citations zod@^4
+pnpm add @galaxy-foundry/cast
+pnpm add @galaxy-foundry/kind-manifest zod@^4
+pnpm add @galaxy-foundry/kind-schema zod@^4
 pnpm add @galaxy-foundry/license-policy
-
-# Only when producing manifests from zod 3 schemas:
-pnpm add @galaxy-foundry/kind-manifest zod@^3.25
-
 pnpm add @galaxy-foundry/reference-contract
+pnpm add @galaxy-foundry/site-kit
 pnpm add @galaxy-foundry/tag-registry
 pnpm add @galaxy-foundry/wiki-links
 ```
 
-`zod` is a peer dependency of `kind-manifest`. The package reflects the same Zod instance
-that built the schemas, so the peer must not be duplicated.
+`zod@^4` is a peer of `audit-citations`, `kind-manifest`, and `kind-schema`; schema composition and
+reflection must use the consumer's instance. `site-kit` expects an existing Astro 6+ project with
+`astro-pagefind` 1.9+.
 
 ## Audit scholarly citations
 
@@ -55,6 +55,28 @@ const scan = extractCitations([
 Start with the package README and the
 [citation-audit architecture](architecture/audit-citations.md). The package is experimental and
 does not define generic S2/S3 audit types.
+
+## Reconcile a cast bundle
+
+The deterministic casting helpers report drift as values so a caller can aggregate placement,
+content, licensing, and provenance faults before deciding its process exit status:
+
+```ts
+import { reconcileText, recordedHash } from '@galaxy-foundry/cast';
+
+const drift = reconcileText({
+  path: outputPath,
+  expected: rendered,
+  label: 'SKILL.md',
+  check: true,
+});
+
+const observedHash = recordedHash(drift, true);
+```
+
+The instance still owns what it renders and how references resolve. Read the
+[`cast` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/cast)
+for placement, tree reconciliation, license-policy integration, and provenance.
 
 ## Resolve a license policy
 
@@ -117,6 +139,33 @@ const manifest = buildKindManifest({
 
 Continue with [Produce a kind manifest](guides/producing-kind-manifests.md).
 
+## Define and assemble kinds
+
+`kind-schema` keeps each instance's actual kind definitions local while sharing their declaration,
+assembly, manifest bridge, collection routing, and companion-file checks:
+
+```ts
+import { assemble, kindDefiner } from '@galaxy-foundry/kind-schema';
+import { z } from 'zod';
+
+const defineKind = kindDefiner<{ base: z.ZodRawShape }>();
+const pattern = defineKind({
+  kind: 'pattern',
+  title: 'Pattern',
+  layer: 'substrate',
+  summary: 'A reusable solution backed by evidence.',
+  shape: 'file',
+  companions: [],
+  build: (ctx) => z.object({ type: z.literal('pattern'), ...ctx.base }).strict(),
+});
+
+const patternSchema = assemble(pattern, { base: {} });
+```
+
+Read the
+[`kind-schema` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/kind-schema)
+before wiring collection routes or directory companions.
+
 ## Consume a manifest
 
 Treat manifests from another repository as untrusted input:
@@ -157,6 +206,17 @@ The loader rejects a local copy of an inherited group. Narrow an inherited group
 the instance deliberately does not implement that capacity.
 
 Continue with [Compose a reference contract](guides/composing-reference-contracts.md).
+
+## Render the shared reading shell
+
+`site-kit` ships Astro source for the document shell, header, and footer. The instance passes its
+identity, current path, and deployment base to `SiteShell.astro`, while keeping its corpus and
+styles local. Two consumer steps are deliberately explicit: point Tailwind at the package source,
+and define every token and class in the shell style contract.
+
+Use `shellStyleGaps` against emitted CSS so either silent omission becomes a failing test. Read the
+[`site-kit` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)
+for the complete Astro and Tailwind setup.
 
 ## Load an instance tag registry
 

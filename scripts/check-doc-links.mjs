@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docsRoot = path.join(repoRoot, 'docs');
+const packagesRoot = path.join(repoRoot, 'packages');
 const failures = [];
 
 async function walk(directory) {
@@ -47,6 +48,65 @@ async function exists(target) {
   }
 }
 
+async function workspacePackages() {
+  const entries = await readdir(packagesRoot, { withFileTypes: true });
+  const packages = await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const manifestPath = path.join(packagesRoot, entry.name, 'package.json');
+        const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+        return { directory: entry.name, name: manifest.name, private: manifest.private === true };
+      }),
+  );
+  return packages.filter((entry) => !entry.private).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function checkPackageCoverage(packages) {
+  const packageIndexes = [
+    path.join(repoRoot, 'README.md'),
+    path.join(docsRoot, 'README.md'),
+    path.join(docsRoot, 'packages', 'README.md'),
+    path.join(docsRoot, 'getting-started.md'),
+    path.join(docsRoot, 'api', 'README.md'),
+  ];
+
+  for (const indexPath of packageIndexes) {
+    const contents = await readFile(indexPath, 'utf8');
+    for (const workspacePackage of packages) {
+      if (!contents.includes(workspacePackage.name)) {
+        failures.push(
+          `${path.relative(repoRoot, indexPath)}: missing package: ${workspacePackage.name}`,
+        );
+      }
+    }
+  }
+
+  const typedocPath = path.join(repoRoot, 'typedoc.json');
+  const typedoc = JSON.parse(await readFile(typedocPath, 'utf8'));
+  const actualEntryPoints = new Set(typedoc.entryPoints ?? []);
+  const expectedEntryPoints = packages.map(({ directory }) => `packages/${directory}`);
+  for (const entryPoint of expectedEntryPoints) {
+    if (!actualEntryPoints.has(entryPoint)) {
+      failures.push(`typedoc.json: missing package entry point: ${entryPoint}`);
+    }
+  }
+  for (const entryPoint of actualEntryPoints) {
+    if (!expectedEntryPoints.includes(entryPoint)) {
+      failures.push(`typedoc.json: unexpected package entry point: ${entryPoint}`);
+    }
+  }
+
+  const coverPath = path.join(docsRoot, '_coverpage.md');
+  const cover = await readFile(coverPath, 'utf8');
+  const packageCount = /<strong>(\d+)<\/strong><span>focused packages<\/span>/u.exec(cover)?.[1];
+  if (Number(packageCount) !== packages.length) {
+    failures.push(
+      `docs/_coverpage.md: focused package count is ${packageCount ?? 'missing'}, expected ${packages.length}`,
+    );
+  }
+}
+
 async function checkTarget(source, rawTarget) {
   const target = markdownTarget(rawTarget);
   if (!target || isExternal(target)) {
@@ -76,6 +136,8 @@ async function checkTarget(source, rawTarget) {
 }
 
 const files = await walk(docsRoot);
+const packages = await workspacePackages();
+await checkPackageCoverage(packages);
 for (const file of files.filter((candidate) => candidate.endsWith('.md'))) {
   const contents = await readFile(file, 'utf8');
   const links = contents.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/gu);
@@ -107,5 +169,7 @@ if (failures.length > 0) {
   }
   process.exitCode = 1;
 } else {
-  console.log(`Documentation checks passed (${files.length} source files).`);
+  console.log(
+    `Documentation checks passed (${files.length} source files, ${packages.length} packages).`,
+  );
 }
