@@ -48,10 +48,13 @@ That makes the package:
   requests one; and
 - easier to version because its boundary is visible in function signatures.
 
-## Strict readers at trust boundaries
+## Readers at trust boundaries
 
-YAML and JSON cross repository and package boundaries as `unknown` data. Parsers validate the
-entire contract and report the offending location. A type assertion is not validation.
+YAML and JSON cross repository and package boundaries as `unknown` data. Persisted JSON contracts
+such as kind manifests and citation-audit documents use strict schemas that reject unknown fields.
+YAML readers validate the required structure and the invariants their package owns, and report the
+offending location. A type assertion is not validation, but neither should a reader claim policy
+invariants that only the bundled table's focused tests establish.
 
 Unknown license IDs land on a deny-by-default row. Unsupported manifest versions fail rather
 than being interpreted as the current version. Reference-contract loaders reject vocabulary
@@ -70,11 +73,12 @@ always described every Zod construct correctly.
 
 ## Data packages remain code packages
 
-`license-policy` ships the policy YAML and a parser together.
+`license-policy` ships the policy YAML and a structural parser together. Focused tests enforce
+relationships among fields in the bundled table; parsing an arbitrary table checks its rows and
+closed policy enum without claiming that every cross-row policy invariant is universal.
 `reference-contract` likewise ships the inherited YAML while accepting instance kinds as an
-input. Their parsers enforce invariants that well-formed YAML alone cannot express, including
-relationships among policy fields and the ownership boundary between shared and local
-vocabulary.
+input. Its parser enforces the ownership boundary between shared and local vocabulary, which
+well-formed YAML alone cannot express.
 
 Keeping data and validation in one versioned package makes a vocabulary or policy release an
 auditable contract change. `kind-manifest`, `kind-schema`, `tag-registry`, `site-kit`, and

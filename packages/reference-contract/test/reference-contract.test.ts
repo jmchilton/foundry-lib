@@ -19,8 +19,7 @@ import { mkdirSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-const SPEC_URL =
-  'https://github.com/galaxyproject/foundry-pattern/blob/main/content/pattern/anatomy-of-an-instance.md';
+const SPEC_URL = 'https://galaxyproject.github.io/foundry-pattern/pattern/anatomy-of-an-instance/';
 
 const kinds: Record<string, KindTerm> = {
   pattern: { label: 'Pattern', description: 'A domain pattern page.', ref_shape: 'wiki-link' },

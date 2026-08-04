@@ -14,6 +14,8 @@
   - [Migrate a vendored contract](guides/migrating-vendored-contracts.md)
 - **Architecture**
   - [Citation audits](architecture/audit-citations.md)
+  - [Deterministic casting](architecture/cast.md)
+  - [Site-kit runtime](architecture/site-kit-runtime.md)
   - [Package boundaries](architecture/package-boundaries.md)
   - [Manifest provenance](architecture/manifest-provenance.md)
 - **API**

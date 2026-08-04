@@ -90,8 +90,6 @@ besides.
 ## `spec_url`
 
 The shipped table carries one `spec_url`, applied by the loader to every term's `href`, rather
-than repeating the same link twelve times in data.
-
-It is currently a **repository** URL, not a site URL, because foundry-pattern's hosting is not
-finalized — its `astro.config.mjs` still carries placeholder `site`/`base` values. Point it at
-the rendered page, with a per-term anchor, once that lands.
+than repeating the same link across the vocabulary. It points to the rendered
+[Anatomy of an Instance](https://galaxyproject.github.io/foundry-pattern/pattern/anatomy-of-an-instance/)
+page. Keep it at page level until the individual vocabulary terms have stable rendered anchors.

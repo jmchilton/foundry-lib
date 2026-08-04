@@ -11,6 +11,12 @@ produced**. None of those vary by domain.
 What is not here is everything that names a Foundry's own world — its kinds, its slug map, its
 validators, its renderers. A caster composes those with these.
 
+`cast` is an early N=1 extraction rather than an admitted shared-substrate package. Its first
+consumer's committed bundles provide a byte-identity oracle; adoption by a second independent
+caster is what tests whether this boundary is genuinely reusable. See
+[Deterministic casting architecture](https://jmchilton.github.io/foundry-lib/#/architecture/cast)
+for the ownership map and complete helper flow.
+
 ```ts
 import {
   bundleDir,
@@ -84,9 +90,11 @@ catch that, because the gate compares against exactly what the caster would writ
 ## Licences are checked against what the cast did
 
 `applyLicensePolicy` runs the shared redistribution-policy table over the assembled refs,
-keyed off each ref's `mode` — carrying a note verbatim under an own-words-only licence is the
-violation; paraphrasing the same note is not. It stamps the content hash of the licence file
-each redistributed ref travels under, so the record says which licence text was in force.
+keyed off each ref's recorded `derived` posture. A Foundry-authored own-words summary is outside
+the source licence's redistribution policy; a ref that preserves upstream expression remains
+governed by it. The cast mode is deliberately irrelevant: copying or rendering cannot change
+whose expression the note contains. The helper also stamps the content hash of any declared
+licence file, so the record says which licence text was in force.
 
 It returns one message per violation rather than throwing. A cast reports all its problems
 together, and a licence failure has to combine with the unresolved refs and drifted artifacts

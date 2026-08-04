@@ -1,8 +1,8 @@
 # @galaxy-foundry/site-kit
 
 The reading shell for Foundry-pattern instances: document skeleton, header with derived navigation,
-and footer. The kit ships the **markup and the rules**; the instance supplies the **values, the
-stylesheet and the corpus**.
+and footer. The kit ships the **markup, structural component styles, and client behavior**; the
+instance supplies the **identity values, global theme contract, and corpus**.
 
 ```sh
 pnpm add @galaxy-foundry/site-kit
@@ -26,9 +26,11 @@ A typo here is exactly as silent as omitting the line — `site-kitt` builds as 
 reaches your emitted CSS; `min-h-dvh` is a good canary, because the kit's `<body>` is the only place
 it appears.
 
-**2. Define the tokens.** The kit brings no stylesheet. It names six custom properties and wears
-three classes, and you supply all nine — `SHELL_TOKENS` and `SHELL_CLASSES` are exported so the
-list is a value you can check rather than a paragraph you can read carefully.
+**2. Define the tokens.** The kit brings no global theme stylesheet. It names six custom properties
+and wears three instance-owned classes, and you supply all nine — `SHELL_TOKENS` and
+`SHELL_CLASSES` are exported so the list is a value you can check rather than a paragraph you can
+read carefully. Component-scoped rules still own the overflow menu, header grid, and Pagefind
+layout; those are package behavior rather than instance theme values.
 
 ```css
 @theme {
@@ -135,8 +137,14 @@ segments, so `/tag/` does not light up on `/tags/`.
 `shellStyleGaps` is exported for the opposite reason — it asserts on something the kit deliberately
 does NOT do. See "Define the tokens" above.
 
+The shell also owns a small client runtime: initial dark-mode selection, persisted theme toggling,
+Pagefind palette synchronization, and the overflow menu's click, outside-click, and Escape-key
+behavior. Read [Site-kit runtime architecture](https://jmchilton.github.io/foundry-lib/#/architecture/site-kit-runtime)
+before replacing or wrapping those controls.
+
 ## Peer dependencies
 
-`astro` and `astro-pagefind` — the header renders a Pagefind search box.
+`astro` 6 or later and `astro-pagefind` 2 or later — the header renders the Pagefind 2 search-box
+component and styles its `pf-searchbox` structure.
 
 The `.astro` components ship as **source**, not built output. Astro compiles them in your build.

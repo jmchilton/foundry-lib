@@ -63,6 +63,11 @@ existing byte-stable bundle corpus can test the boundary before a second caster 
 - **Deciding whether code belongs here?** Read
   [The shared substrate](concepts/shared-substrate.md) and
   [Package boundaries](architecture/package-boundaries.md).
+- **Understanding a package boundary?** Read the architecture notes for
+  [citation audits](architecture/audit-citations.md),
+  [deterministic casting](architecture/cast.md),
+  [site-kit runtime behavior](architecture/site-kit-runtime.md), or
+  [manifest provenance](architecture/manifest-provenance.md).
 - **Contributing or releasing?** See [Contributing](development/contributing.md),
   [Testing and smoke checks](development/testing-and-smoke.md), and
   [Publication](development/publication.md).
@@ -87,8 +92,8 @@ removes duplicated maintenance without erasing a real local decision.
 An experimental package is not represented as having passed that test. It remains `0.x`, names its
 first implementation, and exists to expose a design to falsification. Read the
 [citation-audit architecture](architecture/audit-citations.md) for that model, and the
-[`cast` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/cast)
-for its separately justified early extraction.
+[deterministic casting architecture](architecture/cast.md) for `cast`'s separately justified early
+extraction.
 
 ## Packages
 
