@@ -9,9 +9,11 @@ export {
   driftOf,
   recordedHash,
   reconcile,
+  reconcileAbsent,
   reconcileText,
   sha256File,
   sha256Text,
+  type Absence,
   type Drift,
   type ReconcileOptions,
 } from './reconcile.js';
@@ -26,7 +28,13 @@ export {
   resolveBundlePath,
 } from './target-layout.js';
 
-export { copyVerbatim, gitHead, pruneEmptyDirs } from './bundle.js';
+export {
+  copyVerbatim,
+  gitHead,
+  listFilesUnder,
+  pruneEmptyDirs,
+  reconcileTreeTo,
+} from './bundle.js';
 
 export { applyLicensePolicy } from './license.js';
 
