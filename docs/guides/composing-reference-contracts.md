@@ -71,14 +71,14 @@ Inheritance is the default. An unused term is not necessarily drift: it may be
 capacity the instance has not exercised yet.
 
 Narrow a group only when supporting a term would claim machinery the instance
-deliberately does not have. For example, a deterministic caster can decline the
-LLM-backed `condense` mode:
+deliberately does not have. For example, an instance that has written no sidecar
+renderer can decline the `sidecar` mode:
 
 ```ts
 const contract = buildReferenceContract({
   kinds: loadInstanceKinds(kindsPath),
   narrow: {
-    modes: ['verbatim', 'sidecar'],
+    modes: ['verbatim'],
   },
 });
 ```

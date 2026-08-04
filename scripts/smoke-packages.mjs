@@ -102,8 +102,9 @@ const SMOKE = {
     const contract = mod.buildReferenceContract({
       kinds: { pattern: { label: 'Pattern', description: 'd', ref_shape: 'wiki-link' } },
     });
-    if (mod.contractKeys(contract, 'modes').length !== 3) {
-      throw new Error('packed vocabulary did not carry the three cast modes');
+    const modes = mod.contractKeys(contract, 'modes').join(', ');
+    if (modes !== 'verbatim, sidecar') {
+      throw new Error(`packed vocabulary carried modes: ${modes}`);
     }
   },
   '@galaxy-foundry/tag-registry': (mod) => {

@@ -235,7 +235,7 @@ trailing slash (`refinements/`) and is satisfied by existing; what is inside it 
 business.
 
 **`disposition` is one axis: whether the file reaches a skill artifact.** `foundry-only` never
-leaves, `cast-input` is read by the caster but does not ship (per-mold condensation prompts),
+leaves, `cast-input` is read by the caster but does not ship (a template a renderer consumes),
 `bundled` is copied in. A target's list of files forbidden from a bundle is therefore every
 companion that is not `bundled` — both of the other two, which is the distinction a boolean loses.
 

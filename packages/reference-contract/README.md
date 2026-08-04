@@ -22,7 +22,7 @@ const contract = buildReferenceContract({
   kinds: loadInstanceKinds('reference_contract.yml'),
 });
 
-contractKeys(contract, 'modes'); // ['verbatim', 'condense', 'sidecar'] — inherited
+contractKeys(contract, 'modes'); // ['verbatim', 'sidecar'] — inherited
 contractKeys(contract, 'kinds'); // whatever your instance declares
 ```
 
@@ -31,21 +31,26 @@ contractKeys(contract, 'kinds'); // whatever your instance declares
 Inheriting a vocabulary complete is the right default: a term an instance has not used _yet_
 is inheritance, not drift, which is why a dead-vocabulary check should skip these groups.
 
-But some terms are **capacity, not description**. `modes.condense` commits a Foundry to an LLM
-phase in its caster — and to the `pending_llm` slots, the `prompt`/`model` provenance needed to
-reproduce a cast, and the loss of byte-stable output that phase drags in. An instance whose
-caster is deterministic should be able to say so:
+But some terms are **capacity, not description**. `modes.sidecar` commits a Foundry to writing a
+renderer: something has to turn the reference into a structured artifact beside the skill, and
+until it exists the term is a word an author can spell and no caster can perform. An instance
+that has not written one should be able to say so:
 
 ```ts
 const contract = buildReferenceContract({
   kinds: loadInstanceKinds('reference_contract.yml'),
-  narrow: { modes: ['verbatim', 'sidecar'] },
+  narrow: { modes: ['verbatim'] },
 });
 ```
 
-Now `condense` is not a value the instance's schema accepts, and its dead-vocabulary check over
+Now `sidecar` is not a value the instance's schema accepts, and its dead-vocabulary check over
 `modes` means something. Widening again is a one-line edit, made when a Mold first needs the
 term — the same discipline instances already apply to `kinds`.
+
+That is not hypothetical. One instance kept `sidecar` while owning no renderer, and three
+references reached for it to mean "this source is paywalled, do not carry it verbatim" — a
+statement about the source, which `mode` does not make. Narrowing turned the next one into a
+schema error at authoring time.
 
 Narrowing rebuilds the group in the **shipped** order rather than the caller's, so two instances
 narrowing to the same terms produce byte-identical contracts however they wrote the list. An
@@ -71,10 +76,9 @@ written down:
 | `evidence.hypothesis` | Requires a `verification`          |
 | `modes.verbatim`      | License must permit verbatim carry |
 
-The other two were one instance's specifics leaking into shared vocabulary — an
-implementation-status caveat on `modes.condense`, and `evidence.corpus-observed` describing
-"real workflows" where the domain-neutral "real sources" is what a cross-instance vocabulary
-needs. A test asserts the shipped prose names no instance's domain.
+The rest were one instance's specifics leaking into shared vocabulary — `evidence.corpus-observed`
+described "real workflows" where the domain-neutral "real sources" is what a cross-instance
+vocabulary needs. A test asserts the shipped prose names no instance's domain.
 
 ## Scope
 

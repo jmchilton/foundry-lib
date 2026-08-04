@@ -27,7 +27,7 @@ const mold: CompanionDeclaration = {
     {
       file: 'casting.md',
       requirement: 'optional',
-      purpose: 'Per-mold condensation prompts, read by the caster.',
+      purpose: 'Per-mold casting overrides, read by the caster.',
       disposition: 'cast-input',
     },
     {

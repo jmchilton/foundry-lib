@@ -157,10 +157,11 @@ Parsing is strict: both enums are closed, every field is checked, and an unknown
 error rather than a silently-ignored key. A published table is a contract, and a row that is
 merely well-formed YAML can still authorize a carry nobody intended.
 
-Four invariants are asserted against the shipped table on every run — an own-words-only row can
-never permit verbatim, a verbatim-ok row always can, a copyleft row can never permit condense
-(that is copyleft laundering), and an own-words-only row never requires a `license_file`
-(nothing is redistributed, so there is no notice to carry).
+Three invariants are asserted against the shipped table on every run — a verbatim-ok row always
+demands a notice, an own-words-only row never requires a `license_file` (nothing is
+redistributed, so there is no notice to carry), and no row names a casting transform at all.
+The last is asserted rather than merely deleted, so the column cannot come back one row at a
+time.
 
 ## Provenance
 
