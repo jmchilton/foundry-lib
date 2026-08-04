@@ -21,7 +21,7 @@ const { bar, more, moreActive } = resolveNav(navLinks, navVisible, baseUrl, path
 const navLink =
   'text-(--color-text-on-dark) no-underline hover:text-(--color-accent) transition-colors opacity-80 hover:opacity-100';
 ---
-<header class="bg-(--color-galaxy-dark) border-b-4 border-(--color-accent) relative">
+<header class="bg-(--color-chrome) border-b-4 border-(--color-accent) relative">
   <div class="absolute inset-0 bg-grid-header pointer-events-none"></div>
   <div class={`relative ${CONTAINER} mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-2`}>
     <div class="flex items-center gap-4">
@@ -60,7 +60,7 @@ const navLink =
             id="nav-more-menu"
             role="menu"
             aria-labelledby="nav-more-trigger"
-            class="nav-more-menu absolute left-0 top-full mt-2 min-w-40 rounded-md border border-(--color-accent) bg-(--color-galaxy-dark) shadow-lg py-1 z-50"
+            class="nav-more-menu absolute left-0 top-full mt-2 min-w-40 rounded-md border border-(--color-accent) bg-(--color-chrome) shadow-lg py-1 z-50"
           >
             {more.map(link => (
               <a
