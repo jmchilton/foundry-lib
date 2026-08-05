@@ -203,8 +203,8 @@ The kit ships the cases its components are meant to handle, as props:
 import { REFERENCE_SPECIMENS } from '@galaxy-foundry/site-kit/specimens';
 ```
 
-Each entry is `{ id, name, why, props }`, grouped per component with a `summary` and a `surface`.
-Rendering a group is a page of your own, in your own theme:
+Each entry is `{ id, name, why, props }`, grouped per component with its own `id`, a `summary` and
+a `surface`. Rendering a group is a page of your own, in your own theme:
 
 ```astro
 ---
@@ -223,7 +223,9 @@ import { REFERENCE_SPECIMENS, specimenPath } from '@galaxy-foundry/site-kit/spec
 **The theme is the specialization.** Nothing here carries a colour, and that is the point: the same
 seventeen cases rendered under two instances' tokens are two galleries, and what differs between
 them is exactly what each instance owns. An instance adds groups of its own for its own components
-in the same shape.
+in the same shape — and a group's `id`, not its `component`, is its address, because an instance's
+extra group for a kit component is the ordinary case: the parent Foundry adds a second
+`ReferenceContract` group for its own seven kinds.
 
 **`surface` is not decoration.** A group is `inline` (many to a page), `isolated` (one to a page or
 one per frame — valid inline markup carrying document-unique `id`s, which the header does), or

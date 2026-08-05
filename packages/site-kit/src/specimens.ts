@@ -53,6 +53,14 @@ export interface Specimen<P = unknown> {
 
 /** Every case for one component, and how a page is allowed to render them. */
 export interface SpecimenGroup<P = unknown> {
+  /**
+   * Stable and unique across every group a gallery renders: a route prefix and an anchor.
+   *
+   * Separate from {@link component} because the component name is not an address. The first
+   * consumer added a second group of `ReferenceContract` cases — its own kinds, which the package
+   * cannot know — and a name-derived anchor gave both sections the same one.
+   */
+  id: string;
   /** The component's name, as it is imported. */
   component: string;
   /** The subpath a consumer imports it from. */
@@ -123,6 +131,7 @@ const card = (references: Reference[]): ReferenceContractProps => ({
 });
 
 export const REFERENCE_SPECIMENS: SpecimenGroup<ReferenceContractProps> = {
+  id: 'reference-contract',
   component: 'ReferenceContract',
   importPath: '@galaxy-foundry/site-kit/ReferenceContract.astro',
   summary:
@@ -286,6 +295,7 @@ const FULL_NAV = [
 ];
 
 export const HEADER_SPECIMENS: SpecimenGroup<SiteHeaderProps> = {
+  id: 'site-header',
   component: 'SiteHeader',
   importPath: '@galaxy-foundry/site-kit/SiteHeader.astro',
   summary: 'The dark bar: wordmark, derived navigation, search box, theme toggle.',
@@ -362,6 +372,7 @@ export const HEADER_SPECIMENS: SpecimenGroup<SiteHeaderProps> = {
 };
 
 export const FOOTER_SPECIMENS: SpecimenGroup<SiteFooterProps> = {
+  id: 'site-footer',
   component: 'SiteFooter',
   importPath: '@galaxy-foundry/site-kit/SiteFooter.astro',
   summary:
@@ -397,6 +408,7 @@ export const FOOTER_SPECIMENS: SpecimenGroup<SiteFooterProps> = {
 };
 
 export const SHELL_SPECIMENS: SpecimenGroup<SiteShellProps> = {
+  id: 'site-shell',
   component: 'SiteShell',
   importPath: '@galaxy-foundry/site-kit/SiteShell.astro',
   summary: 'The whole document: head, header, the reading column, footer.',
@@ -467,14 +479,11 @@ export const SPECIMENS: readonly SpecimenGroup[] = [
  */
 export const sharesPage = (group: SpecimenGroup): boolean => group.surface === 'inline';
 
-const kebab = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
-
 /**
  * A specimen's stable address: `site-header/overflows`.
  *
  * One spelling for the anchor on an index page and the segment of a standalone route, so a link
- * between them cannot drift. Derived from the component name rather than stored, because a second
- * field to keep in step is the thing this exists to avoid.
+ * between them cannot drift.
  */
 export const specimenPath = (group: SpecimenGroup, specimen: Specimen): string =>
-  `${kebab(group.component)}/${specimen.id}`;
+  `${group.id}/${specimen.id}`;

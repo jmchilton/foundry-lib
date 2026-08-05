@@ -64,6 +64,13 @@ describe('every specimen renders', () => {
 });
 
 describe('a specimen is addressable', () => {
+  it('gives every group a distinct prefix', () => {
+    // A consumer's own groups share this address space, so a collision here is a collision there:
+    // two sections under one anchor, two routes at one path.
+    const ids = SPECIMENS.map((group) => group.id);
+    expect(ids).toEqual([...new Set(ids)]);
+  });
+
   it('gives every case a distinct address', () => {
     const paths = SPECIMENS.flatMap((group) =>
       group.specimens.map((specimen) => specimenPath(group, specimen)),
