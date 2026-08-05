@@ -6,6 +6,17 @@
 // validators, its renderers — because those are what a Foundry IS.
 
 export {
+  CAST_BLOCK_KEY,
+  CAST_RESOLVE_VALUES,
+  loadCastContract,
+  loadCastReferenceContract,
+  type CastContract,
+  type CastDeclaration,
+  type CastResolve,
+  type LoadCastReferenceContractOptions,
+} from './cast-contract.js';
+
+export {
   driftOf,
   recordedHash,
   reconcile,
