@@ -161,13 +161,47 @@ Evidence chips are styled from the standing each term **declares**
 (`@galaxy-foundry/reference-contract` ships `standing: provisional | grounded`), not from a list of
 term names in a selector. A term added to the vocabulary gets a colour without a component release.
 
+## The search index
+
+The header renders a Pagefind search box. What goes IN the index is the other half, and its rule
+runs backwards from what the annotation looks like:
+
+- Mark **no** page with `data-pagefind-body` → every page is indexed, from its `<body>`.
+- Mark **one** page → every unmarked page leaves the index entirely.
+
+So adding the attribute to a single route is strictly worse for the rest of the site than never
+adding it. Measured on a real instance: one annotated route, and the index held **242 of 374 pages**
+— missing every artifact page, every tag page, the glossary, the dashboard, and 48 generated skill
+pages. The build log printed `Pagefind indexed 374 pages` in both states, because it counts pages
+processed rather than pages indexed. Nothing warns, nothing looks wrong, and the only symptom is a
+search that answers "no results" for words plainly on the site.
+
+`SiteShell` therefore puts the attribute on `<main>` **by default**. Opt out per page:
+
+```astro
+<SiteShell title="Tags" base={base} pathname={pathname} identity={SITE_IDENTITY} searchable={false}>
+```
+
+Marking `<main>` rather than falling back to `<body>` also keeps the header, nav and footer out of
+every result's excerpt.
+
+Then assert the whole built site, listing the routes that opted out:
+
+```ts
+const pages = builtPages(); // [{ path, html }, …] from dist
+expect(searchIndexGaps(pages, UNSEARCHABLE)).toEqual([]);
+```
+
+The list is what makes an absence a decision. Without one, "deliberately out of the index" and
+"nobody thought about this route" are the same observation — which is how 132 of them accumulated.
+
 ## Exports
 
-| Import                                             | What                                                                                                                                                                                                                                                |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `ResolvedReference` |
-| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                 |
-| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                  |
+| Import                                             | What                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `ResolvedReference`, `PAGEFIND_BODY_ATTR`, `searchIndexGaps` |
+| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                                                          |
+| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                                                           |
 
 `resolveNav` is exported because it is the only part of the shell with behaviour worth asserting
 on: a destination is active on its own page and everything beneath it, compared on whole path
