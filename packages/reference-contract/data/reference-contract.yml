@@ -59,15 +59,22 @@ modes:
     label: Sidecar
     description: Transformed into a structured runtime artifact beside the generated skill.
 
+# `standing` says whether a term is a claim or a record of something checked. Every renderer of
+# this vocabulary drew that line already, by term name, in a class selector — a copy of this table
+# kept where the table cannot see it. A term added below cannot skip the question now, and a
+# renderer no longer holds an opinion about which of these names mean what.
 evidence:
   hypothesis:
     label: Hypothesis
+    standing: provisional
     description: >-
       Added because it seems useful; not yet proven by a real cast run. Requires a
       `verification`.
   corpus-observed:
     label: Corpus Observed
+    standing: grounded
     description: Grounded in survey or research over real sources, upstream, or runtime behavior.
   cast-validated:
     label: Cast Validated
+    standing: grounded
     description: A generated skill used this reference successfully on real data.

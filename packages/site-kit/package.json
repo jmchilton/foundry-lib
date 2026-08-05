@@ -8,7 +8,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./SiteShell.astro": "./src/components/SiteShell.astro"
+    "./SiteShell.astro": "./src/components/SiteShell.astro",
+    "./ReferenceContract.astro": "./src/components/ReferenceContract.astro"
   },
   "files": [
     "dist",
@@ -39,6 +40,9 @@
     "navigation"
   ],
   "license": "MIT",
+  "dependencies": {
+    "@galaxy-foundry/reference-contract": "workspace:^"
+  },
   "peerDependencies": {
     "astro": ">=6",
     "astro-pagefind": ">=2"
