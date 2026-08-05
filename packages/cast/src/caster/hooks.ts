@@ -156,6 +156,19 @@ export type BundleCheck = (context: BundleCheckContext) => readonly string[];
  */
 export type PayloadCompanion = (kind: string) => string;
 
+/**
+ * Load an npm module a note names, from the instance's own dependency graph.
+ *
+ * The `package-export` strategy cannot import a specifier itself. A bare `import(spec)` resolves
+ * relative to the file that runs it, so this package would look for the instance's dependencies
+ * beside its OWN installed copy — under `node_modules/@galaxy-foundry/cast/dist/`, or somewhere
+ * inside a pnpm store, neither of which can see them. Resolution has to start from a module the
+ * instance ships, which means the instance does the importing.
+ *
+ * `(spec) => import(spec)` written in any file of the instance's tree is the implementation.
+ */
+export type PackageLoader = (spec: string) => Promise<Record<string, unknown>>;
+
 export interface CastHooks {
   /**
    * Renderers for every non-verbatim mode this instance admits.
@@ -189,6 +202,15 @@ export interface CastHooks {
    * wrapper would package the wrong file and look like it worked.
    */
   readonly payloadCompanion?: PayloadCompanion;
+  /**
+   * How a `package-export` kind's module is loaded. See {@link PackageLoader}.
+   *
+   * Optional on the same terms as `payloadCompanion`: a contract with no such kind never asks,
+   * and one that declares the strategy with nothing registered is an error rather than a
+   * fallback. There is nothing to fall back TO — the bytes exist only inside a package this
+   * package cannot reach.
+   */
+  readonly packageLoader?: PackageLoader;
   /**
    * Checks over the finished bundle, run before the error gate.
    *

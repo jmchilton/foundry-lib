@@ -84,6 +84,7 @@ export {
   type BundleFileContributor,
   type CastContext,
   type CastHooks,
+  type PackageLoader,
   type PayloadCompanion,
   type RefRenderInput,
   type RefRenderer,

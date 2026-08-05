@@ -9,6 +9,11 @@ instance. Now here, reached through `CastHooks` and a `CastRequest`: an instance
 kinds, slug map, renderers and target, and gets back errors and drift as VALUES. Nothing
 prints, and nothing is read that was not handed in.
 
+`CastHooks` gains `packageLoader`. A `package-export` ref names an npm module in the INSTANCE's
+dependency graph, and a bare `import(spec)` resolves relative to the file that runs it — so this
+package would look beside its own installed copy and find nothing. The instance imports; a
+contract declaring the strategy with nothing registered is an error, not a fallback.
+
 `ResolvedRef.kind` is `string` rather than a six-name union. The set of kinds is exactly what
 varies by Foundry, so a union here would be a compile-time copy of a table read at runtime —
 kept in the one place that cannot be right about it.

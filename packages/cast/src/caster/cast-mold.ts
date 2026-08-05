@@ -230,7 +230,7 @@ export async function castMold<Ext extends object = Record<string, never>>(
     const staged = new Set<string>();
 
     for (const r of resolved) {
-      const result = await castOneRef(r, repoRoot, stagedBundleRoot, hooks.renderers);
+      const result = await castOneRef(r, repoRoot, stagedBundleRoot, hooks);
       refEntries.push(result.entry);
       staged.add(result.entry.dst);
       if (result.error) errors.push(result.error);

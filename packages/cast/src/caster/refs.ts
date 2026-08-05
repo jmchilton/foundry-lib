@@ -16,7 +16,7 @@ import { errorMessage } from '../errors.js';
 import { readMarkdown, type Frontmatter } from '../frontmatter.js';
 import type { ProvenanceRefEntry } from '../provenance.js';
 import { reconcile, reconcileText, sha256File } from '../reconcile.js';
-import type { CastHooks, RefRenderers } from './hooks.js';
+import type { CastHooks } from './hooks.js';
 import type { TargetConfig, TargetKindConfig } from './target-config.js';
 
 /**
@@ -322,8 +322,9 @@ export async function castOneRef(
   resolved: ResolvedRef,
   repoRoot: string,
   bundleRoot: string,
-  renderers: RefRenderers,
+  hooks: Pick<CastHooks, 'renderers' | 'packageLoader'>,
 ): Promise<{ entry: ProvenanceRefEntry; drift?: string | undefined; error?: string | undefined }> {
+  const renderers = hooks.renderers;
   const dstAbs = path.join(bundleRoot, resolved.dst);
 
   // Package-vendored schema: import the named export, JSON.stringify, write verbatim.
@@ -335,9 +336,19 @@ export async function castOneRef(
         error: `package_source ref must be kind=schema mode=verbatim (got ${resolved.kind}/${resolved.mode})`,
       };
     }
+    // Imported by the INSTANCE, not here. A bare `import(spec)` resolves relative to the file
+    // running it, so this module would look for an instance's dependencies beside its own
+    // installed copy and find nothing. Nothing registered is an error rather than a fallback:
+    // the bytes exist only inside a package this one cannot reach.
+    if (!hooks.packageLoader) {
+      return {
+        entry: { ...skeleton(resolved), src_hash: null, dst_hash: null, source: 'deterministic' },
+        error: `${resolved.ref} resolves via package-export, but nothing registers a packageLoader hook — the contract declares this strategy and this Foundry does not implement it`,
+      };
+    }
     let json: string;
     try {
-      const mod = (await import(resolved.package_source.spec)) as Record<string, unknown>;
+      const mod = await hooks.packageLoader(resolved.package_source.spec);
       const exported = mod[resolved.package_source.exportName];
       if (exported === undefined) {
         return {
