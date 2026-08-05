@@ -5,6 +5,10 @@ document skeleton, header, footer, navigation rules, small client-side controls,
 styles those controls require. A consuming Foundry supplies identity, corpus, routes, and its global
 visual contract.
 
+This page is canonical for the package's runtime and CSS boundary. For the whole-repository view —
+how a Foundry composes `site-kit` with its content tree, schemas, registries, validation, and other
+shared mechanics — see [Build with the Astro Stack](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/).
+
 ## Ownership boundary
 
 | Concern                         | Package                 | Consuming Foundry                    |
