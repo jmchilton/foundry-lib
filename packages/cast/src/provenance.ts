@@ -56,26 +56,6 @@ export interface ProvenanceRefEntry {
   license_file_hash?: string;
 }
 
-export interface ProvenanceArtifactOutput {
-  id: string;
-  kind: string;
-  default_filename: string;
-  schema?: string;
-  description: string;
-}
-
-export interface ProvenanceArtifactInput {
-  id: string;
-  description: string;
-  inherited_schema?: string;
-  producers?: string[];
-}
-
-export interface ProvenanceArtifacts {
-  produces: ProvenanceArtifactOutput[];
-  consumes: ProvenanceArtifactInput[];
-}
-
 /** The outcome of running a declared validator over a produced artifact. */
 export interface ValidationResult {
   artifact_id: string;
@@ -91,6 +71,14 @@ export interface ValidationResult {
   error?: string;
 }
 
+/**
+ * The fields every instance's record carries.
+ *
+ * An instance records more than this — what a Mold produces and consumes, whatever else its
+ * domain needs a cast to remember. Those are not declared here. A shared type that named one
+ * Foundry's vocabulary would make every other Foundry's record wrong by construction, and this
+ * package holds only what does not vary by domain. `provenanceRecord` is where the rest goes.
+ */
 export interface Provenance {
   provenance_schema_version: number;
   cast_target: string;
@@ -108,9 +96,54 @@ export interface Provenance {
   cast_revision?: number;
   cast_history?: CastHistoryEntry[];
   refs: ProvenanceRefEntry[];
-  artifacts?: ProvenanceArtifacts;
   validation_results?: ValidationResult[];
   open_questions?: string[];
+}
+
+/** Everything the record carries before `refs`. */
+export type ProvenanceHead = Omit<Provenance, 'refs' | 'validation_results' | 'open_questions'>;
+
+/** Everything it carries after the instance's own fields. */
+export type ProvenanceTail = Pick<Provenance, 'validation_results' | 'open_questions'>;
+
+/**
+ * Assemble a record, with the instance's own fields in the one slot reserved for them.
+ *
+ * Key order is the point. A record is compared by its bytes — that is what makes a drift gate
+ * possible — and `JSON.stringify` emits keys in insertion order, so where a field is written
+ * decides whether a re-cast of an unchanged Mold produces an identical file. That made key
+ * order a property of however a caster happened to write one object literal, which is not
+ * something a second instance can read off a type. It is this function's now: head, `refs`,
+ * the instance's fields, then the tail.
+ *
+ * Extensions land between `refs` and `validation_results` — after what was compiled, before
+ * what checking it concluded. An instance that records nothing extra passes nothing and gets
+ * the same bytes it would have written itself.
+ */
+export function provenanceRecord<Ext extends object = Record<string, never>>(parts: {
+  head: ProvenanceHead;
+  refs: ProvenanceRefEntry[];
+  extensions?: Ext;
+  tail?: ProvenanceTail;
+}): Provenance & Ext {
+  const { head, refs, extensions, tail } = parts;
+  // Written out rather than spread so this function, not its caller's literal, fixes the order.
+  // `undefined` values are omitted by JSON.stringify, so naming an absent field costs no bytes.
+  return {
+    provenance_schema_version: head.provenance_schema_version,
+    cast_target: head.cast_target,
+    mold: head.mold,
+    cast_method: head.cast_method,
+    cast_agent: head.cast_agent,
+    cast_at: head.cast_at,
+    cast_date: head.cast_date,
+    cast_revision: head.cast_revision,
+    cast_history: head.cast_history,
+    refs,
+    ...(extensions ?? ({} as Ext)),
+    validation_results: tail?.validation_results,
+    open_questions: tail?.open_questions,
+  } as Provenance & Ext;
 }
 
 /**
