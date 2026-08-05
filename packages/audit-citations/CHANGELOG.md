@@ -1,5 +1,20 @@
 # @galaxy-foundry/audit-citations
 
+## 0.1.1
+
+### Patch Changes
+
+- [#52](https://github.com/jmchilton/foundry-lib/pull/52) [`26d830d`](https://github.com/jmchilton/foundry-lib/commit/26d830d852c2ba0148f61bfb89ef04eee08d973d) Thanks [@jmchilton](https://github.com/jmchilton)! - Point reference-contract term documentation at the rendered Foundry Pattern page, and correct
+  site-kit's peer metadata to the Pagefind 2 component contract its shipped Astro source uses.
+  Replace audit-citations' text pipeline with the accessible SVG used by the architecture guide.
+
+  The Pagefind range correction excludes no published compatible version: `astro-pagefind` moved from
+  1.8.6 directly to 2.0.0, so the former `>=1.9` range already resolved only to 2.x releases.
+
+- [#50](https://github.com/jmchilton/foundry-lib/pull/50) [`df6b089`](https://github.com/jmchilton/foundry-lib/commit/df6b089d81d3d13561e85cbd2c7abe29de2273ac) Thanks [@jmchilton](https://github.com/jmchilton)! - Run the packaged `foundry-audit-citations` command when a package manager invokes it through its
+  `.bin` symlink. The direct-execution guard now compares real paths instead of mistaking the symlink
+  for an import and exiting successfully without producing output.
+
 ## 0.1.0
 
 ### Minor Changes
