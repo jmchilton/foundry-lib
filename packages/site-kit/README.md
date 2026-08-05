@@ -123,19 +123,59 @@ own content. See `CONTAINER`.
 
 Parameterizing a difference is how an accident becomes a policy.
 
+## The reference card
+
+`ReferenceContract.astro` renders a note's typed `references:` manifest against the contract it was
+authored under. Unlike the shell it brings its own stylesheet, so there are no classes to define —
+only the tokens its rules read, listed as `REFERENCE_TOKENS` and checked with `referenceStyleGaps`.
+
+```astro
+---
+import ReferenceContract from '@galaxy-foundry/site-kit/ReferenceContract.astro';
+import { referenceContract } from '../lib/registries';
+---
+<ReferenceContract
+  references={entry.data.references ?? []}
+  contract={referenceContract}
+  resolveRef={(ref) => resolveWikiLink(ref, linkMap, base)}
+/>
+```
+
+`resolveRef` is a function rather than a link map because how a `ref` becomes an href is the
+instance's question — one spells wiki links, another paths — and returning `null` leaves the ref on
+the page as written.
+
+Which reference **kinds** exist is the one part of the contract an instance declares for itself, so
+the card ships no per-kind colour. Each card carries `data-kind`, and an instance tints its own:
+
+```css
+[data-kind='mold'] {
+  --color-kind-accent: var(--color-accent);
+}
+```
+
+A kind nothing tints gets `--color-brand`. That is a real answer, not a missing one — which is why
+`--color-kind-accent` is a fallback and not in `REFERENCE_TOKENS`.
+
+Evidence chips are styled from the standing each term **declares**
+(`@galaxy-foundry/reference-contract` ships `standing: provisional | grounded`), not from a list of
+term names in a selector. A term added to the vocabulary gets a colour without a component release.
+
 ## Exports
 
-| Import                                     | What                                                                                                                                                                    |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@galaxy-foundry/site-kit`                 | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps` |
-| `@galaxy-foundry/site-kit/SiteShell.astro` | the shell component                                                                                                                                                     |
+| Import                                             | What                                                                                                                                                                                                                                                |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `ResolvedReference` |
+| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                 |
+| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                  |
 
 `resolveNav` is exported because it is the only part of the shell with behaviour worth asserting
 on: a destination is active on its own page and everything beneath it, compared on whole path
 segments, so `/tag/` does not light up on `/tags/`.
 
 `shellStyleGaps` is exported for the opposite reason — it asserts on something the kit deliberately
-does NOT do. See "Define the tokens" above.
+does NOT do. See "Define the tokens" above. `referenceStyleGaps` is the same check for the card,
+and both are `styleGaps` with a different list.
 
 The shell also owns a small client runtime: initial dark-mode selection, persisted theme toggling,
 Pagefind palette synchronization, and the overflow menu's click, outside-click, and Escape-key

@@ -128,10 +128,84 @@ export const SHELL_CLASSES = ['.skip-link', '.bg-grid', '.nav-link-active'] as c
  * being mentioned: declarations come from CSS, which is never scanned for candidates.
  */
 export function shellStyleGaps(css: string): string[] {
+  return styleGaps(css, SHELL_TOKENS, SHELL_CLASSES);
+}
+
+/**
+ * What a component names that a built stylesheet does not supply. Empty is the passing state.
+ *
+ * The rule {@link shellStyleGaps} documents, lifted one level so a second component does not
+ * arrive carrying a second copy of the colon.
+ */
+export function styleGaps(
+  css: string,
+  tokens: readonly string[],
+  classes: readonly string[] = [],
+): string[] {
   return [
-    ...SHELL_TOKENS.filter((token) => !css.includes(`${token}:`)),
-    ...SHELL_CLASSES.filter((selector) => !css.includes(selector)),
+    ...tokens.filter((token) => !css.includes(`${token}:`)),
+    ...classes.filter((selector) => !css.includes(selector)),
   ];
+}
+
+/**
+ * The custom properties the reference-contract component NAMES and does not define.
+ *
+ * Unlike the shell, that component ships its own stylesheet — so nothing here is about a rule that
+ * might be missing. It is about the values inside the rules it ships: a scoped `var(--color-brand)`
+ * resolves to nothing exactly as silently as an unscoped one, and the card renders with no tint, no
+ * accent bar and no evidence colour while every test still passes.
+ *
+ * `--color-brand` is a ROLE, not a brand — whatever colour this site is. An instance reading its
+ * own name here would be the cost {@link SHELL_TOKENS} exists to refuse. The `--color-evidence-*`
+ * pairs are named for the shared vocabulary's two standings, which the contract declares as data
+ * rather than each renderer splitting the terms by name in a selector.
+ *
+ * NOT here: the per-kind accent. `kinds` is the one group an instance declares for itself, so the
+ * component reads `--color-kind-accent` with `--color-brand` behind it and an instance tints its
+ * own kinds through `[data-kind]`. A kind nothing styles gets the brand, which is a plain answer
+ * rather than a missing one — a fallback, not a gap.
+ */
+export const REFERENCE_TOKENS = [
+  '--color-brand',
+  '--color-chrome',
+  '--color-accent',
+  '--color-surface',
+  '--color-surface-raised',
+  '--color-surface-hover',
+  '--color-border-subtle',
+  '--color-link',
+  '--color-link-hover',
+  '--color-text-primary',
+  '--color-text-secondary',
+  '--color-text-muted',
+  '--color-evidence-provisional-bg',
+  '--color-evidence-provisional-text',
+  '--color-evidence-grounded-bg',
+  '--color-evidence-grounded-text',
+  '--font-mono',
+] as const;
+
+/** What {@link REFERENCE_TOKENS} names that a built stylesheet does not supply. */
+export function referenceStyleGaps(css: string): string[] {
+  return styleGaps(css, REFERENCE_TOKENS);
+}
+
+/**
+ * A reference's target, once the instance has resolved it.
+ *
+ * The component takes a resolver rather than a link map, because how a `ref` becomes an href is
+ * the instance's question and not the contract's: one spells wiki links, another spells paths, and
+ * a kind term already records which through its `ref_shape`. A resolver returning `null` leaves
+ * the ref on the page as the author wrote it.
+ */
+export interface ResolvedReference {
+  /** Where the reference points, or `null` for a target that does not exist — a dangling link. */
+  href: string | null;
+  /** What to show. Usually the target's title, falling back to the raw ref. */
+  label: string;
+  /** Hover text, when the instance has a summary for the target. */
+  summary?: string;
 }
 
 /** The nav, cut into what the bar shows and what "More" holds. */
