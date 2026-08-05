@@ -49,6 +49,19 @@ function term(group: ContractGroup, key: string): ContractTerm & { standing?: St
     }
   );
 }
+
+/**
+ * What a pill IS, decided by whether it has anywhere to go.
+ *
+ * The four inherited vocabularies carry spec URLs, so their chips are links. `kinds` is the
+ * instance's own, and an instance need not have a page to point a reader at.
+ *
+ * An `<a>` with no `href` is valid HTML and is not a link: not focusable, not clickable, announced
+ * as plain text — while carrying the same pill styling as the real links beside it. It looks like
+ * something to click and is nothing. The affordance worth keeping is the description, and a
+ * `<span>` carries that just as well.
+ */
+const pill = (href?: string): 'a' | 'span' => (href ? 'a' : 'span');
 ---
 {references.length > 0 && (
   <section class="reference-contract">
@@ -63,13 +76,14 @@ function term(group: ContractGroup, key: string): ContractTerm & { standing?: St
     <div class="reference-grid">
       {references.map(reference => {
         const kind = term('kinds', reference.kind);
+        const Kind = pill(kind.href);
         const link = resolveRef?.(reference.ref) ?? null;
         const detail = ([['Purpose', reference.purpose], ['Trigger', reference.trigger], ['Verify', reference.verification]] as const)
           .filter(([, value]) => Boolean(value));
         return (
           <article class="reference-card" data-kind={reference.kind}>
             <header class="reference-card-top">
-              <a class="pill kind" href={kind.href} title={kind.description}>{kind.label}</a>
+              <Kind class="pill kind" href={kind.href} title={kind.description}>{kind.label}</Kind>
               <span class="ref">
                 {link
                   ? link.href
@@ -82,8 +96,9 @@ function term(group: ContractGroup, key: string): ContractTerm & { standing?: St
             <div class="chips" aria-label="loading metadata">
               {REFERENCE_CHIP_FIELDS.map(field => {
                 const chip = term(REFERENCE_FIELDS[field], reference[field]);
+                const Chip = pill(chip.href);
                 return (
-                  <a class="pill" href={chip.href} title={chip.description} data-standing={chip.standing}>{chip.label}</a>
+                  <Chip class="pill" href={chip.href} title={chip.description} data-standing={chip.standing}>{chip.label}</Chip>
                 );
               })}
             </div>
@@ -240,7 +255,9 @@ function term(group: ContractGroup, key: string): ContractTerm & { standing?: St
     color: var(--color-text-secondary);
     background: var(--color-surface-raised);
   }
-  .chips .pill:hover {
+  /* `a.pill`, not `.pill` — a chip whose term has no destination renders as a `<span>`, and a
+     non-link that lights up under the cursor promises a click it cannot honour. */
+  .chips a.pill:hover {
     color: var(--color-link);
     border-color: var(--color-accent);
     background: var(--color-surface-hover);
