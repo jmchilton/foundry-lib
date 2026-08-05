@@ -208,6 +208,53 @@ export interface ResolvedReference {
   summary?: string;
 }
 
+/**
+ * The attribute Pagefind reads to decide what a page contributes to the index.
+ *
+ * Named here because the shell writes it and a consumer's test looks for it, and two spellings of
+ * an attribute agree right up until one is a typo — at which point the test either finds it on no
+ * page and reports the whole site missing, or finds it on every page and reports nothing at all.
+ */
+export const PAGEFIND_BODY_ATTR = 'data-pagefind-body';
+
+/**
+ * Built pages that will not be findable, and that nobody decided should not be.
+ *
+ * Pagefind's rule is all-or-nothing and runs BACKWARDS from what the attribute looks like. Mark no
+ * page, and every page is indexed from its `<body>`. Mark one, and every unmarked page drops out of
+ * the index entirely. So an annotation that reads as "index this page" means "index only pages like
+ * this one", and adding it to a single route is strictly worse for the rest of the site than never
+ * having added it.
+ *
+ * Measured on a real instance: one route carried the attribute and the index held 242 of 374 pages.
+ * Deleting that one annotation put all 374 back. The 132 missing were every artifact page, every
+ * tag page, the glossary, the dashboard, and 48 generated skill pages — the routes a reader is
+ * likeliest to reach by searching rather than by following a link.
+ *
+ * **Nothing reports it.** The build log prints `Pagefind indexed 374 pages` in both states, because
+ * it counts pages processed rather than pages indexed. No warning, no diff, no page that looks
+ * wrong; the only symptom is a search answering "no results" for words plainly on the site.
+ *
+ * `unsearchable` is how a page opts out on purpose, and a list is what makes an absence a DECISION.
+ * Without one, "this page is deliberately out of the index" and "nobody thought about this page"
+ * are the same observation — which is how 132 of them accumulated unnoticed.
+ *
+ * Hand it every built page. Empty is the passing state.
+ */
+export function searchIndexGaps(
+  pages: readonly { path: string; html: string }[],
+  unsearchable: readonly string[] = [],
+): string[] {
+  const isMarked = (page: { html: string }): boolean => page.html.includes(PAGEFIND_BODY_ATTR);
+  // No page marked: Pagefind falls back to indexing every `<body>`, so nothing is missing. A valid
+  // state, and a healthier one than marking a single route — see above.
+  if (!pages.some(isMarked)) return [];
+  return pages
+    .filter((page) => !isMarked(page) && !unsearchable.includes(page.path))
+    .map((page) => page.path)
+    .sort();
+}
+
 /** The nav, cut into what the bar shows and what "More" holds. */
 export interface ResolvedNav {
   /** Destinations on the bar, in order. */
