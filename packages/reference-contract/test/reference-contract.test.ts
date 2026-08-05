@@ -3,7 +3,10 @@ import { describe, it, expect } from 'vitest';
 import {
   CONTRACT_GROUPS,
   INHERITED_GROUPS,
+  REFERENCE_CHIP_FIELDS,
   REFERENCE_CONTRACT_FILE,
+  REFERENCE_FIELDS,
+  STANDINGS,
   bundledContractPath,
   bundledContractText,
   bundledVocabularies,
@@ -154,7 +157,7 @@ describe('composing an instance contract', () => {
         'modes:',
         '  copy: {label: Copy, description: d}',
         'evidence:',
-        '  guess: {label: Guess, description: d}',
+        '  guess: {label: Guess, description: d, standing: grounded}',
       ].join('\n'),
     );
     const contract = buildReferenceContract({ kinds, inherited });
@@ -181,7 +184,7 @@ describe('parsing an arbitrary table', () => {
     'modes:',
     '  copy: {label: Copy, description: d}',
     'evidence:',
-    '  guess: {label: Guess, description: d}',
+    '  guess: {label: Guess, description: d, standing: grounded}',
   ].join('\n');
 
   it('accepts a well-formed table', () => {
@@ -197,7 +200,7 @@ describe('parsing an arbitrary table', () => {
   it('rejects a term missing a label or a description', () => {
     expect(() =>
       parseInheritedVocabularies(
-        'used_at:\n  now: {label: Now}\nload:\n  e: {label: E, description: d}\nmodes:\n  c: {label: C, description: d}\nevidence:\n  g: {label: G, description: d}',
+        'used_at:\n  now: {label: Now}\nload:\n  e: {label: E, description: d}\nmodes:\n  c: {label: C, description: d}\nevidence:\n  g: {label: G, description: d, standing: grounded}',
       ),
     ).toThrow(/used_at\.now missing required field `description`/);
   });
@@ -205,7 +208,7 @@ describe('parsing an arbitrary table', () => {
   it('rejects an empty vocabulary block', () => {
     expect(() =>
       parseInheritedVocabularies(
-        'used_at: {}\nload:\n  e: {label: E, description: d}\nmodes:\n  c: {label: C, description: d}\nevidence:\n  g: {label: G, description: d}',
+        'used_at: {}\nload:\n  e: {label: E, description: d}\nmodes:\n  c: {label: C, description: d}\nevidence:\n  g: {label: G, description: d, standing: grounded}',
       ),
     ).toThrow(/`used_at` is empty/);
   });
@@ -213,7 +216,7 @@ describe('parsing an arbitrary table', () => {
   it('rejects an unknown ref_shape', () => {
     expect(() =>
       parseInheritedVocabularies(
-        'used_at:\n  now: {label: N, description: d, ref_shape: hyperlink}\nload:\n  e: {label: E, description: d}\nmodes:\n  c: {label: C, description: d}\nevidence:\n  g: {label: G, description: d}',
+        'used_at:\n  now: {label: N, description: d, ref_shape: hyperlink}\nload:\n  e: {label: E, description: d}\nmodes:\n  c: {label: C, description: d}\nevidence:\n  g: {label: G, description: d, standing: grounded}',
       ),
     ).toThrow(/unknown ref_shape `hyperlink`/);
   });
@@ -222,6 +225,73 @@ describe('parsing an arbitrary table', () => {
     expect(() => parseInheritedVocabularies('used_at: {}', 'somewhere.yml')).toThrow(
       /^somewhere\.yml:/,
     );
+  });
+
+  it('rejects an evidence term that never says where it stands', () => {
+    // The one a renderer cannot catch. A term with no standing renders in whichever style the
+    // fallback happened to be, and a style is not an error — so this has to fail at load.
+    expect(() => parseInheritedVocabularies(valid.replace(', standing: grounded', ''))).toThrow(
+      /evidence\.guess missing required field `standing`/,
+    );
+  });
+
+  it('rejects a standing outside the vocabulary', () => {
+    expect(() =>
+      parseInheritedVocabularies(valid.replace('standing: grounded', 'standing: probably')),
+    ).toThrow(/unknown standing `probably`/);
+  });
+
+  it('asks for a standing only from evidence, not from every group', () => {
+    expect(() => parseInheritedVocabularies(valid)).not.toThrow();
+  });
+});
+
+describe('the reference shape', () => {
+  it('maps every typed field to a group the contract actually has', () => {
+    for (const group of Object.values(REFERENCE_FIELDS)) {
+      expect(CONTRACT_GROUPS).toContain(group);
+    }
+  });
+
+  it('names a chip for each inherited group, and none for `kinds`', () => {
+    // The point of deriving these rather than listing them. `kind` is absent because `kinds` is
+    // the group an instance declares — the same line loadInstanceKinds enforces, read from the
+    // same place, so a group that changed sides moves here too.
+    expect(REFERENCE_CHIP_FIELDS.map((field) => REFERENCE_FIELDS[field]).sort()).toEqual(
+      [...INHERITED_GROUPS].sort(),
+    );
+    expect(REFERENCE_CHIP_FIELDS).not.toContain('kind');
+  });
+
+  it('keeps the irregular pairs that made the copies uncomparable', () => {
+    // `mode`/`modes` and `kind`/`kinds`: the two a reader checking three hand-written lists by eye
+    // would let past, and the reason this is a value.
+    expect(REFERENCE_FIELDS.mode).toBe('modes');
+    expect(REFERENCE_FIELDS.kind).toBe('kinds');
+  });
+});
+
+describe('standings', () => {
+  const inherited = bundledVocabularies();
+
+  it('places every shipped evidence term', () => {
+    for (const [key, term] of Object.entries(inherited.evidence)) {
+      expect(STANDINGS, `evidence.${key}`).toContain(term.standing);
+    }
+  });
+
+  it('draws the line the renderers had been drawing by name', () => {
+    expect(inherited.evidence['hypothesis']?.standing).toBe('provisional');
+    expect(inherited.evidence['corpus-observed']?.standing).toBe('grounded');
+    expect(inherited.evidence['cast-validated']?.standing).toBe('grounded');
+  });
+
+  it('survives narrowing, which is where a widened type would have dropped it', () => {
+    const contract = buildReferenceContract({
+      kinds,
+      narrow: { evidence: ['cast-validated'] },
+    });
+    expect(contract.evidence['cast-validated']?.standing).toBe('grounded');
   });
 });
 

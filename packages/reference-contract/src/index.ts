@@ -6,6 +6,21 @@ import yaml from 'js-yaml';
 
 export type RefShape = 'wiki-link' | 'path';
 
+/**
+ * Whether an `evidence` term claims a reference works, or records that something checked.
+ *
+ * Every renderer of this vocabulary draws the same line — `hypothesis` is marked as unproven and
+ * the other two are not — and every one of them drew it by NAME, in a class selector or a switch.
+ * That is a copy of this table kept somewhere the table cannot see, and it is silently wrong the
+ * moment a term is added: a fourth `evidence` value renders in whichever style the `else` branch
+ * happened to be, and nothing anywhere reports that no one decided.
+ *
+ * Declared here, the split is one fact with one home, and a new term cannot be added without
+ * answering the question.
+ */
+export const STANDINGS = ['provisional', 'grounded'] as const;
+export type Standing = (typeof STANDINGS)[number];
+
 export interface ContractTerm {
   label: string;
   description: string;
@@ -17,11 +32,16 @@ export interface KindTerm extends ContractTerm {
   ref_shape?: RefShape;
 }
 
+/** An `evidence` term, which must say where it stands. See {@link Standing}. */
+export interface EvidenceTerm extends ContractTerm {
+  standing: Standing;
+}
+
 export interface InheritedVocabularies {
   used_at: Record<string, ContractTerm>;
   load: Record<string, ContractTerm>;
   modes: Record<string, ContractTerm>;
-  evidence: Record<string, ContractTerm>;
+  evidence: Record<string, EvidenceTerm>;
 }
 
 export interface ReferenceContract extends InheritedVocabularies {
@@ -32,6 +52,61 @@ export const CONTRACT_GROUPS = ['kinds', 'used_at', 'load', 'modes', 'evidence']
 export type ContractGroup = (typeof CONTRACT_GROUPS)[number];
 
 export const INHERITED_GROUPS = ['used_at', 'load', 'modes', 'evidence'] as const;
+
+/**
+ * The typed fields of one reference, each naming the group its value is drawn from.
+ *
+ * This mapping existed three times and was checked nowhere: the groups above, a schema that spelled
+ * out `kind: enumOf("kinds")` … `mode: enumOf("modes")` by hand, and a view that spelled the same
+ * five pairs back the other way to look each label up. The irregular pairs are the whole problem —
+ * the field is `mode` and the group is `modes`, the field is `kind` and the group is `kinds` — so
+ * the copies could not be compared by eye and were never compared by anything else.
+ *
+ * A schema derives its shape from this; a renderer derives its chips. Neither restates it.
+ */
+export const REFERENCE_FIELDS = {
+  kind: 'kinds',
+  used_at: 'used_at',
+  load: 'load',
+  mode: 'modes',
+  evidence: 'evidence',
+} as const satisfies Record<string, ContractGroup>;
+
+export type ReferenceField = keyof typeof REFERENCE_FIELDS;
+
+/**
+ * The reference fields that carry an author's prose rather than a vocabulary value.
+ *
+ * All optional, which is why they belong in a list. Two descriptions of an object whose fields are
+ * mostly optional do not fail against each other: drop `trigger` from one and everything still
+ * compiles against the other, and the row simply stops rendering.
+ */
+export const REFERENCE_PROSE_FIELDS = ['purpose', 'trigger', 'verification'] as const;
+export type ReferenceProseField = (typeof REFERENCE_PROSE_FIELDS)[number];
+
+/**
+ * One entry of a note's typed reference manifest, as {@link REFERENCE_FIELDS} defines it.
+ *
+ * The vocabulary fields are `string` rather than the contract's own enums, deliberately: the terms
+ * come from a YAML table read at runtime, and a compile-time union would be a second, staler copy
+ * of a registry that is already the authority. Validation is the schema's job; this is the shape.
+ */
+export type Reference = Record<ReferenceField, string> &
+  Partial<Record<ReferenceProseField, string>> & { ref: string };
+
+/**
+ * The reference fields whose vocabulary this package ships, in render order.
+ *
+ * Derived, not listed. A renderer may style these because every instance gets the same terms —
+ * and `kind` falls out on its own, because `kinds` is the one group an instance declares. That is
+ * the same line {@link loadInstanceKinds} enforces, read from the same place, so a group that
+ * changed sides would move here too rather than leaving a hand-written list behind.
+ */
+export const REFERENCE_CHIP_FIELDS: ReferenceField[] = (
+  Object.keys(REFERENCE_FIELDS) as ReferenceField[]
+).filter((field) =>
+  (INHERITED_GROUPS as readonly ContractGroup[]).includes(REFERENCE_FIELDS[field]),
+);
 
 export const REFERENCE_CONTRACT_FILE = 'reference_contract.yml';
 
@@ -61,23 +136,56 @@ function parseTerm(
       `${termPath} has unknown ref_shape \`${String(shape)}\` (expected wiki-link | path)`,
     );
   }
+  const standing = fields['standing'];
+  if (standing !== undefined && !(STANDINGS as readonly unknown[]).includes(standing)) {
+    throwValidationError(
+      sourcePath,
+      `${termPath} has unknown standing \`${String(standing)}\` (expected ${STANDINGS.join(' | ')})`,
+    );
+  }
 
-  const term: KindTerm = {
+  const term: KindTerm & { standing?: Standing } = {
     label: fields['label'] as string,
     description: fields['description'] as string,
   };
   const link = typeof fields['href'] === 'string' ? fields['href'] : href;
   if (link !== undefined) term.href = link;
   if (shape !== undefined) term.ref_shape = shape;
+  if (standing !== undefined) term.standing = standing as Standing;
   return term;
 }
+
+/**
+ * The `evidence` group, with every term's {@link Standing} confirmed present.
+ *
+ * Checked here rather than left to the renderer, because the renderer's fallback for a term with
+ * no standing is a style — and a style is not an error. The vocabulary is small and shipped; a
+ * term that reaches a page having never been placed is the failure this catches at load.
+ */
+function requireStandings(
+  terms: Record<string, KindTerm & { standing?: Standing }>,
+  sourcePath: string | undefined,
+): Record<string, EvidenceTerm> {
+  for (const [termKey, term] of Object.entries(terms)) {
+    if (term.standing === undefined) {
+      throwValidationError(
+        sourcePath,
+        `evidence.${termKey} missing required field \`standing\` (${STANDINGS.join(' | ')})`,
+      );
+    }
+  }
+  return terms as Record<string, EvidenceTerm>;
+}
+
+/** Every field any group's term may carry. One parser reads them all; each group keeps its own. */
+type ParsedTerm = KindTerm & { standing?: Standing };
 
 function parseGroup(
   group: string,
   rawGroup: unknown,
   sourcePath: string | undefined,
   href?: string,
-): Record<string, KindTerm> {
+): Record<string, ParsedTerm> {
   if (typeof rawGroup !== 'object' || rawGroup === null || Array.isArray(rawGroup)) {
     throwValidationError(sourcePath, `\`${group}\` is not a mapping`);
   }
@@ -114,7 +222,10 @@ export function parseInheritedVocabularies(
     used_at: parseGroup('used_at', contractData['used_at'], sourcePath, specUrl),
     load: parseGroup('load', contractData['load'], sourcePath, specUrl),
     modes: parseGroup('modes', contractData['modes'], sourcePath, specUrl),
-    evidence: parseGroup('evidence', contractData['evidence'], sourcePath, specUrl),
+    evidence: requireStandings(
+      parseGroup('evidence', contractData['evidence'], sourcePath, specUrl),
+      sourcePath,
+    ),
   };
 }
 
@@ -151,11 +262,11 @@ export interface BuildReferenceContractOptions {
   inherited?: InheritedVocabularies;
 }
 
-function narrowGroup(
+function narrowGroup<T extends ContractTerm>(
   group: InheritedGroup,
-  terms: Record<string, ContractTerm>,
+  terms: Record<string, T>,
   keep: readonly string[],
-): Record<string, ContractTerm> {
+): Record<string, T> {
   if (keep.length === 0) {
     throw new Error(`reference contract: narrowing \`${group}\` to nothing leaves no valid value`);
   }
@@ -189,9 +300,14 @@ export function buildReferenceContract({
       );
     }
   }
-  const selectGroupTerms = (group: InheritedGroup): Record<string, ContractTerm> => {
+  // Generic in the group so `evidence` keeps its EvidenceTerm through narrowing. Widened to
+  // ContractTerm here, a narrowed contract would quietly lose the standings it was built with.
+  const selectGroupTerms = <G extends InheritedGroup>(group: G): InheritedVocabularies[G] => {
     const keep = narrow?.[group];
-    return keep === undefined ? inherited[group] : narrowGroup(group, inherited[group], keep);
+    if (keep === undefined) return inherited[group];
+    // narrowGroup only ever drops whole entries, so the term type it returns is the one it was
+    // given — which TypeScript cannot see through a generic index into InheritedVocabularies.
+    return narrowGroup(group, inherited[group], keep) as InheritedVocabularies[G];
   };
   return {
     kinds,
