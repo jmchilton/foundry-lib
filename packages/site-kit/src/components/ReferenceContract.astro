@@ -4,11 +4,9 @@ import {
   REFERENCE_FIELDS,
   type ContractGroup,
   type ContractTerm,
-  type Reference,
-  type ReferenceContract,
   type Standing,
 } from '@galaxy-foundry/reference-contract';
-import type { ResolvedReference } from '../index.js';
+import type { ReferenceContractProps } from '../index.js';
 
 /**
  * A note's typed reference manifest, rendered from the contract it was authored against.
@@ -24,13 +22,7 @@ import type { ResolvedReference } from '../index.js';
  * `kinds`, `mode` for `modes` — to look each label up, and the schema had spelled them a third.
  * Three lists, no two of which anything compared.
  */
-interface Props {
-  references: Reference[];
-  /** The instance's built contract: the shipped vocabularies plus its own `kinds`. */
-  contract: ReferenceContract;
-  /** How a `ref` becomes a link here. See {@link ResolvedReference}. */
-  resolveRef?: (ref: string) => ResolvedReference | null;
-}
+type Props = ReferenceContractProps;
 
 const { references, contract, resolveRef } = Astro.props;
 

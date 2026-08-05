@@ -1,5 +1,5 @@
 ---
-import { CONTAINER, type SiteIdentity } from '../index.js';
+import { CONTAINER, type SiteShellProps } from '../index.js';
 import SiteFooter from './SiteFooter.astro';
 import SiteHeader from './SiteHeader.astro';
 
@@ -16,29 +16,7 @@ import SiteHeader from './SiteHeader.astro';
  * fills. `<main>` carries {@link PAGEFIND_BODY_ATTR} unless a page opts out; assert the whole
  * built site with {@link searchIndexGaps}.
  */
-interface Props {
-  /** The page title, before the site name is appended. */
-  title: string;
-  /** Overrides the identity's description for this page. */
-  description?: string;
-  /** `import.meta.env.BASE_URL` from the consumer — the kit never reads the environment. */
-  base: string;
-  /** `Astro.url.pathname` from the consumer, for the active-section rule. */
-  pathname: string;
-  identity: SiteIdentity;
-  /**
-   * Whether this page's main content goes in the search index. Defaults to yes.
-   *
-   * Defaulted rather than required, and defaulted TRUE, because Pagefind's rule is all-or-nothing
-   * and runs backwards: the moment one page marks itself, every unmarked page leaves the index. A
-   * shell that made this opt-in would put each new route one forgotten prop away from being
-   * unfindable, with no warning and no visible symptom. See {@link searchIndexGaps}.
-   *
-   * Marking `<main>` rather than letting Pagefind fall back to `<body>` also keeps the header, nav
-   * and footer out of every result's excerpt.
-   */
-  searchable?: boolean;
-}
+type Props = SiteShellProps;
 
 const { title, base, pathname, identity } = Astro.props;
 const { description = identity.description, searchable = true } = Astro.props;

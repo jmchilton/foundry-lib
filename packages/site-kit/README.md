@@ -195,13 +195,61 @@ expect(searchIndexGaps(pages, UNSEARCHABLE)).toEqual([]);
 The list is what makes an absence a decision. Without one, "deliberately out of the index" and
 "nobody thought about this route" are the same observation — which is how 132 of them accumulated.
 
+## Specimens, and the gallery each instance builds from them
+
+The kit ships the cases its components are meant to handle, as props:
+
+```ts
+import { REFERENCE_SPECIMENS } from '@galaxy-foundry/site-kit/specimens';
+```
+
+Each entry is `{ id, name, why, props }`, grouped per component with a `summary` and a `surface`.
+Rendering a group is a page of your own, in your own theme:
+
+```astro
+---
+import ReferenceContract from '@galaxy-foundry/site-kit/ReferenceContract.astro';
+import { REFERENCE_SPECIMENS, specimenPath } from '@galaxy-foundry/site-kit/specimens';
+---
+{REFERENCE_SPECIMENS.specimens.map((specimen) => (
+  <section id={specimenPath(REFERENCE_SPECIMENS, specimen)}>
+    <h2>{specimen.name}</h2>
+    <p>{specimen.why}</p>
+    <ReferenceContract {...specimen.props} />
+  </section>
+))}
+```
+
+**The theme is the specialization.** Nothing here carries a colour, and that is the point: the same
+seventeen cases rendered under two instances' tokens are two galleries, and what differs between
+them is exactly what each instance owns. An instance adds groups of its own for its own components
+in the same shape.
+
+**`surface` is not decoration.** A group is `inline` (many to a page), `isolated` (one to a page or
+one per frame — valid inline markup carrying document-unique `id`s, which the header does), or
+`document` (its own `<html>`, so it needs a route and an `<iframe>`). Getting it wrong does not
+fail: two headers on one page is two `#nav-more-trigger`, the second one's menu binds nothing, and
+the specimen that exists to prove the overflow menu opens is the one that appears not to. Use
+`sharesPage(group)` rather than reading the field.
+
+`why` is what makes a specimen more than a screenshot. `no-references` renders **nothing** — a
+correct result indistinguishable from a broken gallery until something says which it is.
+
+The reference specimens carry their own `SPECIMEN_CONTRACT` rather than taking yours. Half of them
+are about terms your contract does not contain — a kind with no destination, a value outside the
+vocabulary — and fed a real contract they would collapse into the same happy-path card. Say whose
+vocabulary is on screen; then add your own kinds' specimens beside them.
+
 ## Exports
 
-| Import                                             | What                                                                                                                                                                                                                                                                                         |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `ResolvedReference`, `PAGEFIND_BODY_ATTR`, `searchIndexGaps` |
-| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                                                          |
-| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                                                           |
+| Import                                             | What                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `ResolvedReference`, `PAGEFIND_BODY_ATTR`, `searchIndexGaps`, `SiteShellProps`, `SiteHeaderProps`, `SiteFooterProps`, `ReferenceContractProps` |
+| `@galaxy-foundry/site-kit/specimens`               | `Specimen`, `SpecimenGroup`, `SpecimenSurface`, `SPECIMENS`, `REFERENCE_SPECIMENS`, `HEADER_SPECIMENS`, `FOOTER_SPECIMENS`, `SHELL_SPECIMENS`, `SPECIMEN_CONTRACT`, `sharesPage`, `specimenPath`                                                                                                                                                                               |
+| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                                                                                                                                            |
+| `@galaxy-foundry/site-kit/SiteHeader.astro`        | the header alone — a gallery cannot show it otherwise                                                                                                                                                                                                                                                                                                                          |
+| `@galaxy-foundry/site-kit/SiteFooter.astro`        | the footer alone                                                                                                                                                                                                                                                                                                                                                               |
+| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                                                                                                                                             |
 
 `resolveNav` is exported because it is the only part of the shell with behaviour worth asserting
 on: a destination is active on its own page and everything beneath it, compared on whole path

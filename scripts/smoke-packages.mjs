@@ -220,7 +220,7 @@ const SMOKE = {
       throw new Error('packed transform rewrote code — a backtick means the syntax');
     }
   },
-  '@galaxy-foundry/site-kit': (mod, _peer, unpacked) => {
+  '@galaxy-foundry/site-kit': async (mod, _peer, unpacked) => {
     // The nav rule, from the packed JS rather than the source tree.
     const nav = mod.resolveNav(
       [
@@ -262,6 +262,28 @@ const SMOKE = {
     const shell = readFileSync(path.join(unpacked, 'src', 'components', 'SiteShell.astro'), 'utf8');
     if (!shell.includes('min-h-dvh')) {
       throw new Error('packed shell does not name the canary class the README documents');
+    }
+
+    // Each specimen group names the subpath a gallery imports its component from. The unit tests
+    // check that name against this package's `exports`; both live in the source tree, so neither
+    // can tell whether the file `exports` points AT is in the tarball. A gallery finds out at its
+    // own build, which is a repository away.
+    const specimens = await import(pathToFileURL(path.join(unpacked, 'dist', 'specimens.js')).href);
+    const packed = JSON.parse(readFileSync(path.join(unpacked, 'package.json'), 'utf8'));
+    for (const group of specimens.SPECIMENS) {
+      const subpath = group.importPath.replace(packed.name, '.');
+      const target = packed.exports[subpath];
+      const file = typeof target === 'string' ? target : (target?.import ?? target?.default);
+      if (!file)
+        throw new Error(`packed specimens name ${group.importPath}, which is not exported`);
+      if (!existsSync(path.join(unpacked, file))) {
+        throw new Error(
+          `${group.importPath} is exported as ${file}, which the tarball does not carry`,
+        );
+      }
+    }
+    if (specimens.SPECIMENS.flatMap((group) => group.specimens).length === 0) {
+      throw new Error('packed package exposes specimens and has none');
     }
   },
   '@galaxy-foundry/kind-manifest': async (mod, peer) => {
