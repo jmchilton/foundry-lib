@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/site-kit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The reading shell for Foundry-pattern instances — document skeleton, header with derived nav, and footer, as Astro components taking a site's identity as data. The values, the styles and the corpus stay per-instance.",
   "type": "module",
   "exports": {

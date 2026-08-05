@@ -1,5 +1,36 @@
 # @galaxy-foundry/site-kit
 
+## 0.3.0
+
+### Minor Changes
+
+- [#54](https://github.com/jmchilton/foundry-lib/pull/54) [`c99f685`](https://github.com/jmchilton/foundry-lib/commit/c99f685b402f9577f142d37a5e29ff5d6e6ab972) Thanks [@jmchilton](https://github.com/jmchilton)! - Ship the reference card, not just the vocabulary behind it.
+
+  `@galaxy-foundry/site-kit/ReferenceContract.astro` renders a note's typed `references:` manifest.
+  One instance had written this component; the other depended on
+  `@galaxy-foundry/reference-contract`, loaded it, wired it into its registries and validated twelve
+  notes' worth of references against it — with no component that read any of it. The package shipped
+  the data and left the view to be reinvented, so one site reinvented it and one never did. Nothing
+  failed.
+
+  `REFERENCE_TOKENS` and `referenceStyleGaps` are the card's half of the style contract, and
+  `styleGaps` is the shared rule `shellStyleGaps` was. The card ships its own stylesheet, so an
+  instance cannot fail to write a rule — but a scoped `var(--color-brand)` resolving to nothing
+  renders exactly like a design decision, which is what the list is for. Two tests read the component
+  itself, so the list cannot drift from the file it describes in either direction.
+
+  Two things the card deliberately does not decide. Per-kind accents: `kinds` is the one group an
+  instance declares, so each card carries `data-kind` and an instance sets `--color-kind-accent`,
+  with `--color-brand` behind it. And evidence colour, which comes from the `standing` a term now
+  declares rather than from a list of term names in a selector.
+
+  Adds a dependency on `@galaxy-foundry/reference-contract`.
+
+### Patch Changes
+
+- Updated dependencies [[`37e3120`](https://github.com/jmchilton/foundry-lib/commit/37e312096e35eb196abe0635a1643e5174e390e8)]:
+  - @galaxy-foundry/reference-contract@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
