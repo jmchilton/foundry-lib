@@ -9,6 +9,11 @@ act as a byte-identity oracle, but an independent second caster has not yet test
 That status is why the package owns mechanics rather than promoting its first consumer's renderer,
 kind catalog, or process policy into shared abstractions.
 
+This page is canonical for the shared mechanics. For the stack-neutral sequence that decides what
+to cast, see [Plan Your Foundry](https://galaxyproject.github.io/foundry-pattern/pattern/setting-up-a-foundry/);
+for the consumer-owned resolver, renderer, and target in one repository composition, see
+[Build with the Astro Stack](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/).
+
 ## Ownership boundary
 
 | Concern                                   | Package                     | Consuming Foundry                   |

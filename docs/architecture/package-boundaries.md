@@ -3,6 +3,11 @@
 The architecture is organized around who can truthfully know a fact and which decisions have
 already converged across instances.
 
+This page is canonical for library-versus-instance ownership. The Pattern's
+[What a Foundry Needs](https://galaxyproject.github.io/foundry-pattern/pattern/anatomy-of-an-instance/)
+defines the larger substrate and extension surface; [Build with the Astro Stack](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/)
+shows these package boundaries composed inside one concrete repository.
+
 ## Ownership map
 
 | Concern                            | `foundry-lib`         | Foundry instance       |

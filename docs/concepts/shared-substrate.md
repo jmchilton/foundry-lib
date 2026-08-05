@@ -6,6 +6,10 @@ one centrally owned application. Each instance can define different kinds, front
 registries, and coherence rules. The shared substrate is the much smaller layer where
 independent instances have already reached the same decision.
 
+The Pattern's [What a Foundry Needs](https://galaxyproject.github.io/foundry-pattern/pattern/anatomy-of-an-instance/)
+page owns the pattern-level substrate and extension boundary. This page owns the narrower
+admission question: which converged mechanics belong in a shared, versioned package.
+
 ## The admission test
 
 A proposed package belongs in `foundry-lib` only when all of these are true:

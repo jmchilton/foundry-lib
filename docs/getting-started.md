@@ -7,16 +7,16 @@ sequence for designing a new Foundry.
 
 Start in the Foundry Pattern documentation:
 
-- [Setting up a Foundry](https://galaxyproject.github.io/foundry-pattern/pattern/setting-up-a-foundry/)
-  is the stack-agnostic sequence: bring the domain corpus, pin its vocabulary, identify and author
-  Molds, choose targets, define the external check, and add composition only when the work is
-  sequential.
-- [One Worked Example: the Astro Stack](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/)
-  maps those commitments onto the concrete Astro, TypeScript, Zod, Vitest, and GitHub Pages stack
-  used by the current instances.
+- [What a Foundry Needs](https://galaxyproject.github.io/foundry-pattern/pattern/anatomy-of-an-instance/)
+  separates the shared substrate from the extension surface each domain owns.
+- [Plan Your Foundry](https://galaxyproject.github.io/foundry-pattern/pattern/setting-up-a-foundry/)
+  is the stack-neutral sequence from grounded domain knowledge to one working vertical slice.
+- [Build with the Astro Stack](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/)
+  owns the repository-level composition: how instance content and policy use Astro, TypeScript,
+  Zod, Vitest, GitHub Pages, and the packages documented here.
 
-Those pages own the full setup story. Return here after choosing an implementation seam and use
-this page for package-level composition.
+Those pages own the pattern, planning sequence, and whole-repository composition. Return here for
+current prerequisites, package-level integration, and links to each package's canonical behavior.
 
 ## Compose only what you need
 
@@ -333,8 +333,8 @@ Continue with [Adopt wiki links](guides/adopting-wiki-links.md).
 
 ## Next steps
 
-- Follow the Pattern's [stack-agnostic setup sequence](https://galaxyproject.github.io/foundry-pattern/pattern/setting-up-a-foundry/)
-  or its [worked Astro implementation](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/).
+- Follow the Pattern's [stack-neutral planning sequence](https://galaxyproject.github.io/foundry-pattern/pattern/setting-up-a-foundry/)
+  or [Astro composition guide](https://galaxyproject.github.io/foundry-pattern/pattern/standing-up-a-foundry/).
 - Compare the packages in [Choose a package](packages/README.md).
 - Understand the admission rule in [The shared substrate](concepts/shared-substrate.md).
 - Browse all public exports in the [API reference](api/README.md).
