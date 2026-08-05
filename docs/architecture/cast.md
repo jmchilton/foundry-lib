@@ -92,9 +92,13 @@ note was required to declare `license_file` in the first place remains an instan
 ## Provenance has generated and hand-recorded halves
 
 The `Provenance` TypeScript contract records the target, Mold identity, resolved references and
-hashes, produced and consumed artifacts, validation results, and optional open questions. The
-package exports a schema-version constant and types; it does not currently export a strict runtime
-parser for a complete provenance document.
+hashes, validation results, and optional open questions. Anything else a domain needs a cast to
+remember — what a Mold produces and consumes, say — is the instance's, and `provenanceRecord`
+places it between `refs` and `validation_results`. That function owns the record's key order,
+because a record is compared by its bytes and `JSON.stringify` writes keys in insertion order;
+leaving order to each caller's object literal makes byte-identity a coincidence. The package
+exports a schema-version constant, the builder, and types; it does not currently export a strict
+runtime parser for a complete provenance document.
 
 `readProvenanceCarryOver` reads the fields that cannot be regenerated—casting method and agent,
 dates and revisions, history, validation results, and open questions—from an existing JSON record.

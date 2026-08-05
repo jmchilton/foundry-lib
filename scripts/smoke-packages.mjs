@@ -444,6 +444,27 @@ const SMOKE = {
       throw new Error('packed package emits a different provenance version');
     }
 
+    // Key order, checked here because packing is where the types stop helping. An instance's
+    // records are compared byte for byte, so the slot moving is a diff in every bundle it has
+    // committed — and nothing in a consumer's build would catch it.
+    const record = mod.provenanceRecord({
+      head: {
+        provenance_schema_version: mod.PROVENANCE_SCHEMA_VERSION,
+        cast_target: 'claude',
+        mold: { name: 'm', path: 'content/molds/m/index.md', content_hash: 'h', commit: null },
+        cast_at: '2026-08-04T00:00:00.000Z',
+      },
+      refs: [],
+      extensions: { artifacts: {} },
+      tail: { open_questions: ['q'] },
+    });
+    const order = Object.keys(JSON.parse(JSON.stringify(record))).join(',');
+    const wanted =
+      'provenance_schema_version,cast_target,mold,cast_at,refs,artifacts,open_questions';
+    if (order !== wanted) {
+      throw new Error(`packed builder wrote provenance keys as: ${order}`);
+    }
+
     // license-policy is a runtime dependency, so the packed tarball has to reach the table.
     // Nothing but an install proves that: the source tree resolves it through the workspace.
     const ref = {

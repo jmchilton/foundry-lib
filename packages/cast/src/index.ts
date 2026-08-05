@@ -40,13 +40,13 @@ export { applyLicensePolicy } from './license.js';
 
 export {
   PROVENANCE_SCHEMA_VERSION,
+  provenanceRecord,
   readProvenanceCarryOver,
   type CastHistoryEntry,
   type Provenance,
-  type ProvenanceArtifactInput,
-  type ProvenanceArtifactOutput,
-  type ProvenanceArtifacts,
   type ProvenanceCarryOver,
+  type ProvenanceHead,
   type ProvenanceRefEntry,
+  type ProvenanceTail,
   type ValidationResult,
 } from './provenance.js';

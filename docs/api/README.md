@@ -133,8 +133,10 @@ The public surface includes:
 - bundle hygiene: `copyVerbatim`, `listFilesUnder`, `reconcileTreeTo`, `pruneEmptyDirs`, and
   `gitHead`;
 - license enforcement: `applyLicensePolicy`; and
-- the provenance record: `PROVENANCE_SCHEMA_VERSION`, `readProvenanceCarryOver`, and the
-  `Provenance`, `ProvenanceRefEntry`, `ProvenanceArtifacts`, and `ValidationResult` types.
+- the provenance record: `PROVENANCE_SCHEMA_VERSION`, `readProvenanceCarryOver`,
+  `provenanceRecord` — which assembles a record and fixes its key order, including the slot an
+  instance's own fields occupy — and the `Provenance`, `ProvenanceRefEntry`, `ProvenanceHead`,
+  `ProvenanceTail`, and `ValidationResult` types.
 
 The package renders nothing and resolves no references. What a bundle contains is the
 instance's; what a bundle _is_ — where it sits, whether it is current, what it records — is
