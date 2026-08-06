@@ -1,3 +1,5 @@
+import type { Reference, ReferenceContract } from '@galaxy-foundry/reference-contract';
+
 /**
  * A destination in the shell's chrome.
  *
@@ -72,6 +74,77 @@ export interface SiteIdentity {
  * full-bleed.
  */
 export const CONTAINER = 'max-w-6xl';
+
+/**
+ * What {@link SiteShell} takes.
+ *
+ * Declared here rather than in the component's own frontmatter so that a caller building props —
+ * a page, a test, a specimen — types them against the SAME declaration the component reads them
+ * from. A shape written twice is a shape nothing compares: the second copy stays valid while the
+ * component's own moves, and the mismatch surfaces as a prop the page passes and the shell has
+ * stopped consuming.
+ */
+export interface SiteShellProps {
+  /** The page title, before the site name is appended. */
+  title: string;
+  /** Overrides the identity's description for this page. */
+  description?: string;
+  /** `import.meta.env.BASE_URL` from the consumer — the kit never reads the environment. */
+  base: string;
+  /** `Astro.url.pathname` from the consumer, for the active-section rule. */
+  pathname: string;
+  identity: SiteIdentity;
+  /**
+   * Whether this page's main content goes in the search index. Defaults to yes.
+   *
+   * Defaulted rather than required, and defaulted TRUE, because Pagefind's rule is all-or-nothing
+   * and runs backwards: the moment one page marks itself, every unmarked page leaves the index. A
+   * shell that made this opt-in would put each new route one forgotten prop away from being
+   * unfindable, with no warning and no visible symptom. See {@link searchIndexGaps}.
+   *
+   * Marking `<main>` rather than letting Pagefind fall back to `<body>` also keeps the header, nav
+   * and footer out of every result's excerpt.
+   */
+  searchable?: boolean;
+}
+
+/**
+ * What the header takes: the identity's navigation half, plus where the reader is.
+ *
+ * Not `SiteIdentity` itself. The header renders four of its seven fields, and a component that
+ * accepts the whole record can read a field the shell never meant it to own — which is how a
+ * footer link ends up in a nav.
+ */
+export interface SiteHeaderProps {
+  base: string;
+  pathname: string;
+  /** The wordmark. */
+  name: string;
+  navLinks: ShellLink[];
+  /** See {@link SiteIdentity.navVisible} — a count set by what FITS. */
+  navVisible: number;
+}
+
+/** What the footer takes: the identity's footer half. See {@link SiteHeaderProps} on the split. */
+export interface SiteFooterProps {
+  base: string;
+  fullName: string;
+  repoUrl: string;
+  footerLinks: ShellLink[];
+}
+
+/**
+ * What the reference card takes.
+ *
+ * `contract` is the instance's BUILT contract — the shipped vocabularies plus its own `kinds` —
+ * so the card never reaches for a registry of its own.
+ */
+export interface ReferenceContractProps {
+  references: Reference[];
+  contract: ReferenceContract;
+  /** How a `ref` becomes a link here. See {@link ResolvedReference}. */
+  resolveRef?: (ref: string) => ResolvedReference | null;
+}
 
 /**
  * The custom properties this shell NAMES and does not define.

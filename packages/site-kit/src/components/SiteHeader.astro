@@ -1,15 +1,9 @@
 ---
 import Search from 'astro-pagefind/components/Search.astro';
 
-import { CONTAINER, resolveNav, shellBase, type ShellLink } from '../index.js';
+import { CONTAINER, resolveNav, shellBase, type SiteHeaderProps } from '../index.js';
 
-interface Props {
-  base: string;
-  pathname: string;
-  name: string;
-  navLinks: ShellLink[];
-  navVisible: number;
-}
+type Props = SiteHeaderProps;
 
 const { base: baseUrl, pathname, name, navLinks, navVisible } = Astro.props;
 const base = shellBase(baseUrl);

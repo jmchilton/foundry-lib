@@ -1,6 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src/index.ts"],
+  "entryPoints": ["src/index.ts", "src/specimens.ts"],
   "readme": "README.md",
   "excludeInternal": true,
   "excludePrivate": true,

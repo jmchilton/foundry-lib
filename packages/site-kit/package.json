@@ -8,7 +8,13 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./specimens": {
+      "types": "./dist/specimens.d.ts",
+      "import": "./dist/specimens.js"
+    },
     "./SiteShell.astro": "./src/components/SiteShell.astro",
+    "./SiteHeader.astro": "./src/components/SiteHeader.astro",
+    "./SiteFooter.astro": "./src/components/SiteFooter.astro",
     "./ReferenceContract.astro": "./src/components/ReferenceContract.astro"
   },
   "files": [

@@ -1,12 +1,7 @@
 ---
-import { CONTAINER, shellBase, shellHref, type ShellLink } from '../index.js';
+import { CONTAINER, shellBase, shellHref, type SiteFooterProps } from '../index.js';
 
-interface Props {
-  base: string;
-  fullName: string;
-  repoUrl: string;
-  footerLinks: ShellLink[];
-}
+type Props = SiteFooterProps;
 
 const { base: baseUrl, fullName, repoUrl, footerLinks } = Astro.props;
 const base = shellBase(baseUrl);
