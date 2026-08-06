@@ -430,7 +430,7 @@ const SMOKE = {
       rmSync(docsDir, { recursive: true, force: true });
     }
   },
-  '@galaxy-foundry/cast': (mod, _peer, unpacked) => {
+  '@galaxy-foundry/cast': async (mod, _peer, unpacked) => {
     // No bundled data — targets and their layouts are per-instance — so what this proves is
     // that the placement rules and the drift decision survive packing.
     if (mod.resolveBundlePath('skills/{mold}', 'a') !== 'skills/a') {
@@ -507,6 +507,39 @@ const SMOKE = {
     }
     if (mod.applyLicensePolicy([{ ...ref, license: undefined }], unpacked).length !== 0) {
       throw new Error('packed policy check flagged a Foundry-authored ref');
+    }
+
+    // `./command` is a second `exports` entry. Only a packed tarball proves it ships and
+    // resolves — the source tree would import the file directly either way.
+    const commandEntry = path.join(unpacked, 'dist', 'command.js');
+    if (!existsSync(commandEntry)) throw new Error('tarball has no dist/command.js');
+    const command = await import(pathToFileURL(commandEntry).href);
+
+    // The barrel promises nothing in it prints. That promise is what puts this behind its own
+    // door, so the packed barrel must not carry the terminal-shaped half back in.
+    for (const printer of ['castCommand', 'castReport', 'parseCastArgs']) {
+      if (printer in mod) throw new Error(`packed barrel exports ${printer} — it should not print`);
+    }
+
+    // A usage error names the binary that hit it, because two Foundries invoke this differently.
+    let usage = '';
+    try {
+      command.parseCastArgs([], { usage: 'statgen-foundry-build cast' });
+    } catch (e) {
+      usage = e.message;
+    }
+    if (!usage.includes('statgen-foundry-build cast')) {
+      throw new Error(`packed parser did not name its caller: ${usage}`);
+    }
+
+    // The verdict is a value, not a stream. A check that found drift fails and says which file.
+    const verdict = command.castReport(
+      { errors: [], drift: [{ file: 'SKILL.md', reason: 'changed' }], wrote: null },
+      true,
+      '/repo',
+    );
+    if (verdict.exitCode !== 1 || !verdict.err.join('\n').includes('SKILL.md')) {
+      throw new Error('packed reporter passed a drifted check');
     }
   },
 };
