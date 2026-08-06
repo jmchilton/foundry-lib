@@ -8,8 +8,8 @@ that solve the same problem differently, and the trade it makes that they do not
 
 Google Research's [Science One framework](https://research.google/blog/science-one-framework-a-verifiable-autonomous-research-framework-via-chain-of-evidence/)
 states the principle this package is built on. Every claim in a research artifact must carry a
-recorded evidence chain — *completeness* — and each chain must genuinely support the claim it is
-attached to — *correctness*. A claim is not only a citation. It is also a reported number, a method
+recorded evidence chain — _completeness_ — and each chain must genuinely support the claim it is
+attached to — _correctness_. A claim is not only a citation. It is also a reported number, a method
 description, and a conclusion, and each binds to a different kind of evidence.
 
 Science One audits four of them: score verification, specification violation, reference
@@ -32,7 +32,7 @@ evidence that the three tiers share a base schema, and an `audit-base` package m
 ## Why the tier needs a machine
 
 The [CITADEL audit](https://retractionwatch.com/2026/05/07/one-in-277-pubmed-indexed-papers-in-2026-shows-fabricated-references-says-analysis/)
-(Topaz et al., *The Lancet*, May 2026) scanned roughly 2.5 million PubMed-indexed papers and found
+(Topaz et al., _The Lancet_, May 2026) scanned roughly 2.5 million PubMed-indexed papers and found
 fabricated references in 2,810 of them. The trend is the finding: about one paper in 2,828 carried a
 fabricated reference in 2023, one in 458 in 2025, and one in 277 in early 2026, with the sharpest
 rise in mid-2024.
@@ -179,7 +179,7 @@ first structurally different adopter is expected to falsify part of it.
 - [Detecting Hallucinated and Suspicious Citations: What Current Tools Can and Cannot Do](https://arxiv.org/abs/2607.22693) — Badalova and Mayr, 2026
 - [RefChecker: Reference-based Fine-grained Hallucination Checker](https://arxiv.org/abs/2405.14486) — Amazon Science, 2024
 - [markrussinovich/refchecker](https://github.com/markrussinovich/refchecker) and [amazon-science/RefChecker](https://github.com/amazon-science/RefChecker)
-- CITADEL fabricated-citation audit, Topaz et al., *The Lancet*, May 2026, [summarized by Retraction Watch](https://retractionwatch.com/2026/05/07/one-in-277-pubmed-indexed-papers-in-2026-shows-fabricated-references-says-analysis/)
+- CITADEL fabricated-citation audit, Topaz et al., _The Lancet_, May 2026, [summarized by Retraction Watch](https://retractionwatch.com/2026/05/07/one-in-277-pubmed-indexed-papers-in-2026-shows-fabricated-references-says-analysis/)
 - [bio-topo-foundry#9](https://github.com/jmchilton/bio-topo-foundry/pull/9) — the first reviewed calibration run
 
 For the implementation these choices produce, see the
