@@ -24,14 +24,15 @@ Start with [Citation audit architecture and schemas](architecture/audit-citation
 
 The public surface includes:
 
-- policy types: `LicensePolicy`, `LicenseRow`, and `RedistributionPolicy`;
+- policy types: `LicensePolicy`, `LicenseRow`, `RedistributionPolicy`, and `LicenseId`;
 - bundled data access: `bundledPolicy`, `bundledPolicyText`, and `bundledPolicyPath`;
 - parsing and discovery: `parseLicensePolicy`, `loadLicensePolicy`, and
   `findLicensePolicyPath`;
 - resolution helpers: `licenseIds`, `isValidLicenseId`, `resolveLicenseRow`, and
   `declaresVerbatimCarry`; and
-- license files: `loadLicenseFiles`, `findLicenseFileById`, `licenseIdFromFilePath`, and the
-  `LicenseFile` type; and
+- license files: `loadLicenseFiles`, `findLicenseFileById`, `licenseFileIdFromPath`, and the
+  `LicenseFile` and `LicenseFileId` types — a `LicenseFileId` names a vendored COPY (`msmb`) and
+  is not a `LicenseId` (`CC-BY-NC-SA-2.0`); and
 - constants: `LICENSE_POLICY_FILE`, `LICENSE_REF_RE`, and `LICENSE_FILE_EXTENSION`.
 
 Start with [Adopt the license policy](guides/adopting-license-policy.md) for an integration

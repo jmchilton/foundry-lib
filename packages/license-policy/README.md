@@ -125,21 +125,37 @@ Types: `LicensePolicy`, `LicenseRow`, `RedistributionPolicy`.
 ### The license texts themselves
 
 A `license_file: true` row obliges an instance to carry a verbatim copy, conventionally at
-`LICENSES/<id>.LICENSE`. These read those copies so a site can render license terms in-app
+`LICENSES/<source>.LICENSE`. These read those copies so a site can render license terms in-app
 rather than bouncing the reader out to GitHub.
 
-| Export                                             | What it does                                         |
-| -------------------------------------------------- | ---------------------------------------------------- |
-| `loadLicenseFiles(licenseDirectory)`               | Every `*.LICENSE`, license-id-sorted, with its text. |
-| `findLicenseFileById(licenseDirectory, licenseId)` | One by license id, or `undefined`.                   |
-| `licenseIdFromFilePath(path)`                      | `LICENSES/nf-schema.LICENSE` → `nf-schema`.          |
-| `LICENSE_FILE_EXTENSION`                           | `.LICENSE`.                                          |
+| Export                                                 | What it does                                       |
+| ------------------------------------------------------ | -------------------------------------------------- |
+| `loadLicenseFiles(licenseDirectory)`                   | Every `*.LICENSE`, filename-sorted, with its text. |
+| `findLicenseFileById(licenseDirectory, licenseFileId)` | One by its file id, or `undefined`.                |
+| `licenseFileIdFromPath(path)`                          | `LICENSES/nf-schema.LICENSE` → `nf-schema`.        |
+| `LICENSE_FILE_EXTENSION`                               | `.LICENSE`.                                        |
 
 The directory is a parameter rather than a resolved `../LICENSES`, because the callers are
 Astro pages whose cwd is a subdirectory — an implicit relative path is the one thing that
 does not survive being shared.
 
-Type: `LicenseFile`.
+Types: `LicenseFile`, `LicenseFileId`.
+
+### Two ids, and they are not interchangeable
+
+| Type            | Is                                | Looks like          | Comes from               |
+| --------------- | --------------------------------- | ------------------- | ------------------------ |
+| `LicenseId`     | a **licence**                     | `MIT`, `CC-BY-4.0`  | a note's `license:`      |
+| `LicenseFileId` | a **vendored copy** of some terms | `msmb`, `nf-schema` | a note's `license_file:` |
+
+A `LicenseFileId` names the **source** whose licence text was vendored, never the licence:
+`msmb.LICENSE` holds CC-BY-NC-SA-2.0. Two sources under one licence vendor two files and get two
+ids; a note under MIT that vendors nothing has none at all.
+
+Both were spelled `licenseId` until a route compared one against the other. Nothing enforces the
+distinction at runtime — both are strings off a filesystem — so `findLicenseFileById` handed a
+`LicenseId` returns `undefined`: not an error, not the wrong file, a silent miss that reads as
+"this source vendored nothing".
 
 ## The table
 
