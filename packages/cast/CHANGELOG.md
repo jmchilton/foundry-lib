@@ -1,5 +1,45 @@
 # @galaxy-foundry/cast
 
+## 0.6.0
+
+### Minor Changes
+
+- [#62](https://github.com/jmchilton/foundry-lib/pull/62) [`b03e2f6`](https://github.com/jmchilton/foundry-lib/commit/b03e2f608c25d1f1814e2d1c61110ca42271773c) Thanks [@jmchilton](https://github.com/jmchilton)! - The `cast:` half of a reference kind now parses here.
+
+  `loadCastContract` reads the blocks; `loadCastReferenceContract` composes both halves of one
+  file — the fields a site renders, from `@galaxy-foundry/reference-contract`, and the resolve
+  strategy the caster needs. It is the only function that knows a kind has two readers, and it
+  delegates the `cast` key so the shared parser permits what it does not read.
+
+  `default_mode` is validated against the COMPOSED `modes`, so an instance that narrows the
+  vocabulary cannot default a kind to a mode it just declined.
+
+- [#62](https://github.com/jmchilton/foundry-lib/pull/62) [`366d4b3`](https://github.com/jmchilton/foundry-lib/commit/366d4b380d6d4b446197cd191a061174394db5d2) Thanks [@jmchilton](https://github.com/jmchilton)! - `castMold` — the assembly between a loaded Mold and a published bundle.
+
+  The package held the primitives a cast uses; the ~1300 lines that compose them lived in one
+  instance. Now here, reached through `CastHooks` and a `CastRequest`: an instance passes its
+  kinds, slug map, renderers and target, and gets back errors and drift as VALUES. Nothing
+  prints, and nothing is read that was not handed in.
+
+  `CastHooks` gains `packageLoader`. A `package-export` ref names an npm module in the INSTANCE's
+  dependency graph, and a bare `import(spec)` resolves relative to the file that runs it — so this
+  package would look beside its own installed copy and find nothing. The instance imports; a
+  contract declaring the strategy with nothing registered is an error, not a fallback.
+
+  `ResolvedRef.kind` is `string` rather than a six-name union. The set of kinds is exactly what
+  varies by Foundry, so a union here would be a compile-time copy of a table read at runtime —
+  kept in the one place that cannot be right about it.
+
+  The optional fields on the provenance record types now read `?: T | undefined`, which is what
+  copying a frontmatter field a note may not carry actually produces. `JSON.stringify` drops an
+  explicitly-undefined key exactly as it drops an absent one, so the emitted record is unchanged.
+
+### Patch Changes
+
+- Updated dependencies [[`c4a1e4f`](https://github.com/jmchilton/foundry-lib/commit/c4a1e4f7bbfd3c8cf6b43333fa28e922a98c4206), [`befe66a`](https://github.com/jmchilton/foundry-lib/commit/befe66a7386e7ba6a0e68e2c317af2772f36f0b5)]:
+  - @galaxy-foundry/wiki-links@0.4.0
+  - @galaxy-foundry/reference-contract@0.4.0
+
 ## 0.5.0
 
 ### Minor Changes
