@@ -2,11 +2,21 @@
 // agree or do not. Every case here is a way they can disagree that would otherwise cast
 // something plausible — the wrong file, the wrong name — and report success.
 
-import { describe, expect, it } from 'vitest';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { CastContract } from '../src/cast-contract.js';
 import type { CastHooks } from '../src/caster/hooks.js';
-import { expandCompanions, resolveMoldRef, type RefResolution } from '../src/caster/refs.js';
+import {
+  castOneRef,
+  expandCompanions,
+  resolveMoldRef,
+  type RefResolution,
+  type ResolvedRef,
+} from '../src/caster/refs.js';
 import type { TargetConfig } from '../src/caster/target-config.js';
 
 const target: TargetConfig = {
@@ -200,5 +210,61 @@ describe('companions travel only where a kind says they may', () => {
       },
     });
     expect(out).toHaveLength(1);
+  });
+});
+
+describe('casting a ref whose bytes come from a package export', () => {
+  let bundle: string;
+
+  beforeEach(() => {
+    bundle = mkdtempSync(path.join(tmpdir(), 'cast-refs-'));
+  });
+
+  afterEach(() => {
+    rmSync(bundle, { recursive: true, force: true });
+  });
+
+  /** A resolved package-export ref, whose kind the caller names. */
+  const packaged = (kind: string): ResolvedRef => ({
+    kind,
+    mode: 'verbatim',
+    ref: `[[${kind}-x]]`,
+    src: '',
+    dst: `references/${kind}s/x.json`,
+    used_at: 'runtime',
+    load: 'on-demand',
+    package_source: { spec: 'pkg', exportName: 'schema' },
+  });
+
+  const loader = (): Promise<Record<string, unknown>> =>
+    Promise.resolve({ schema: { title: 'x' } });
+
+  it('does not require the kind to be named `schema`', async () => {
+    // The strategy is declared per kind by the contract, and what a kind is CALLED is exactly
+    // what varies between Foundries. A kind name from one instance's table, tested here,
+    // refuses every sibling that spells the same idea differently.
+    const out = await castOneRef(packaged('spec'), '/repo', bundle, {
+      renderers: {},
+      packageLoader: loader,
+    });
+    expect(out.error).toBeUndefined();
+    expect(JSON.parse(readFileSync(path.join(bundle, 'references/specs/x.json'), 'utf8'))).toEqual({
+      title: 'x',
+    });
+  });
+
+  it('still refuses a mode it cannot synthesize bytes for', async () => {
+    // Nothing renders a package export: the bytes ARE the stringified value. A mode asking for
+    // a rendering has no renderer that could apply, so this stays refused.
+    const out = await castOneRef({ ...packaged('spec'), mode: 'sidecar' }, '/repo', bundle, {
+      renderers: {},
+      packageLoader: loader,
+    });
+    expect(out.error).toMatch(/mode=verbatim/);
+  });
+
+  it('refuses when the Foundry registers no packageLoader', async () => {
+    const out = await castOneRef(packaged('spec'), '/repo', bundle, { renderers: {} });
+    expect(out.error).toMatch(/nothing registers a packageLoader hook/);
   });
 });
