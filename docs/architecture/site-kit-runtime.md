@@ -29,7 +29,7 @@ deployment root.
 
 ## Build and runtime flow
 
-![Site-kit flow from a consumer Astro layout through Astro compilation, Tailwind scanning, and consumer CSS to the browser runtime.](assets/diagrams/site-kit-runtime.svg)
+![Site-kit flow from a consumer Astro layout through Astro compilation, Tailwind scanning, and consumer CSS to the browser runtime.](../assets/diagrams/site-kit-runtime.svg)
 
 The components ship as `.astro` source instead of precompiled JavaScript. This keeps Astro's normal
 component compilation and scoped-style behavior at the consumer boundary, but it also means the

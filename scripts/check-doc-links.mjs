@@ -225,7 +225,11 @@ async function checkArchitectureConsistency(packages, documentationFiles) {
   }
 }
 
-async function checkTarget(source, rawTarget) {
+// Docsify resolves the two kinds of target differently, and the difference is not cosmetic: with
+// `relativePath: false` a link is routed from the docs root, but an image src is always resolved
+// against the directory of the page that holds it. A checker that treats both as root-relative
+// passes on image paths the rendered site then 404s on.
+async function checkTarget(source, rawTarget, { relativeToSource = false } = {}) {
   const target = markdownTarget(rawTarget);
   if (!target || isExternal(target)) {
     return;
@@ -239,6 +243,8 @@ async function checkTarget(source, rawTarget) {
   let resolved;
   if (pathOnly === '/') {
     resolved = path.join(docsRoot, 'README.md');
+  } else if (relativeToSource && !pathOnly.startsWith('/')) {
+    resolved = path.resolve(path.dirname(source), pathOnly);
   } else {
     resolved = path.resolve(docsRoot, pathOnly.replace(/^\/+/u, ''));
   }
@@ -259,9 +265,9 @@ await checkPackageCoverage(packages);
 await checkArchitectureConsistency(packages, files);
 for (const file of files.filter((candidate) => candidate.endsWith('.md'))) {
   const contents = await readFile(file, 'utf8');
-  const links = contents.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/gu);
+  const links = contents.matchAll(/(!?)\[[^\]]*\]\(([^)]+)\)/gu);
   for (const match of links) {
-    await checkTarget(file, match[1]);
+    await checkTarget(file, match[2], { relativeToSource: match[1] === '!' });
   }
 }
 

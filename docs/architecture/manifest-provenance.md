@@ -5,7 +5,7 @@ right time.
 
 ## The lifecycle
 
-![Manifest provenance lifecycle: the producer builds a deterministic manifest, while a consumer fetches it at an immutable commit and records that observed revision.](assets/diagrams/manifest-provenance.svg)
+![Manifest provenance lifecycle: the producer builds a deterministic manifest, while a consumer fetches it at an immutable commit and records that observed revision.](../assets/diagrams/manifest-provenance.svg)
 
 ## Producer facts
 

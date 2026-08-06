@@ -17,7 +17,7 @@ verification, and method-code alignment. A Foundry has the same shape of problem
 makes claims and those claims need chains. The tiers are S1 reference integrity, S2 tool checks, and
 S3 threshold checks.
 
-![Chain-of-evidence tiers: a completeness and correctness principle above three Foundry audit tiers, with S1 reference integrity built as audit-citations and S2 and S3 named but not yet built.](assets/diagrams/coe-audit-tiers.svg)
+![Chain-of-evidence tiers: a completeness and correctness principle above three Foundry audit tiers, with S1 reference integrity built as audit-citations and S2 and S3 named but not yet built.](../assets/diagrams/coe-audit-tiers.svg)
 
 `audit-citations` is S1. It is first because it is the tier that resolves against public registries
 without executing anything or evaluating a scientific claim — a DOI either names the work the
@@ -97,7 +97,7 @@ uses an author-overlap threshold of 0.6 and abstains below three compared names 
 matches. Two designs reaching the same threshold and the same abstention floor is better evidence
 that both are calibrated correctly than either could produce alone.
 
-![Both pipelines share the same index fan-out, then diverge: RefChecker escalates suspicious references to an LLM deep web search and re-verifies, while audit-citations keeps no model in the pipeline and leaves escalation to a consumer-owned tier.](assets/diagrams/citation-verification-boundary.svg)
+![Both pipelines share the same index fan-out, then diverge: RefChecker escalates suspicious references to an LLM deep web search and re-verifies, while audit-citations keeps no model in the pipeline and leaves escalation to a consumer-owned tier.](../assets/diagrams/citation-verification-boundary.svg)
 
 They diverge in three places, each a trade rather than a gap.
 
