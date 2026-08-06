@@ -1,5 +1,58 @@
 # @galaxy-foundry/license-policy
 
+## 0.4.0
+
+### Minor Changes
+
+- [#68](https://github.com/jmchilton/foundry-lib/pull/68) [`e5c7578`](https://github.com/jmchilton/foundry-lib/commit/e5c75788a78b0f3cd1eb688743b5fd7cf0072f3f) Thanks [@jmchilton](https://github.com/jmchilton)! - **Breaking:** `licenseIdFromFilePath` is now `licenseFileIdFromPath`, and `LicenseFile.licenseId`
+  is now `LicenseFile.id`. Two new documented types, `LicenseId` and `LicenseFileId`, say which id a
+  signature means.
+
+  The package exported two different ids under one name. `licenseId` meant an SPDX id — `MIT`,
+  `CC-BY-4.0`, what a note's `license:` carries and what `resolveLicenseRow` takes — except in
+  `license-files.ts`, where it meant the stem of a vendored filename: `msmb`, `nf-schema`. Those name
+  the **source** whose licence text was vendored, never a licence. `msmb.LICENSE` holds
+  CC-BY-NC-SA-2.0.
+
+  The two met on one line of a consumer's route, comparing a file stem to a file stem while reading
+  as a licence comparison, and the site's `/licenses/<id>/` pages are keyed by the first while their
+  subject is the second.
+
+  Nothing enforces the distinction at runtime — both are strings off a filesystem — so the names
+  carry it, and a new test pins the failure the old name invited: `findLicenseFileById` handed a
+  `LicenseId` returns `undefined`. Not an error, not the wrong file; a silent miss that reads as
+  "this source vendored nothing".
+
+  Consumers rename the import and the field; no behaviour changed.
+
+- [#68](https://github.com/jmchilton/foundry-lib/pull/68) [`fec0034`](https://github.com/jmchilton/foundry-lib/commit/fec003499b307fe2163ad0460f40eb375d86ee85) Thanks [@jmchilton](https://github.com/jmchilton)! - The vendored-licence route: `LicenseFileBody.astro`, `licenseFileHref`, `licensesUnderFile`,
+  `LICENSE_FILE_ROUTE`, and `redistributesUnder` beside the table.
+
+  Both instances built a page per vendored `LICENSES/*.LICENSE` copy, and the parts that were
+  identical were the derivations rather than the markup: which licences a copy covers, which notes
+  redistribute under it, and the copy's own text. The parts that genuinely differ — walking one note
+  collection versus three, `/{id}/` versus `/{collection}/{id}/` — stay with the instance, so `uses`
+  is a prop rather than something the component discovers.
+
+  `redistributesUnder(note.license_file, licenseFile.id)` names the comparison that was previously
+  written as `licenseIdFromFilePath(...) === license.licenseId`: a file id against a file id, in an
+  expression that scanned as a licence check. A copy is keyed by SOURCE, so two books under one
+  licence have two copies and one source's page must not list the other's notes.
+
+  `LICENSE_FILE_ROUTE` and `licenseFileHref` exist because `/licenses/` was typed inline in the page
+  that builds the route and again in every component linking to it — in two repositories. The route
+  and its links agreed by coincidence, and a drift between them builds clean and 404s for readers.
+
+  The body renders the licence text with its bare URLs linked. One instance did that already; the
+  other rendered a `<pre>` a reader had to retype the canonical terms from. Everything outside a
+  matched URL is emitted verbatim, whitespace included, which is what the `license_file` obligation
+  is for.
+
+  The page's `<h1>` and wrapper stay with the instance on purpose: one site marks this route with
+  `data-pagefind-body`, and Pagefind reads the first such mark as "index only pages like this one".
+  A component shipping the wrapper would decide a site's entire search index from inside a licence
+  page.
+
 ## 0.3.1
 
 ### Patch Changes

@@ -1,5 +1,58 @@
 # @galaxy-foundry/site-kit
 
+## 0.6.0
+
+### Minor Changes
+
+- [#68](https://github.com/jmchilton/foundry-lib/pull/68) [`c8dd6ea`](https://github.com/jmchilton/foundry-lib/commit/c8dd6eaf29efdea474bc2809569b11682645c3e9) Thanks [@jmchilton](https://github.com/jmchilton)! - `LicenseBadge.astro`: what a licence permits, as chips, from the id a note declares.
+
+  Both instances that depend on `@galaxy-foundry/license-policy` wrote this row themselves and
+  reached the same three colours as literals — `#16a34a`, `#d97706`, `#dc2626` — in two
+  repositories. The markup agreed as well; only the padding and the letter-spacing differed, by
+  amounts nobody chose. Those are settled here rather than parameterized.
+
+  The badge takes the policy table as a prop and reads nothing else off the note. It renders the
+  row's `name` rather than the SPDX id, which equals the id in 1 of 23 rows, and keeps the id as the
+  chip's `title`. The policy chip is keyed on `data-policy`, so a row added upstream is styled
+  without a component release — the rule the reference card already follows for evidence standings.
+
+  `LICENSE_BADGE_TOKENS` and `licenseBadgeStyleGaps` name the custom properties the badge reads and
+  does not define. The three policy hues are the reason: a chip whose background resolves to nothing
+  is still legible and no longer distinguishable from the chip beside it that means the opposite.
+
+- [#68](https://github.com/jmchilton/foundry-lib/pull/68) [`fec0034`](https://github.com/jmchilton/foundry-lib/commit/fec003499b307fe2163ad0460f40eb375d86ee85) Thanks [@jmchilton](https://github.com/jmchilton)! - The vendored-licence route: `LicenseFileBody.astro`, `licenseFileHref`, `licensesUnderFile`,
+  `LICENSE_FILE_ROUTE`, and `redistributesUnder` beside the table.
+
+  Both instances built a page per vendored `LICENSES/*.LICENSE` copy, and the parts that were
+  identical were the derivations rather than the markup: which licences a copy covers, which notes
+  redistribute under it, and the copy's own text. The parts that genuinely differ — walking one note
+  collection versus three, `/{id}/` versus `/{collection}/{id}/` — stay with the instance, so `uses`
+  is a prop rather than something the component discovers.
+
+  `redistributesUnder(note.license_file, licenseFile.id)` names the comparison that was previously
+  written as `licenseIdFromFilePath(...) === license.licenseId`: a file id against a file id, in an
+  expression that scanned as a licence check. A copy is keyed by SOURCE, so two books under one
+  licence have two copies and one source's page must not list the other's notes.
+
+  `LICENSE_FILE_ROUTE` and `licenseFileHref` exist because `/licenses/` was typed inline in the page
+  that builds the route and again in every component linking to it — in two repositories. The route
+  and its links agreed by coincidence, and a drift between them builds clean and 404s for readers.
+
+  The body renders the licence text with its bare URLs linked. One instance did that already; the
+  other rendered a `<pre>` a reader had to retype the canonical terms from. Everything outside a
+  matched URL is emitted verbatim, whitespace included, which is what the `license_file` obligation
+  is for.
+
+  The page's `<h1>` and wrapper stay with the instance on purpose: one site marks this route with
+  `data-pagefind-body`, and Pagefind reads the first such mark as "index only pages like this one".
+  A component shipping the wrapper would decide a site's entire search index from inside a licence
+  page.
+
+### Patch Changes
+
+- Updated dependencies [[`e5c7578`](https://github.com/jmchilton/foundry-lib/commit/e5c75788a78b0f3cd1eb688743b5fd7cf0072f3f), [`fec0034`](https://github.com/jmchilton/foundry-lib/commit/fec003499b307fe2163ad0460f40eb375d86ee85)]:
+  - @galaxy-foundry/license-policy@0.4.0
+
 ## 0.5.0
 
 ### Minor Changes
