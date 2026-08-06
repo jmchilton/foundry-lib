@@ -1,44 +1,68 @@
 # @galaxy-foundry/cast
 
-The deterministic half of casting — turning a Mold into a frozen, target-specific skill
-artifact that can be re-derived byte-for-byte and checked for drift.
+Casting — turning a Mold into a frozen, target-specific skill artifact that can be re-derived
+byte-for-byte and checked for drift.
 
-A cast is only worth anything if it can be _reproduced_. That is what this package holds: the
-parts of casting that decide **where a bundle goes**, **whether what is on disk still matches
-what would be written**, and **what the provenance record says about how the bytes were
-produced**. None of those vary by domain.
+A cast is only worth anything if it can be _reproduced_. This package holds the whole of that:
+resolving each declared reference, placing its bytes, applying the redistribution policy,
+rendering the skill document, sweeping what stopped being a reference, and writing the
+provenance record. None of it varies by domain.
 
 What is not here is everything that names a Foundry's own world — its kinds, its slug map, its
-validators, its renderers. A caster composes those with these.
+validators, its renderers. Those reach the caster through `CastHooks`, one value per extension
+point, so a Foundry adds its knowledge without forking the assembly.
 
-`cast` is an early N=1 extraction rather than an admitted shared-substrate package. Its first
+`cast` is an early extraction rather than an admitted shared-substrate package. Its first
 consumer's committed bundles provide a byte-identity oracle; adoption by a second independent
-caster is what tests whether this boundary is genuinely reusable. See
+Foundry is what tests whether this boundary is genuinely reusable. See
 [Deterministic casting architecture](https://jmchilton.github.io/foundry-lib/#/architecture/cast)
-for the ownership map and complete helper flow.
+for the ownership map and the full flow.
 
 ```ts
-import {
-  bundleDir,
-  castsTargetDir,
-  reconcileText,
-  recordedHash,
-  PROVENANCE_SCHEMA_VERSION,
-} from '@galaxy-foundry/cast';
+import { castMold, castsTargetDir, loadTargetConfig } from '@galaxy-foundry/cast';
 
 const targetDir = castsTargetDir(repoRoot, 'claude');
-const bundle = bundleDir(targetDir, 'summarize-nextflow');
 
-const drift = reconcileText({
-  path: path.join(bundle, 'SKILL.md'),
-  expected: renderSkill(mold), // yours
-  label: 'SKILL.md',
+const outcome = await castMold({
+  repoRoot,
+  bundleRoot: bundleDir(targetDir, mold.name),
+  targetName: 'claude',
+  target: loadTargetConfig(targetDir),
+  mold, // read off disk by you
+  castContract, // the `cast:` half of your reference contract
+  refKinds,
+  slugMap,
+  metaByPath,
+  hooks: MY_HOOKS,
   check: args.check,
+  note: null,
 });
 
-if (drift.reason) console.error(drift.reason);
-entry.dst_hash = recordedHash(drift, args.check);
+for (const error of outcome.errors) console.error(error);
+process.exitCode = outcome.errors.length ? 1 : 0;
 ```
+
+Errors and drift come back as values and nothing is printed, because a cast that found four
+unresolved refs has produced a result rather than suffered a failure — and how that is rendered
+is the caller's decision. The one thing `castMold` decides is whether to publish, since that is
+a question about the staged bundle rather than about presentation.
+
+## Hooks are how a Foundry attaches, and they refuse rather than default
+
+`renderers` supplies a function per non-verbatim mode; `skillLede` and `skillSections` say what
+the skill document contains; `bundleFiles` contributes files beyond `SKILL.md` and
+`_provenance.json`; `bundleChecks` runs an instance's own checks over the finished bundle.
+
+Two are optional, and that is the test of the boundary: a Foundry whose corpus is research notes
+has no artifacts, no tools and no commands, and should still cast. `payloadCompanion` answers
+the `payload-companion` strategy, `packageLoader` the `package-export` one — and a contract that
+declares either strategy while registering nothing gets an error naming the reference that asked.
+Falling back to the note would package the file that _frames_ a payload and report success,
+which is the one outcome worse than a failure.
+
+`packageLoader` exists because a bare `import(spec)` resolves relative to the file running it.
+Written inside this package, it would look for your dependencies beside its own installed copy.
+`(spec) => import(spec)`, written anywhere in your tree, is the whole implementation.
 
 ## Drift is a value, never an exit
 
