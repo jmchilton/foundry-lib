@@ -50,7 +50,7 @@ a question about the staged bundle rather than about presentation.
 ## Hooks are how a Foundry attaches, and they refuse rather than default
 
 `renderers` supplies a function per non-verbatim mode; `skillLede` and `skillSections` say what
-the skill document contains; `bundleFiles` contributes files beyond `SKILL.md` and
+the cast document contains; `bundleFiles` contributes files beyond the document and
 `_provenance.json`; `bundleChecks` runs an instance's own checks over the finished bundle.
 
 Two are optional, and that is the test of the boundary: a Foundry whose corpus is research notes
@@ -89,6 +89,30 @@ bundle_path: 'skills/{mold}'
 
 That one declaration is why the Claude target's directory doubles as a Claude Code plugin root.
 A target that declares nothing gets one directory per bundle, named for it.
+
+## So does the vocabulary
+
+What the document is called, and what a cast of a Mold is called, are the target's too:
+
+```yaml
+document:
+  path: SKILL.md
+  noun: skill
+```
+
+`SKILL.md` is what one agent harness looks for; `skill` is what that harness calls what it
+finds. Both are required, with no default — a default would be the same assumption spelled as
+a fallback, and no longer visible in any target file. `_provenance.json` is **not** here: the
+record is the caster's own account of what it did, and everything that reads a bundle without
+knowing which target made it finds the record by that name.
+
+`required_outputs` defaults to those two, so a target that requires exactly what casting writes
+says nothing. Declare it only to require something else.
+
+Still hardcoded, and named here rather than generalised on one example: the document's
+`name:`/`description:` frontmatter. The target already declares that pair in
+`skill_constraints.frontmatter_required`, but closing the gap needs a rule for which value fills
+a declared key — which needs a second target to design against.
 
 Quote it. `bundle_path: {mold}` is not the string it looks like — unquoted braces are YAML
 _flow-mapping_ syntax, so it loads as `{ mold: null }`, and `bundlePathOf` says so by name

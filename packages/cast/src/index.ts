@@ -11,6 +11,11 @@
 // Nothing here prints. A cast reports what it found as VALUES, so how a caller renders four
 // unresolved refs — a CLI's stderr, a test's assertion, an editor's squiggles — stays the
 // caller's decision.
+//
+// `@galaxy-foundry/cast/command` is the one exception, and it is a SEPARATE entry point so that
+// sentence stays literally true of this one. It holds the terminal-shaped part every casting
+// CLI has anyway — the flags, and which of four endings a run had — and importing it is a
+// choice to be a command rather than a consequence of casting.
 
 export {
   CAST_BLOCK_KEY,

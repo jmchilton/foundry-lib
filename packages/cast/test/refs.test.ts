@@ -21,6 +21,7 @@ import {
 import type { TargetConfig } from '../src/caster/target-config.js';
 
 const target: TargetConfig = {
+  document: { path: 'SKILL.md', noun: 'skill' },
   required_outputs: [],
   kinds: {
     prompt: { dst_dir: 'references/prompts', dst_extension: '.md', modes: ['verbatim'] },

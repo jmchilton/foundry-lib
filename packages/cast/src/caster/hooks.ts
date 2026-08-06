@@ -107,15 +107,23 @@ export interface SkillSection {
 export interface SkillContext extends CastContext {
   /** The Mold's markdown body, wiki-links intact and not yet rewritten for a runtime reader. */
   readonly body: string;
+  /**
+   * What a cast of this Mold is called at this target — `document.noun` from `_target.yml`.
+   *
+   * Passed in because a contributor writing prose about the thing being cast needs the target's
+   * word for it, and `skillSections` is registered once per Foundry rather than per cast, so it
+   * has no other way to reach the declaration.
+   */
+  readonly noun: string;
 }
 
 /**
- * The skill document's sections, in the order they appear.
+ * The cast document's sections, in the order they appear.
  *
  * The instance supplies the whole list — including the procedure and any closing notes — rather
  * than filling slots in a skeleton. Casting owns the frontmatter, the title, and the `## Title`
- * convention; what a skill document should SAY is a fact about the corpus it was cast from, and
- * a fixed skeleton would make every Foundry render Galaxy's idea of a skill.
+ * convention; what the document should SAY is a fact about the corpus it was cast from, and a
+ * fixed skeleton would make every Foundry render the first one's idea of a skill.
  */
 export type SkillSectionContributor = (context: SkillContext) => readonly SkillSection[];
 
@@ -171,14 +179,14 @@ export interface CastHooks {
    */
   readonly renderers: RefRenderers;
   /**
-   * Bundle-root files beyond `SKILL.md` and `_provenance.json`.
+   * Bundle-root files beyond the target's document and `_provenance.json`.
    *
-   * Both of ours describe Galaxy: which tools a skill needs installed, and how to verify what it
-   * produces. A Foundry of research notes contributes none, and gets a bundle of exactly the two
-   * files casting itself writes.
+   * The first casting Foundry contributes two, both describing Galaxy: which tools a bundle needs
+   * installed, and how to verify what it produces. A Foundry of research notes contributes none,
+   * and gets a bundle of exactly the two files casting itself writes.
    */
   readonly bundleFiles: readonly BundleFileContributor[];
-  /** The paragraph under the skill's title, before the first section. */
+  /** The paragraph under the document's title, before the first section. */
   readonly skillLede: string;
   /** Everything below that paragraph. */
   readonly skillSections: SkillSectionContributor;

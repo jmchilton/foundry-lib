@@ -15,12 +15,33 @@ import path from 'node:path';
 
 import yaml from 'js-yaml';
 
+import { PROVENANCE_FILE } from '../provenance.js';
 import { bundlePathOf } from '../target-layout.js';
 
 export interface TargetKindConfig {
   dst_dir: string;
   dst_extension: string;
   modes: string[];
+}
+
+/**
+ * The document a cast writes, and what a cast of a Mold is called here.
+ *
+ * Both are the TARGET's, and both were the caster's until a second target had to be imagined to
+ * see it. `SKILL.md` is what one agent harness looks for; the noun "skill" is what that harness
+ * calls the thing it finds. A target producing something else — a page, a card, a prompt file —
+ * got the first Foundry's filename and the first Foundry's word for its own output.
+ *
+ * The byte-identity oracle cannot catch this class of mistake. It re-casts the one instance
+ * whose vocabulary the hardcoded value already is, so the wrong answer and the right answer are
+ * the same bytes. That is why these are declared rather than defaulted: a default would put the
+ * assumption back, spelled as a fallback and no longer visible in any target file.
+ */
+export interface TargetDocument {
+  /** Bundle-root-relative filename, e.g. `SKILL.md`. */
+  path: string;
+  /** The noun a cast goes by, e.g. `skill`. Substituted for `Mold` in the cast body. */
+  noun: string;
 }
 
 /**
@@ -45,6 +66,15 @@ export interface TargetConfig {
    * mapping rather than the template it resembles.
    */
   bundle_path?: string;
+  document: TargetDocument;
+  /**
+   * What a finished bundle must contain, for the verifier that checks one.
+   *
+   * Defaults to what casting always writes — the document and the provenance record — because a
+   * target spelling those out by hand restates the caster, and a restatement is only ever a
+   * chance for the two to disagree. Declared explicitly, it means the target requires something
+   * else instead.
+   */
   required_outputs: string[];
   kinds: Record<string, TargetKindConfig>;
   skill_constraints: {
@@ -78,6 +108,26 @@ function parseKind(value: unknown, where: string): TargetKindConfig {
   };
 }
 
+function parseDocument(value: unknown, where: string): TargetDocument {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(`${where} must be a mapping declaring the file a cast writes and its noun`);
+  }
+  const doc = value as Record<string, unknown>;
+  for (const field of ['path', 'noun'] as const) {
+    if (typeof doc[field] !== 'string' || !(doc[field] as string).trim()) {
+      throw new Error(`${where}.${field} must be a non-empty string`);
+    }
+  }
+  const docPath = (doc.path as string).trim();
+  // The document sits at the bundle root or nowhere. Casting writes it, the sweep never visits
+  // it, and provenance does not list it — placed in a subdirectory it would land inside a
+  // subtree the sweep owns and be deleted as an orphan on the next cast.
+  if (/[\\/]/.test(docPath) || docPath === '.' || docPath === '..') {
+    throw new Error(`${where}.path must be a filename at the bundle root, not a path: ${docPath}`);
+  }
+  return { path: docPath, noun: (doc.noun as string).trim() };
+}
+
 export function loadTargetConfig(targetDir: string): TargetConfig {
   const p = path.join(targetDir, '_target.yml');
   if (!existsSync(p)) throw new Error(`missing target config: ${p}`);
@@ -99,10 +149,15 @@ export function loadTargetConfig(targetDir: string): TargetConfig {
   }
 
   const declaredBundlePath = bundlePathOf(raw.bundle_path, p);
+  const document = parseDocument(raw.document, `${p}: document`);
 
   return {
     ...(raw.bundle_path === undefined ? {} : { bundle_path: declaredBundlePath }),
-    required_outputs: stringList(raw.required_outputs, `${p}: required_outputs`),
+    document,
+    required_outputs:
+      raw.required_outputs === undefined
+        ? [document.path, PROVENANCE_FILE]
+        : stringList(raw.required_outputs, `${p}: required_outputs`),
     kinds: Object.fromEntries(
       Object.entries(kinds as Record<string, unknown>).map(([name, kind]) => [
         name,

@@ -34,24 +34,28 @@ export function stripWikiLinks(text: string): string {
 }
 
 /**
- * A Mold's body as a skill's procedure reads it.
+ * A Mold's body as the cast document's procedure reads it.
  *
- * The vocabulary substitution is casting's, not an instance's: a Mold becomes a skill at the
- * moment it is cast, so a bundle that still called itself a Mold would be naming the thing it
- * was made from rather than the thing it is. Heading levels shift down by one because the
- * document already spent `#` on its title and `##` on its sections.
+ * THAT a substitution happens is casting's: a Mold becomes something else at the moment it is
+ * cast, so a bundle still calling itself a Mold would name the thing it was made from rather
+ * than the thing it is. WHICH word it becomes is the target's — `skill` is what one agent
+ * harness calls its artifacts, and until this took an argument, a target shipping pages or
+ * cards was told by its own documents that it shipped skills.
+ *
+ * Heading levels shift down by one because the document already spent `#` on its title and
+ * `##` on its sections.
  */
-export function runtimeProcedureBody(body: string, moldName: string): string {
+export function runtimeProcedureBody(body: string, moldName: string, noun: string): string {
   return stripWikiLinks(body.trim())
     .replace(new RegExp(`^#\\s+${moldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\n+`), '')
     .replace(/^(#{2,5})\s/gm, '$1# ')
-    .replace(/\bcast skill\b/g, 'skill')
-    .replace(/\bThis Mold\b/g, 'This skill')
-    .replace(/\bThe Mold\b/g, 'The skill')
-    .replace(/\bthis Mold\b/g, 'this skill')
-    .replace(/\bthe Mold\b/g, 'the skill')
-    .replace(/\bMolds\b/g, 'skills')
-    .replace(/\bMold\b/g, 'skill');
+    .replace(new RegExp(`\\bcast ${noun}\\b`, 'g'), noun)
+    .replace(/\bThis Mold\b/g, `This ${noun}`)
+    .replace(/\bThe Mold\b/g, `The ${noun}`)
+    .replace(/\bthis Mold\b/g, `this ${noun}`)
+    .replace(/\bthe Mold\b/g, `the ${noun}`)
+    .replace(/\bMolds\b/g, `${noun}s`)
+    .replace(/\bMold\b/g, noun);
 }
 
 function escapeFrontmatterString(text: string): string {
@@ -118,25 +122,37 @@ export function bulletSection(
   return { title, body: (lines.length ? lines : [empty]).join('\n') };
 }
 
-/** The skill's one-line description, falling back to naming the Mold when none was written. */
-export function skillSummary(meta: Frontmatter, moldName: string): string {
-  return scalar(meta.summary) ?? `Run the ${moldName} Mold.`;
+/**
+ * The document's one-line description, falling back to naming what it is when none was written.
+ *
+ * The fallback is the one path the body substitution never reaches, so it used to describe every
+ * summary-less bundle as a Mold — the thing it was cast from rather than the thing it is.
+ */
+export function skillSummary(meta: Frontmatter, moldName: string, noun: string): string {
+  return scalar(meta.summary) ?? `Run the ${moldName} ${noun}.`;
 }
 
 /**
- * The skill document: frontmatter, title, lede, then the sections the instance contributed.
+ * The cast document: frontmatter, title, lede, then the sections the instance contributed.
  *
- * What stays here is only what holds for any Foundry — the frontmatter a harness reads to find
- * the skill, and the `## Title` convention. Which sections exist and what they say came from
- * `skillSections`, because a document's contents are a fact about the corpus it describes.
+ * Which sections exist and what they say came from `skillSections`, because a document's
+ * contents are a fact about the corpus it describes. What stays here is the `## Title`
+ * convention and the two frontmatter keys a harness reads to find the document.
+ *
+ * Those two keys are the one piece of target vocabulary still written into this function.
+ * `name:`/`description:` is what one harness looks for, and `skill_constraints.frontmatter_required`
+ * declares exactly that pair — so the target already says it and the package still hardcodes it.
+ * Closing that needs a rule for which value fills a declared key, which needs a second target to
+ * design against; naming it here rather than generalising on one example.
  */
 export function renderSkillMarkdown(args: {
   moldName: string;
   meta: Frontmatter;
   lede: string;
   sections: readonly SkillSection[];
+  noun: string;
 }): string {
-  const summary = skillSummary(args.meta, args.moldName);
+  const summary = skillSummary(args.meta, args.moldName, args.noun);
   return [
     '---',
     `name: ${args.moldName}`,

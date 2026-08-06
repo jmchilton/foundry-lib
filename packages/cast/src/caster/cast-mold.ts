@@ -255,27 +255,32 @@ export async function castMold<Ext extends object = Record<string, never>>(
     // License → redistribution-policy enforcement + license_file hashing.
     errors.push(...applyLicensePolicy(refEntries, repoRoot));
 
+    // What the document is called, and what it calls itself, are the target's — see
+    // `TargetDocument`. Only the provenance record beside it keeps a name of the caster's own.
+    const documentFile = request.target.document.path;
     const skillText = renderSkillMarkdown({
       moldName: mold.name,
       meta: mold.meta,
       lede: hooks.skillLede,
+      noun: request.target.document.noun,
       sections: hooks.skillSections({
         moldName: mold.name,
         meta: mold.meta,
         body: mold.body,
+        noun: request.target.document.noun,
         refs: refEntries,
         metaByPath,
         slugMap,
       }),
     });
     const skillDrift = reconcileText({
-      path: path.join(stagedBundleRoot, 'SKILL.md'),
+      path: path.join(stagedBundleRoot, documentFile),
       expected: skillText,
-      label: 'SKILL.md',
+      label: documentFile,
       check: false,
     });
-    if (skillDrift.reason) drift.push({ file: 'SKILL.md', reason: skillDrift.reason });
-    staged.add('SKILL.md');
+    if (skillDrift.reason) drift.push({ file: documentFile, reason: skillDrift.reason });
+    staged.add(documentFile);
 
     // Reduce the subtrees this cast owns to exactly what provenance lists.
     //

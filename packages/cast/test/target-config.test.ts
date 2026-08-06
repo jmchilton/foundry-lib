@@ -28,8 +28,13 @@ function writeTarget(body: string): string {
   return dir;
 }
 
+const DOCUMENT = `document:
+  path: SKILL.md
+  noun: skill
+`;
+
 const MINIMAL = `
-kinds:
+${DOCUMENT}kinds:
   pattern:
     dst_dir: references/patterns/
     dst_extension: .md
@@ -37,12 +42,53 @@ kinds:
 `;
 
 describe('reading a target declaration', () => {
-  it('accepts a target that declares only where its kinds land', () => {
+  it('accepts a target that declares its document and where its kinds land', () => {
     const config = loadTargetConfig(writeTarget(MINIMAL));
     expect(config.kinds.pattern?.dst_dir).toBe('references/patterns/');
-    // A Foundry with no skill constraints declares none rather than declaring them empty.
-    expect(config.required_outputs).toEqual([]);
+    expect(config.document).toEqual({ path: 'SKILL.md', noun: 'skill' });
     expect(config.skill_constraints.forbidden_runtime_paths).toEqual([]);
+  });
+
+  it('reads the document a target says a cast produces', () => {
+    // `SKILL.md`, the `name:`/`description:` frontmatter and the noun "skill" are one harness's
+    // vocabulary, not casting's. Hardcoded, they are invisible to the byte-identity oracle,
+    // which only ever runs against the instance whose vocabulary they already are.
+    const config = loadTargetConfig(
+      writeTarget(
+        MINIMAL.replace('path: SKILL.md', 'path: PAGE.md').replace('noun: skill', 'noun: page'),
+      ),
+    );
+    expect(config.document).toEqual({ path: 'PAGE.md', noun: 'page' });
+  });
+
+  it('refuses a target that does not say what a cast of it produces', () => {
+    // No default. A default is the assumption this field exists to remove — it would put one
+    // harness's filename back in the package, just spelled as a fallback.
+    expect(() => loadTargetConfig(writeTarget(MINIMAL.replace(/document:\n.*\n.*\n/, '')))).toThrow(
+      /document/,
+    );
+  });
+
+  it('refuses a document that is not written at the bundle root', () => {
+    // The sweep never visits it and provenance does not name it, so a document placed outside
+    // the bundle is written once and then belongs to nothing.
+    expect(() => loadTargetConfig(writeTarget(MINIMAL.replace('SKILL.md', '../SKILL.md')))).toThrow(
+      /document\.path/,
+    );
+    expect(() =>
+      loadTargetConfig(writeTarget(MINIMAL.replace('SKILL.md', 'docs/SKILL.md'))),
+    ).toThrow(/document\.path/);
+  });
+
+  it('requires the outputs a cast must produce, defaulting to what it writes', () => {
+    // Declaring `[SKILL.md, _provenance.json]` by hand restates what casting always writes, and
+    // a restatement is only ever a chance to disagree.
+    expect(loadTargetConfig(writeTarget(MINIMAL)).required_outputs).toEqual([
+      'SKILL.md',
+      '_provenance.json',
+    ]);
+    const declared = loadTargetConfig(writeTarget(`${MINIMAL}required_outputs: [manifest.json]\n`));
+    expect(declared.required_outputs).toEqual(['manifest.json']);
   });
 
   it('names the file when the declaration is not a mapping', () => {
@@ -58,7 +104,7 @@ describe('reading a target declaration', () => {
 
   it('refuses a kind that declares no destination', () => {
     expect(() =>
-      loadTargetConfig(writeTarget('kinds:\n  pattern:\n    modes: [verbatim]\n')),
+      loadTargetConfig(writeTarget(`${DOCUMENT}kinds:\n  pattern:\n    modes: [verbatim]\n`)),
     ).toThrow(/pattern.*dst_dir/s);
   });
 
@@ -68,7 +114,7 @@ describe('reading a target declaration', () => {
     expect(() =>
       loadTargetConfig(
         writeTarget(
-          'kinds:\n  pattern:\n    dst_dir: refs/\n    dst_extension: .md\n    modes: verbatim\n',
+          `${DOCUMENT}kinds:\n  pattern:\n    dst_dir: refs/\n    dst_extension: .md\n    modes: verbatim\n`,
         ),
       ),
     ).toThrow(/pattern.*modes/s);
@@ -85,6 +131,7 @@ describe('reading a target declaration', () => {
 
 describe('which parts of a bundle a cast is allowed to prune', () => {
   const target = (dirs: string[]): TargetConfig => ({
+    document: { path: 'SKILL.md', noun: 'skill' },
     required_outputs: [],
     kinds: Object.fromEntries(
       dirs.map((d, i) => [`k${i}`, { dst_dir: d, dst_extension: '.md', modes: ['verbatim'] }]),
