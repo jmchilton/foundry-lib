@@ -34,6 +34,26 @@ export function licenseFileIdFromPath(licenseFilePath: string): LicenseFileId {
   return path.basename(licenseFilePath).replace(/\.LICENSE$/, '');
 }
 
+/**
+ * Whether a note's `license_file` is a use of this vendored copy.
+ *
+ * Named because this is the comparison the old spelling made unreadable. Both instances wrote it
+ * as `licenseIdFromFilePath(note.license_file) === license.licenseId` — a file stem against a file
+ * stem, in an expression that scanned as a licence check. A note under CC-BY-4.0 whose source
+ * vendored its own copy does not match another source's copy of the same licence, which is correct
+ * and is not what that line looked like.
+ *
+ * Absent `license_file` is `false`: the note redistributes no text, so it uses no copy. That is
+ * the state of 49 of one instance's 111 licensed notes.
+ */
+export function redistributesUnder(
+  licenseFilePath: string | undefined | null,
+  licenseFileId: LicenseFileId,
+): boolean {
+  if (typeof licenseFilePath !== 'string' || licenseFilePath.length === 0) return false;
+  return licenseFileIdFromPath(licenseFilePath) === licenseFileId;
+}
+
 export function loadLicenseFiles(licenseDirectory: string): LicenseFile[] {
   return fs
     .readdirSync(licenseDirectory)

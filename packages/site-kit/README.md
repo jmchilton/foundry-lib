@@ -205,6 +205,48 @@ three to the byte, which is a duplication nothing could have caught and nothing 
 Named for the policy rather than the palette: `--color-license-own-words` is whatever this site
 uses to mean "this text may not be redistributed".
 
+## The vendored-licence route
+
+A site that redistributes third-party text carries verbatim copies of the upstream licences, and
+renders them in-app so a note can link terms without bouncing the reader to GitHub. Both instances
+built that route, and both spelled its path inline — once in the page that builds it and again in
+every component that links to it.
+
+```astro
+---
+import LicenseFileBody from '@galaxy-foundry/site-kit/LicenseFileBody.astro';
+import { licenseFileHref, type LicenseFileUse } from '@galaxy-foundry/site-kit';
+import { redistributesUnder } from '@galaxy-foundry/license-policy';
+
+const uses: LicenseFileUse[] = notes
+  .filter((note) => redistributesUnder(note.data.license_file, licenseFile.id))
+  .map((note) => ({ href: `${base}/${note.id}/`, label: note.id, licenseId: note.data.license }));
+---
+<h1>{licenseFile.filename}</h1>
+<LicenseFileBody licenseFile={licenseFile} policy={licensePolicy} uses={uses} />
+```
+
+`licenseFileHref(base, licenseFile)` builds the link, and takes either a `LicenseFileId` or the
+`license_file` path a note declares — the two call sites hold different ones. It is built from
+`LICENSE_FILE_ROUTE`, which the page that generates the route uses as well, so the two cannot
+drift into a clean build that 404s.
+
+**Finding the notes stays yours.** One instance walks a single collection and links `/{id}/`; the
+other walks three and links `/{collection}/{id}/`. That is the one genuinely per-instance step, so
+`uses` is a prop. Filter with `redistributesUnder` rather than comparing ids by hand: a vendored
+copy is keyed by **source**, so two books under one licence have two copies, and the comparison is
+between file ids even though it reads like a licence check.
+
+**The page's `<h1>` and wrapper stay yours too**, and that one is not taste. One site marks this
+route with `data-pagefind-body`; Pagefind reads the first such mark as "index only pages like this
+one", so a component shipping the wrapper would decide a whole site's search index from inside a
+licence page. See "The search index" below.
+
+`licensesUnderFile(policy, uses)` is exported separately for a page that wants the licences a copy
+covers without the body — deduped and sorted, rather than ordered by whichever note was read first.
+
+Tokens: `LICENSE_FILE_TOKENS`, checked with `licenseFileStyleGaps`.
+
 ## The search index
 
 The header renders a Pagefind search box. What goes IN the index is the other half, and its rule
@@ -288,15 +330,16 @@ vocabulary is on screen; then add your own kinds' specimens beside them.
 
 ## Exports
 
-| Import                                             | What                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `LICENSE_BADGE_TOKENS`, `licenseBadgeStyleGaps`, `ResolvedReference`, `PAGEFIND_BODY_ATTR`, `searchIndexGaps`, `SiteShellProps`, `SiteHeaderProps`, `SiteFooterProps`, `ReferenceContractProps` |
-| `@galaxy-foundry/site-kit/specimens`               | `Specimen`, `SpecimenGroup`, `SpecimenSurface`, `SPECIMENS`, `REFERENCE_SPECIMENS`, `HEADER_SPECIMENS`, `FOOTER_SPECIMENS`, `SHELL_SPECIMENS`, `SPECIMEN_CONTRACT`, `sharesPage`, `specimenPath`                                                                                                                                                                                                                               |
-| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                                                                                                                                                                                           |
-| `@galaxy-foundry/site-kit/SiteHeader.astro`        | the header alone — a gallery cannot show it otherwise                                                                                                                                                                                                                                                                                                                                                                         |
-| `@galaxy-foundry/site-kit/SiteFooter.astro`        | the footer alone                                                                                                                                                                                                                                                                                                                                                                                                              |
-| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `@galaxy-foundry/site-kit/LicenseBadge.astro`      | the licence badge                                                                                                                                                                                                                                                                                                                                                                                                             |
+| Import                                             | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `LICENSE_BADGE_TOKENS`, `licenseBadgeStyleGaps`, `LICENSE_FILE_ROUTE`, `licenseFileHref`, `LicenseFileUse`, `licensesUnderFile`, `LICENSE_FILE_TOKENS`, `licenseFileStyleGaps`, `ResolvedReference`, `PAGEFIND_BODY_ATTR`, `searchIndexGaps`, `SiteShellProps`, `SiteHeaderProps`, `SiteFooterProps`, `ReferenceContractProps` |
+| `@galaxy-foundry/site-kit/specimens`               | `Specimen`, `SpecimenGroup`, `SpecimenSurface`, `SPECIMENS`, `REFERENCE_SPECIMENS`, `HEADER_SPECIMENS`, `FOOTER_SPECIMENS`, `SHELL_SPECIMENS`, `SPECIMEN_CONTRACT`, `sharesPage`, `specimenPath`                                                                                                                                                                                                                                                                                                                                                               |
+| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `@galaxy-foundry/site-kit/SiteHeader.astro`        | the header alone — a gallery cannot show it otherwise                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `@galaxy-foundry/site-kit/SiteFooter.astro`        | the footer alone                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `@galaxy-foundry/site-kit/LicenseBadge.astro`      | the licence badge                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `@galaxy-foundry/site-kit/LicenseFileBody.astro`   | the vendored-licence page body                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 `resolveNav` is exported because it is the only part of the shell with behaviour worth asserting
 on: a destination is active on its own page and everything beneath it, compared on whole path

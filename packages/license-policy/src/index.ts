@@ -191,6 +191,7 @@ export {
   findLicenseFileById,
   licenseFileIdFromPath,
   loadLicenseFiles,
+  redistributesUnder,
   type LicenseFile,
   type LicenseFileId,
 } from './license-files.js';

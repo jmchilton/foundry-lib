@@ -1,3 +1,11 @@
+import {
+  licenseFileIdFromPath,
+  resolveLicenseRow,
+  type LicenseFileId,
+  type LicenseId,
+  type LicensePolicy,
+  type LicenseRow,
+} from '@galaxy-foundry/license-policy';
 import type { Reference, ReferenceContract } from '@galaxy-foundry/reference-contract';
 
 /**
@@ -289,6 +297,80 @@ export const LICENSE_BADGE_TOKENS = [
 /** What {@link LICENSE_BADGE_TOKENS} names that a built stylesheet does not supply. */
 export function licenseBadgeStyleGaps(css: string): string[] {
   return styleGaps(css, LICENSE_BADGE_TOKENS);
+}
+
+/**
+ * Where a site puts its vendored licence copies, site-absolute and without the base.
+ *
+ * A constant rather than a string in four places. Both instances that grew this route spelled
+ * `${base}/licenses/${id}/` inline — once in the page that BUILDS the route and once in each
+ * component that links to it — so the route and its links agreed only because two repositories
+ * happened to type the same thing. Nothing compared them, and a page whose path drifted from its
+ * links would build clean and 404 for readers.
+ */
+export const LICENSE_FILE_ROUTE = '/licenses';
+
+/**
+ * The page for one vendored licence copy.
+ *
+ * Takes either a {@link LicenseFileId} or the `license_file` path a note declares, because the two
+ * call sites hold different ones and {@link licenseFileIdFromPath} passes a bare id through
+ * unchanged. Note that this addresses a COPY, not a licence: `/licenses/msmb/` is the page for
+ * `msmb.LICENSE`, whose text happens to be CC-BY-NC-SA-2.0.
+ */
+export function licenseFileHref(base: string, licenseFile: LicenseFileId | string): string {
+  return `${shellBase(base)}${LICENSE_FILE_ROUTE}/${licenseFileIdFromPath(licenseFile)}/`;
+}
+
+/** A note that redistributes text under a vendored licence copy. */
+export interface LicenseFileUse {
+  /** Where the note lives. Built by the instance: the two sites route notes differently. */
+  href: string;
+  /** What to show — usually the note's id. */
+  label: string;
+  /** The note's own `license`, which is what the copy's text actually governs it under. */
+  licenseId?: LicenseId;
+}
+
+/**
+ * The distinct licences carried under one vendored copy, each with its row.
+ *
+ * A copy is keyed by SOURCE, so what it governs is a question with more than one possible answer
+ * and both instances computed it the same way: collect the users' `license` values, dedupe, and
+ * resolve each. That this derivation is needed at all is the clearest sign that the route is
+ * keyed on a {@link LicenseFileId} while its subject is a licence.
+ *
+ * Sorted, because a set built by walking a corpus is otherwise ordered by which note was read
+ * first — which is stable until a note is added and then silently is not.
+ */
+export function licensesUnderFile(
+  policy: LicensePolicy,
+  uses: readonly LicenseFileUse[],
+): { id: LicenseId; row: LicenseRow }[] {
+  const ids = [...new Set(uses.map((use) => use.licenseId).filter((id): id is LicenseId => !!id))];
+  return ids.sort().map((id) => ({ id, row: resolveLicenseRow(policy, id) }));
+}
+
+/**
+ * The custom properties the licence-file body NAMES and does not define.
+ *
+ * It renders no chips of its own — the policy chips inside it are {@link LICENSE_BADGE_TOKENS}'
+ * business — so this list is the surfaces and the text around them.
+ */
+export const LICENSE_FILE_TOKENS = [
+  '--color-surface-raised',
+  '--color-border-subtle',
+  '--color-link',
+  '--color-link-hover',
+  '--color-text-primary',
+  '--color-text-secondary',
+  '--color-text-muted',
+  '--font-mono',
+] as const;
+
+/** What {@link LICENSE_FILE_TOKENS} names that a built stylesheet does not supply. */
+export function licenseFileStyleGaps(css: string): string[] {
+  return styleGaps(css, LICENSE_FILE_TOKENS);
 }
 
 /**
