@@ -221,7 +221,7 @@ import { REFERENCE_SPECIMENS, specimenPath } from '@galaxy-foundry/site-kit/spec
 ```
 
 **The theme is the specialization.** Nothing here carries a colour, and that is the point: the same
-seventeen cases rendered under two instances' tokens are two galleries, and what differs between
+cases rendered under two instances' tokens are two galleries, and what differs between
 them is exactly what each instance owns. An instance adds groups of its own for its own components
 in the same shape — and a group's `id`, not its `component`, is its address, because an instance's
 extra group for a kit component is the ordinary case: the parent Foundry adds a second
