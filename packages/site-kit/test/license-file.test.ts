@@ -116,4 +116,22 @@ describe('the licence-file body', () => {
     expect(html).not.toContain('Redistributed by');
     expect(html).toContain('CC BY-NC-SA 2.0');
   });
+
+  it('gives the licence text a heading of its own', async () => {
+    // Otherwise the document outline puts the licence — the thing the page IS — inside the
+    // "Redistributed by" section, which is a list of notes. A reader moving by heading lands on
+    // the note list and finds no way to reach the terms; the only other section ends where the
+    // text begins, and nothing says so.
+    //
+    // One instance shipped this heading and the other did not, and the first draft of this
+    // component followed the one that did not. That is the same accident as the padding the badge
+    // settles — a difference nobody chose — so it is settled here rather than made a prop.
+    expect(await render()).toContain('License text');
+  });
+
+  it('keeps the text heading even when no note uses the copy', async () => {
+    // The section is the page's subject, not a footnote to the note list — so it is not
+    // conditional on there being a note list at all.
+    expect(await render([])).toContain('License text');
+  });
 });

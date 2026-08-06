@@ -242,6 +242,11 @@ route with `data-pagefind-body`; Pagefind reads the first such mark as "index on
 one", so a component shipping the wrapper would decide a whole site's search index from inside a
 licence page. See "The search index" below.
 
+The body's own sections each carry an `<h2>`, the licence text included — so supply exactly one
+`<h1>` and nothing between it and the component. A page whose subject is a licence cannot leave
+that licence as the one part with no heading: a reader moving by heading lands on the list of notes
+and the terms are somewhere past the end of it.
+
 `licensesUnderFile(policy, uses)` is exported separately for a page that wants the licences a copy
 covers without the body — deduped and sorted, rather than ordered by whichever note was read first.
 
