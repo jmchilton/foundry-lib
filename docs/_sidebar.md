@@ -2,6 +2,7 @@
 - [Getting started](getting-started.md)
 - **Concepts**
   - [The shared substrate](concepts/shared-substrate.md)
+  - [Citation auditing and where we sit](concepts/citation-auditing-landscape.md)
 - **Packages**
   - [Choose a package](packages/README.md)
 - **Guides**

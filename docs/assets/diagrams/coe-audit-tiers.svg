@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc">
+  <title id="title">Chain-of-evidence audit tiers</title>
+  <desc id="desc">A chain-of-evidence principle requires every claim to carry a recorded evidence chain that genuinely supports it. Three Foundry audit tiers follow from it: S1 reference integrity, which is built as the audit-citations package; S2 tool checks and S3 threshold checks, which are named but not yet built. A closing note states that S1 types are not evidence that the three tiers share a base schema.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e2552b"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .node { fill: #ffffff; stroke: #b9b1a2; stroke-width: 2; }
+      .node-dark { fill: #262b32; stroke: #0e1013; stroke-width: 2; }
+      .node-accent { fill: #f6ded4; stroke: #e2552b; stroke-width: 2; }
+      .node-planned { fill: #ffffff; stroke: #b9b1a2; stroke-width: 2; stroke-dasharray: 7 5; }
+      .pill-built { fill: #e2552b; stroke: none; }
+      .pill-planned { fill: #efece3; stroke: #b9b1a2; stroke-width: 1.5; }
+      .label { fill: #1a1d22; font: 700 18px Arial, sans-serif; }
+      .label-dark { fill: #fbfaf6; font: 700 18px Arial, sans-serif; }
+      .detail { fill: #555b63; font: 14px Arial, sans-serif; }
+      .detail-dark { fill: #d9dde2; font: 14px Arial, sans-serif; }
+      .eyebrow { fill: #9a3a1f; font: 700 12px Arial, sans-serif; letter-spacing: 1.8px; }
+      .pill-text { fill: #ffffff; font: 700 12px Arial, sans-serif; letter-spacing: 1.4px; }
+      .pill-text-muted { fill: #6a7079; font: 700 12px Arial, sans-serif; letter-spacing: 1.4px; }
+      .edge { fill: none; stroke: #e2552b; stroke-width: 3; marker-end: url(#arrow); }
+      .rail { fill: none; stroke: #e2552b; stroke-width: 3; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="1" y="1" width="958" height="558" rx="14"/>
+
+  <text class="eyebrow" x="40" y="38">CHAIN OF EVIDENCE</text>
+  <rect class="node-accent" x="40" y="55" width="880" height="76" rx="8"/>
+  <text class="label" x="480" y="86" text-anchor="middle">Every claim carries a recorded evidence chain</text>
+  <text class="detail" x="480" y="110" text-anchor="middle">completeness: the chain exists · correctness: the chain supports the claim it is attached to</text>
+
+  <path class="rail" d="M 480 131 V 152 M 180 152 H 780"/>
+  <path class="edge" d="M 180 152 V 176"/>
+  <path class="edge" d="M 480 152 V 176"/>
+  <path class="edge" d="M 780 152 V 176"/>
+
+  <text class="eyebrow" x="40" y="196">FOUNDRY AUDIT TIERS</text>
+
+  <rect class="node-dark" x="40" y="210" width="280" height="200" rx="8"/>
+  <text class="label-dark" x="180" y="246" text-anchor="middle">S1 · Reference integrity</text>
+  <text class="detail-dark" x="180" y="280" text-anchor="middle">Do cited works exist,</text>
+  <text class="detail-dark" x="180" y="302" text-anchor="middle">and are they who you say?</text>
+  <text class="detail-dark" x="180" y="330" text-anchor="middle">Evidence: scholarly registries</text>
+  <rect class="pill-built" x="56" y="350" width="248" height="42" rx="6"/>
+  <text class="pill-text" x="180" y="376" text-anchor="middle">BUILT · AUDIT-CITATIONS</text>
+
+  <rect class="node-planned" x="340" y="210" width="280" height="200" rx="8"/>
+  <text class="label" x="480" y="246" text-anchor="middle">S2 · Tool checks</text>
+  <text class="detail" x="480" y="280" text-anchor="middle">Named, not yet built.</text>
+  <text class="detail" x="480" y="302" text-anchor="middle">Shape still open.</text>
+  <rect class="pill-planned" x="356" y="350" width="248" height="42" rx="6"/>
+  <text class="pill-text-muted" x="480" y="376" text-anchor="middle">PLANNED</text>
+
+  <rect class="node-planned" x="640" y="210" width="280" height="200" rx="8"/>
+  <text class="label" x="780" y="246" text-anchor="middle">S3 · Threshold checks</text>
+  <text class="detail" x="780" y="280" text-anchor="middle">Named, not yet built.</text>
+  <text class="detail" x="780" y="302" text-anchor="middle">Shape still open.</text>
+  <rect class="pill-planned" x="656" y="350" width="248" height="42" rx="6"/>
+  <text class="pill-text-muted" x="780" y="376" text-anchor="middle">PLANNED</text>
+
+  <rect class="node" x="40" y="450" width="880" height="76" rx="8"/>
+  <text class="detail" x="480" y="481" text-anchor="middle">S1's citation-specific types are not evidence that the three tiers share a base schema.</text>
+  <text class="detail" x="480" y="505" text-anchor="middle">An audit-base package must still pass the normal admission test after a second checker exists.</text>
+</svg>

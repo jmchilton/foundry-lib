@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 666" width="960" height="666" role="img" aria-labelledby="title desc">
+  <title id="title">Where RefChecker and audit-citations diverge</title>
+  <desc id="desc">Both tools start from an extracted citation candidate and fan a title search across the same scholarly indexes, with RefChecker also querying the ACL Anthology. RefChecker then runs a deterministic pre-filter, escalates suspicious references to an LLM deep web search, re-verifies the metadata it finds, and emits five result types including a hallucination judgement with three levels. The audit-citations package runs a deterministic comparison, keeps no model in the pipeline because escalation is a consumer-owned tier, applies stale-safe adjudication, and emits four verdicts.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e2552b"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .node { fill: #ffffff; stroke: #b9b1a2; stroke-width: 2; }
+      .node-dark { fill: #262b32; stroke: #0e1013; stroke-width: 2; }
+      .node-accent { fill: #f6ded4; stroke: #e2552b; stroke-width: 2; }
+      .node-outside { fill: #efece3; stroke: #b9b1a2; stroke-width: 2; stroke-dasharray: 7 5; }
+      .label { fill: #1a1d22; font: 700 18px Arial, sans-serif; }
+      .label-dark { fill: #fbfaf6; font: 700 18px Arial, sans-serif; }
+      .detail { fill: #555b63; font: 14px Arial, sans-serif; }
+      .detail-dark { fill: #d9dde2; font: 14px Arial, sans-serif; }
+      .eyebrow { fill: #9a3a1f; font: 700 12px Arial, sans-serif; letter-spacing: 1.8px; }
+      .edge { fill: none; stroke: #e2552b; stroke-width: 3; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="bg" x="1" y="1" width="958" height="664" rx="14"/>
+
+  <text class="eyebrow" x="40" y="38">SHARED STARTING POINT</text>
+  <rect class="node-accent" x="40" y="55" width="880" height="72" rx="8"/>
+  <text class="label" x="480" y="85" text-anchor="middle">Extracted citation candidate</text>
+  <text class="detail" x="480" y="108" text-anchor="middle">an identifier or bibliography entry, carried with its exact source span</text>
+
+  <path class="edge" d="M 480 127 V 160"/>
+
+  <rect class="node-dark" x="200" y="161" width="560" height="76" rx="8"/>
+  <text class="label-dark" x="480" y="188" text-anchor="middle">Shared index fan-out (title queries)</text>
+  <text class="detail-dark" x="480" y="210" text-anchor="middle">Crossref · OpenAlex · Semantic Scholar · DBLP</text>
+  <text class="detail-dark" x="480" y="229" text-anchor="middle">RefChecker also queries the ACL Anthology</text>
+
+  <path class="edge" d="M 480 237 H 240 V 292"/>
+  <path class="edge" d="M 480 237 H 720 V 292"/>
+
+  <text class="eyebrow" x="40" y="282">REFCHECKER</text>
+  <text class="eyebrow" x="520" y="282">AUDIT-CITATIONS</text>
+
+  <rect class="node" x="40" y="296" width="400" height="64" rx="8"/>
+  <text class="label" x="240" y="324" text-anchor="middle">Deterministic pre-filter</text>
+  <text class="detail" x="240" y="347" text-anchor="middle">unresolved · author overlap under 60% · ID conflict</text>
+
+  <rect class="node" x="520" y="296" width="400" height="64" rx="8"/>
+  <text class="label" x="720" y="324" text-anchor="middle">Deterministic comparison</text>
+  <text class="detail" x="720" y="347" text-anchor="middle">identity checks · mismatch severity</text>
+
+  <path class="edge" d="M 240 360 V 384"/>
+  <path class="edge" d="M 720 360 V 384"/>
+
+  <rect class="node" x="40" y="386" width="400" height="64" rx="8"/>
+  <text class="label" x="240" y="414" text-anchor="middle">LLM deep web search</text>
+  <text class="detail" x="240" y="437" text-anchor="middle">locate a dedicated page for the cited work</text>
+
+  <rect class="node-outside" x="520" y="386" width="400" height="64" rx="8"/>
+  <text class="label" x="720" y="414" text-anchor="middle">No model in the pipeline</text>
+  <text class="detail" x="720" y="437" text-anchor="middle">escalation is a consumer-owned tier</text>
+
+  <path class="edge" d="M 240 450 V 474"/>
+  <path class="edge" d="M 720 450 V 474"/>
+
+  <rect class="node" x="40" y="476" width="400" height="64" rx="8"/>
+  <text class="label" x="240" y="504" text-anchor="middle">Re-verification</text>
+  <text class="detail" x="240" y="527" text-anchor="middle">recheck metadata before clearing a flag</text>
+
+  <rect class="node" x="520" y="476" width="400" height="64" rx="8"/>
+  <text class="label" x="720" y="504" text-anchor="middle">Adjudication</text>
+  <text class="detail" x="720" y="527" text-anchor="middle">stale-safe review that keeps the machine verdict</text>
+
+  <path class="edge" d="M 240 540 V 564"/>
+  <path class="edge" d="M 720 540 V 564"/>
+
+  <rect class="node" x="40" y="566" width="400" height="76" rx="8"/>
+  <text class="label" x="240" y="594" text-anchor="middle">Five result types</text>
+  <text class="detail" x="240" y="616" text-anchor="middle">Error · Warning · Suggestion · Unverified</text>
+  <text class="detail" x="240" y="636" text-anchor="middle">Hallucination — LIKELY · UNCERTAIN · UNLIKELY</text>
+
+  <rect class="node" x="520" y="566" width="400" height="76" rx="8"/>
+  <text class="label" x="720" y="594" text-anchor="middle">Four verdicts</text>
+  <text class="detail" x="720" y="616" text-anchor="middle">resolved · resolved-mismatched</text>
+  <text class="detail" x="720" y="636" text-anchor="middle">unresolved · unavailable</text>
+</svg>
