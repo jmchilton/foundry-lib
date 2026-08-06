@@ -92,7 +92,8 @@ The public surface includes:
 - link-map and rendering methods: `wikiLinkMap`, `resolveLink`, `remarkWikiLinks`, and
   `resolveMarkdown`;
 - standalone map-bound helpers: `resolveContentLink`, `remarkContentWikiLinks`, and
-  `resolveContentMarkdown`; and
+  `resolveContentMarkdown`;
+- alias/frontmatter seams: `ContentAliases`, `Frontmatter`, and `ContentReaderOptions`; and
 - route target types: `ContentTarget`, `ExtraContentTarget`, and `ContentLink`.
 
 Start with the [Content-reader boundary](architecture/content-reader-boundary.md).

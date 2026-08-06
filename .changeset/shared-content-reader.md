@@ -8,7 +8,9 @@ Statistical Genomics Foundry so new Foundry instances do not grow independent As
 
 `@galaxy-foundry/content-reader` owns filesystem enumeration from a collection table, note-id
 derivation, collection-backed wiki-link maps, and the remark/raw-Markdown bindings over that map.
-Instances keep their schema assembly, routing policy, registries, and domain model.
+Instances keep their schema assembly, routing policy, registries, domain model, and alias
+vocabulary. Optional alias derivation reads routed-note frontmatter once and makes it available to
+route targets for summary tooltips, while readers without aliases retain the directory-only path.
 
 `@galaxy-foundry/site-kit` gains `ContentNote.astro` and `TagChips.astro`. The note frame provides
 semantic slots for instance metadata, badges, references, and prose while keeping package facts,

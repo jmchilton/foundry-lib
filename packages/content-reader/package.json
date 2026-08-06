@@ -38,9 +38,11 @@
   "license": "MIT",
   "dependencies": {
     "@galaxy-foundry/kind-schema": "workspace:^",
-    "@galaxy-foundry/wiki-links": "workspace:^"
+    "@galaxy-foundry/wiki-links": "workspace:^",
+    "js-yaml": "^4.1.0"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0",
     "vitest": "^4.1.10"

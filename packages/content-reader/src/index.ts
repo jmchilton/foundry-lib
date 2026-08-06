@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 
+import yaml from 'js-yaml';
+
 import { matchesCollection, type CollectionTable } from '@galaxy-foundry/kind-schema/collections';
 import {
   parseWikiLink,
@@ -15,6 +17,16 @@ export interface ContentTarget {
   /** Optional tooltip carried by rendered wiki links. */
   title?: string;
 }
+
+/** A note's YAML frontmatter before an instance schema has parsed it. */
+export type Frontmatter = Record<string, unknown>;
+
+/** Extra wiki-link addresses derived from an instance's own note vocabulary. */
+export type ContentAliases<Collections extends CollectionTable> = (
+  meta: Frontmatter,
+  id: string,
+  collection: keyof Collections & string,
+) => readonly string[];
 
 export interface ExtraContentTarget<Target extends ContentTarget = ContentTarget> {
   /** Author-facing key before wiki-link slugification. */
@@ -36,11 +48,26 @@ export interface ContentReaderOptions<
   Collections extends CollectionTable,
   Target extends ContentTarget,
 > {
+  /**
+   * Routed collections in primary-address precedence order. When two notes have the same
+   * primary slug, the later collection wins.
+   */
   collections: Collections;
   /** Resolve a content-relative path to the filesystem frame used by this process. */
   contentPath: (relativePath: string) => string;
+  /**
+   * Read YAML frontmatter even when no aliases are configured. Supplying aliases already opts
+   * into frontmatter reads.
+   */
+  readFrontmatter?: boolean;
+  /** Instance-owned second addresses for a note. Aliases never overwrite a primary address. */
+  aliases?: ContentAliases<Collections>;
   /** Map a typed note to its content route. Route policy stays with the instance. */
-  targetOf: (collection: keyof Collections & string, id: string) => Target;
+  targetOf: (
+    collection: keyof Collections & string,
+    id: string,
+    meta: Frontmatter | undefined,
+  ) => Target;
 }
 
 export interface ContentReader<Collections extends CollectionTable, Target extends ContentTarget> {
@@ -57,6 +84,31 @@ export interface ContentReader<Collections extends CollectionTable, Target exten
 export function noteIdFromPath(relativePath: string): string {
   return relativePath.replace(/(?:\/index)?\.md$/, '');
 }
+
+const FRONTMATTER_RE = /^(?:\uFEFF)?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
+
+const normalizeFrontmatterValue = (value: unknown): unknown => {
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (Array.isArray(value)) return value.map(normalizeFrontmatterValue);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nested]) => [key, normalizeFrontmatterValue(nested)]),
+    );
+  }
+  return value;
+};
+
+const readNoteFrontmatter = (filePath: string): Frontmatter => {
+  const source = fs.readFileSync(filePath, 'utf8');
+  const document = FRONTMATTER_RE.exec(source)?.[1];
+  if (document === undefined) return {};
+  const parsed: unknown = yaml.load(document);
+  if (parsed === undefined || parsed === null) return {};
+  if (typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new TypeError(`${filePath}: YAML frontmatter must be a mapping`);
+  }
+  return normalizeFrontmatterValue(parsed) as Frontmatter;
+};
 
 const hrefFor = (base: string, target: ContentTarget): string => {
   const normalizedBase = base.replace(/\/$/, '');
@@ -112,8 +164,15 @@ export function createContentReader<
   Collections extends CollectionTable,
   Target extends ContentTarget = ContentTarget,
 >(options: ContentReaderOptions<Collections, Target>): ContentReader<Collections, Target> {
-  const { collections, contentPath, targetOf } = options;
+  const { aliases, collections, contentPath, readFrontmatter = false, targetOf } = options;
   type Name = keyof Collections & string;
+
+  interface Note {
+    collection: Name;
+    id: string;
+    meta: Frontmatter | undefined;
+    target: Target;
+  }
 
   const walk = (directory: string): string[] => {
     const absoluteDirectory = contentPath(directory);
@@ -143,11 +202,36 @@ export function createContentReader<
     extraTargets: readonly ExtraContentTarget<Target>[] = [],
   ): Map<string, Target> => {
     const map = new Map<string, Target>();
+
+    // Object property order is the collection-precedence contract. Keep primary registration in
+    // this first pass so no alias can take an address that belongs to a routed note. Within a
+    // collection noteFiles is sorted, making the full precedence deterministic.
+    const notes: Note[] = [];
     for (const name of Object.keys(collections) as Name[]) {
-      for (const id of noteIds(name)) {
-        map.set(slugify(id.replace(/\//g, '-')), targetOf(name, id));
+      const prefix = `${collections[name]!.base}/`;
+      for (const relativePath of noteFiles(name)) {
+        const id = noteIdFromPath(relativePath.slice(prefix.length));
+        const meta =
+          aliases || readFrontmatter ? readNoteFrontmatter(contentPath(relativePath)) : undefined;
+        const target = targetOf(name, id, meta);
+        notes.push({ collection: name, id, meta, target });
+        map.set(slugify(id.replace(/\//g, '-')), target);
       }
     }
+
+    // Aliases fill empty addresses only. In an alias/alias collision, the first routed note wins;
+    // in an alias/primary collision, the primary wins regardless of collection order.
+    if (aliases) {
+      for (const note of notes) {
+        for (const alias of aliases(note.meta!, note.id, note.collection)) {
+          const key = slugify(alias);
+          if (!map.has(key)) map.set(key, note.target);
+        }
+      }
+    }
+
+    // Explicit extra targets are the caller's escape hatch and retain their existing final-write
+    // behavior, including the ability to override a routed target deliberately.
     for (const { key, target } of extraTargets) map.set(slugify(key), target);
     return map;
   };

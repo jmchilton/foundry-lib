@@ -17,7 +17,16 @@ import { createContentReader } from '@galaxy-foundry/content-reader';
 export const contentReader = createContentReader({
   collections: COLLECTIONS,
   contentPath,
-  targetOf: (collection, id) => ({ path: `${collection}/${id}` }),
+  aliases: (meta, id, collection) =>
+    meta.type === 'cli-command' && typeof meta.tool === 'string' && typeof meta.command === 'string'
+      ? [`${meta.tool} ${meta.command}`]
+      : meta.type === 'mold' && typeof meta.name === 'string'
+        ? [meta.name]
+        : [],
+  targetOf: (collection, id, meta) => {
+    const target = { path: `${collection}/${id}` };
+    return typeof meta?.summary === 'string' ? { ...target, title: meta.summary } : target;
+  },
 });
 
 contentReader.noteFiles('papers');
@@ -29,6 +38,24 @@ contentReader.resolveMarkdown(source, { base: '/my-foundry' });
 
 Extra content targets, such as design documents outside the typed collection table, are passed as
 `{ key, target }` entries.
+
+`aliases` is the instance vocabulary seam: the package reads each routed note's YAML frontmatter
+once and registers the returned second addresses. The same frontmatter is passed to `targetOf`, so
+route targets can carry a `summary` tooltip without another filesystem walk. Readers that omit
+`aliases` continue to touch directory entries only; set `readFrontmatter: true` when `targetOf`
+needs metadata but no aliases are required.
+
+Address precedence is deterministic:
+
+1. Primary note addresses are registered in collection property order, then sorted note-path
+   order. A later primary overwrites an earlier primary, so collection declaration order is a
+   contractual part of a corpus with basename collisions.
+2. Aliases fill empty addresses and never overwrite a primary. The first routed note wins when
+   two aliases collide.
+3. Explicit `extraTargets` are applied last and may deliberately override either.
+
+Only files admitted by the collection table become primary or alias targets. Markdown companions
+and other adjacent files remain visible to `markdownFiles()` but cannot leak into `wikiLinkMap()`.
 
 ## Boundary
 

@@ -1,10 +1,11 @@
 # Content-reader boundary
 
-Two structurally different Foundries use the same content-reading mechanics. Statistical Genomics
-Foundry has six routed collections and domain furniture for sources, evidence, patterns, and molds.
-The TDA Bioinformatics Foundry begins with one Package collection and software facts. Their content
-models should differ; their filesystem walk, link-map construction, note frame, and tag markup
-should not.
+Three structurally different Foundries use the same content-reading mechanics. Galaxy Workflow
+Foundry has a broad corpus whose CLI commands and Molds carry instance-specific second addresses.
+Statistical Genomics Foundry has six routed collections and domain furniture for sources, evidence,
+patterns, and molds. The TDA Bioinformatics Foundry begins with one Package collection and software
+facts. Their content models should differ; their filesystem walk, link-map construction, note
+frame, and tag markup should not.
 
 ## Ownership diagram
 
@@ -16,12 +17,22 @@ The instance binding is intentionally small:
 export const contentReader = createContentReader({
   collections: COLLECTIONS,
   contentPath,
-  targetOf: (collection, id) => ({ path: `${collection}/${id}` }),
+  aliases: (meta, id, collection) => galaxyAliases(meta),
+  targetOf: (collection, id, meta) => {
+    const target = { path: `${collection}/${id}` };
+    return typeof meta?.summary === 'string' ? { ...target, title: meta.summary } : target;
+  },
 });
 ```
 
 That is configuration because only the instance knows where a note should be addressed. Repeating
-the filesystem walk or wiki-link adapter locally would be infrastructure duplication.
+the filesystem walk, frontmatter parse, or wiki-link adapter locally would be infrastructure
+duplication. Frontmatter is read only when `aliases` is supplied or `readFrontmatter` is explicitly
+enabled, preserving the directory-only path for instances that do not need metadata.
+
+The collection table is also the target boundary: companions beside a routed note are never
+addressable unless their own collection row admits them. Primary collisions follow collection
+property order with later collections winning; aliases cannot overwrite primaries.
 
 ## Why Astro collection exports stay local
 

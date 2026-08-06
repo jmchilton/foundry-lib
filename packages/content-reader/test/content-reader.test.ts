@@ -2,9 +2,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import type { CollectionRoute } from '@galaxy-foundry/kind-schema/collections';
+import type { MdNode } from '@galaxy-foundry/wiki-links/remark';
 
 import {
   createContentReader,
@@ -16,9 +17,31 @@ import {
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'foundry-content-reader-'));
 fs.mkdirSync(path.join(root, 'packages'), { recursive: true });
 fs.mkdirSync(path.join(root, 'papers', 'nested'), { recursive: true });
-fs.writeFileSync(path.join(root, 'packages', 'alpha.md'), '# Alpha\n');
-fs.writeFileSync(path.join(root, 'packages', 'ignored.md'), '# Untyped\n');
-fs.writeFileSync(path.join(root, 'papers', 'nested', 'index.md'), '# Nested\n');
+fs.writeFileSync(
+  path.join(root, 'packages', 'alpha.md'),
+  `---
+type: cli-command
+tool: gxwf
+command: validate
+summary: Validate a Galaxy workflow.
+---
+# Alpha
+`,
+);
+fs.writeFileSync(
+  path.join(root, 'packages', 'ignored.md'),
+  '---\ntype: cli-command\ntool: gxwf\ncommand: companion\n---\n# Untyped\n',
+);
+fs.writeFileSync(
+  path.join(root, 'papers', 'nested', 'index.md'),
+  `---
+type: mold
+name: Summarize Nextflow
+summary: Turn a Nextflow pipeline into a structured summary.
+---
+# Nested
+`,
+);
 fs.writeFileSync(path.join(root, 'glossary.md'), '# Glossary\n');
 
 afterAll(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -61,6 +84,101 @@ describe('collection-backed content reader', () => {
     expect(contentReader.wikiLinkMap().get('nested')).toEqual({ path: 'papers/nested' });
   });
 
+  it('does not read note contents when frontmatter features are unused', () => {
+    const readFile = vi.spyOn(fs, 'readFileSync');
+    try {
+      contentReader.wikiLinkMap();
+      expect(readFile).not.toHaveBeenCalled();
+    } finally {
+      readFile.mockRestore();
+    }
+  });
+
+  it('derives instance aliases and target titles from one frontmatter read', () => {
+    const reader = createContentReader({
+      collections,
+      contentPath: (relativePath) => path.join(root, relativePath),
+      aliases: (meta) => {
+        if (
+          meta.type === 'cli-command' &&
+          typeof meta.tool === 'string' &&
+          typeof meta.command === 'string'
+        ) {
+          return [`${meta.tool} ${meta.command}`];
+        }
+        return meta.type === 'mold' && typeof meta.name === 'string' ? [meta.name] : [];
+      },
+      targetOf: (collection, id, meta) => {
+        const target = { path: `${collection}/${id}` };
+        return typeof meta?.summary === 'string' ? { ...target, title: meta.summary } : target;
+      },
+    });
+
+    const readFile = vi.spyOn(fs, 'readFileSync');
+    const map = reader.wikiLinkMap();
+    expect(readFile).toHaveBeenCalledTimes(2);
+    readFile.mockRestore();
+    expect(map.get('gxwf-validate')).toEqual({
+      path: 'packages/alpha',
+      title: 'Validate a Galaxy workflow.',
+    });
+    expect(map.get('summarize-nextflow')).toEqual({
+      path: 'papers/nested',
+      title: 'Turn a Nextflow pipeline into a structured summary.',
+    });
+    expect(map.has('gxwf-companion')).toBe(false);
+    expect(reader.resolveMarkdown('Run [[gxwf validate]].', { base: '/foundry' })).toBe(
+      'Run [gxwf validate](/foundry/packages/alpha/).',
+    );
+
+    const tree: MdNode = {
+      type: 'root',
+      children: [
+        { type: 'paragraph', children: [{ type: 'text', value: 'Run [[gxwf validate]].' }] },
+      ],
+    };
+    reader.remarkWikiLinks({ base: '/foundry' })(tree);
+    expect(tree).toEqual({
+      type: 'root',
+      children: [
+        {
+          type: 'paragraph',
+          children: [
+            { type: 'text', value: 'Run ' },
+            {
+              type: 'link',
+              url: '/foundry/packages/alpha/',
+              title: 'Validate a Galaxy workflow.',
+              children: [{ type: 'text', value: 'gxwf validate' }],
+            },
+            { type: 'text', value: '.' },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('can opt into frontmatter for targets without defining aliases', () => {
+    const reader = createContentReader({
+      collections,
+      contentPath: (relativePath) => path.join(root, relativePath),
+      readFrontmatter: true,
+      targetOf: (collection, id, meta) => {
+        const target = { path: `${collection}/${id}` };
+        return typeof meta?.summary === 'string' ? { ...target, title: meta.summary } : target;
+      },
+    });
+
+    expect(reader.wikiLinkMap().get('alpha')).toEqual({
+      path: 'packages/alpha',
+      title: 'Validate a Galaxy workflow.',
+    });
+  });
+
+  it('never registers Markdown companions as link targets', () => {
+    expect(contentReader.wikiLinkMap().has('ignored')).toBe(false);
+  });
+
   it('accepts extra content targets without putting them in the collection table', () => {
     const map = contentReader.wikiLinkMap([
       { key: 'Architecture', target: { path: 'design/architecture' } },
@@ -87,5 +205,49 @@ describe('collection-backed content reader', () => {
     expect(resolveContentMarkdown('[[Alpha]]', map, '/foundry')).toBe(
       '[Alpha](/foundry/packages/alpha/)',
     );
+  });
+});
+
+describe('wiki-link address precedence', () => {
+  const collisionRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'foundry-content-collisions-'));
+  fs.mkdirSync(path.join(collisionRoot, 'first'), { recursive: true });
+  fs.mkdirSync(path.join(collisionRoot, 'second'), { recursive: true });
+  fs.writeFileSync(
+    path.join(collisionRoot, 'first', 'same.md'),
+    '---\nalias: shared address\n---\n# First\n',
+  );
+  fs.writeFileSync(
+    path.join(collisionRoot, 'first', 'first-only.md'),
+    '---\nalias: shared address\n---\n# First only\n',
+  );
+  fs.writeFileSync(
+    path.join(collisionRoot, 'second', 'same.md'),
+    '---\nalias: first-only\n---\n# Second\n',
+  );
+
+  afterAll(() => fs.rmSync(collisionRoot, { recursive: true, force: true }));
+
+  const collisionCollections = {
+    first: { base: 'first', pattern: ['*.md'], kind: 'first' },
+    second: { base: 'second', pattern: ['*.md'], kind: 'second' },
+  } as const satisfies Record<string, CollectionRoute>;
+
+  const reader = createContentReader({
+    collections: collisionCollections,
+    contentPath: (relativePath) => path.join(collisionRoot, relativePath),
+    aliases: (meta) => (typeof meta.alias === 'string' ? [meta.alias] : []),
+    targetOf: (collection, id) => ({ path: `${collection}/${id}` }),
+  });
+
+  it('lets later collections win primary collisions', () => {
+    expect(reader.wikiLinkMap().get('same')).toEqual({ path: 'second/same' });
+  });
+
+  it('never lets an alias overwrite a primary address', () => {
+    expect(reader.wikiLinkMap().get('first-only')).toEqual({ path: 'first/first-only' });
+  });
+
+  it('lets the first routed note win an alias collision', () => {
+    expect(reader.wikiLinkMap().get('shared-address')).toEqual({ path: 'first/first-only' });
   });
 });

@@ -105,11 +105,13 @@ Choose this package for:
 - enumerating files selected by an instance-owned collection table;
 - deriving stable note IDs;
 - constructing the content site's wiki-link map from its routed collections;
+- registering instance-owned aliases from routed-note frontmatter;
 - binding the same map into remark and raw-Markdown rendering; or
 - adding explicit content targets that do not belong to a typed collection.
 
-The instance supplies schemas, collections, content paths, routes, and any extra targets. The
-package does not assemble Astro collection exports or render domain fields.
+The instance supplies schemas, collections, content paths, routes, alias vocabulary, and any extra
+targets. The package owns the single frontmatter read needed to derive aliases and target tooltips;
+it does not assemble Astro collection exports or render domain fields.
 
 [Read the content-reader boundary](architecture/content-reader-boundary.md), the
 [package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/content-reader), or the
