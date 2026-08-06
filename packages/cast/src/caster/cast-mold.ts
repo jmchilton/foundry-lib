@@ -267,6 +267,7 @@ export async function castMold<Ext extends object = Record<string, never>>(
         moldName: mold.name,
         meta: mold.meta,
         body: mold.body,
+        noun: request.target.document.noun,
         refs: refEntries,
         metaByPath,
         slugMap,

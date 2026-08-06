@@ -107,15 +107,23 @@ export interface SkillSection {
 export interface SkillContext extends CastContext {
   /** The Mold's markdown body, wiki-links intact and not yet rewritten for a runtime reader. */
   readonly body: string;
+  /**
+   * What a cast of this Mold is called at this target — `document.noun` from `_target.yml`.
+   *
+   * Passed in because a contributor writing prose about the thing being cast needs the target's
+   * word for it, and `skillSections` is registered once per Foundry rather than per cast, so it
+   * has no other way to reach the declaration.
+   */
+  readonly noun: string;
 }
 
 /**
- * The skill document's sections, in the order they appear.
+ * The cast document's sections, in the order they appear.
  *
  * The instance supplies the whole list — including the procedure and any closing notes — rather
  * than filling slots in a skeleton. Casting owns the frontmatter, the title, and the `## Title`
- * convention; what a skill document should SAY is a fact about the corpus it was cast from, and
- * a fixed skeleton would make every Foundry render Galaxy's idea of a skill.
+ * convention; what the document should SAY is a fact about the corpus it was cast from, and a
+ * fixed skeleton would make every Foundry render the first one's idea of a skill.
  */
 export type SkillSectionContributor = (context: SkillContext) => readonly SkillSection[];
 
