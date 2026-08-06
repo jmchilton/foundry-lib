@@ -625,7 +625,7 @@ a {
 
 .cover-facts {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
   width: min(100%, 42rem);
   margin-top: 3.5rem;
@@ -660,7 +660,7 @@ a {
 
 .doc-index {
   display: grid;
-  grid-template-columns: 1.35fr 0.65fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
   margin: 2rem 0 3rem;
   overflow: hidden;
@@ -672,6 +672,12 @@ a {
 .doc-index > div {
   padding: 1.3rem 1.4rem;
   background: var(--paper-raised);
+}
+
+/* An odd package count would otherwise leave the grid's own background showing through as a
+   half-width empty cell. Let the trailing entry take the whole row instead. */
+.doc-index > div:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 .doc-index strong {
