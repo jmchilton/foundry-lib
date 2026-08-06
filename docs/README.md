@@ -33,6 +33,10 @@ existing byte-stable bundle corpus can test the boundary before a second caster 
     <p>Resolve a declared license into its redistribution posture and obligations.</p>
   </div>
   <div>
+    <strong>@galaxy-foundry/content-reader</strong>
+    <p>Bind local collections and routes into one reusable content pipeline.</p>
+  </div>
+  <div>
     <strong>@galaxy-foundry/reference-contract</strong>
     <p>Compose shared casting vocabularies with the reference kinds an instance owns.</p>
   </div>
@@ -104,8 +108,9 @@ extraction.
 | [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds |
 | [`@galaxy-foundry/kind-schema`](https://www.npmjs.com/package/@galaxy-foundry/kind-schema)               | assemble kind schemas and route collections without sharing kinds |
 | [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy)         | interpret a note's license as an allowed redistribution posture   |
+| [`@galaxy-foundry/content-reader`](https://www.npmjs.com/package/@galaxy-foundry/content-reader)         | bind collection files and wiki links into a content site          |
 | [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them  |
-| [`@galaxy-foundry/site-kit`](https://www.npmjs.com/package/@galaxy-foundry/site-kit)                     | stand up the reading shell instead of hand-rolling one            |
+| [`@galaxy-foundry/site-kit`](https://www.npmjs.com/package/@galaxy-foundry/site-kit)                     | render shared reading surfaces instead of hand-rolling them       |
 | [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet |
 | [`@galaxy-foundry/wiki-links`](https://www.npmjs.com/package/@galaxy-foundry/wiki-links)                 | resolve `[[Target]]` links in prose and frontmatter, exactly      |
 

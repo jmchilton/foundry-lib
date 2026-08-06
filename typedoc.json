@@ -6,6 +6,7 @@
     "packages/kind-manifest",
     "packages/kind-schema",
     "packages/license-policy",
+    "packages/content-reader",
     "packages/reference-contract",
     "packages/site-kit",
     "packages/tag-registry",

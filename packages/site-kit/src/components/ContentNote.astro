@@ -1,0 +1,77 @@
+---
+import type { ContentNoteProps as Props } from '../index.js';
+import TagChips from './TagChips.astro';
+
+const {
+  title,
+  summary,
+  tags = [],
+  tagBase,
+  back,
+  showHeading = false,
+  articleClass = '',
+} = Astro.props;
+const hasBadges = Astro.slots.has('badges');
+---
+<div class="content-note">
+  {back && <a href={back.href} class="content-back">← {back.label}</a>}
+
+  <slot name="metadata" />
+
+  {(tags.length > 0 || hasBadges) && (
+    <div class="content-note-row">
+      <slot name="badges" />
+      <TagChips tags={tags} tagBase={tagBase} />
+    </div>
+  )}
+
+  {showHeading && (
+    <header class="content-heading">
+      <h1 data-pagefind-meta="title">{title}</h1>
+      {summary && <p data-pagefind-meta="summary">{summary}</p>}
+    </header>
+  )}
+
+  {!showHeading && summary && <p class="content-summary" data-pagefind-meta="summary">{summary}</p>}
+
+  <slot name="reference" />
+
+  <article class={articleClass}>
+    <slot />
+  </article>
+</div>
+
+<style>
+  .content-back {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    text-decoration: none;
+  }
+
+  .content-back:hover {
+    text-decoration: underline;
+  }
+
+  .content-note-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.9rem 0;
+  }
+
+  .content-heading h1 {
+    margin: 0.5rem 0;
+    font-size: 1.875rem;
+    font-weight: 700;
+  }
+
+  .content-heading p,
+  .content-summary {
+    max-width: 48rem;
+    margin: 0.5rem 0 1.5rem;
+    color: var(--color-text-secondary);
+  }
+</style>

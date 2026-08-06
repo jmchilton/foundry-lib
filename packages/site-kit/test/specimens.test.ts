@@ -7,9 +7,11 @@ import { describe, expect, it } from 'vitest';
 import LicenseBadge from '../src/components/LicenseBadge.astro';
 import LicenseFileBody from '../src/components/LicenseFileBody.astro';
 import ReferenceContract from '../src/components/ReferenceContract.astro';
+import ContentNote from '../src/components/ContentNote.astro';
 import SiteFooter from '../src/components/SiteFooter.astro';
 import SiteHeader from '../src/components/SiteHeader.astro';
 import SiteShell from '../src/components/SiteShell.astro';
+import TagChips from '../src/components/TagChips.astro';
 import { PAGEFIND_BODY_ATTR } from '../src/index.js';
 import {
   FOOTER_SPECIMENS,
@@ -32,9 +34,11 @@ const COMPONENTS: Record<string, AstroComponentFactory> = {
   LicenseBadge,
   LicenseFileBody,
   ReferenceContract,
+  ContentNote,
   SiteHeader,
   SiteFooter,
   SiteShell,
+  TagChips,
 };
 
 const render = async (
@@ -53,8 +57,11 @@ const render = async (
 
 // The shell has a slot, and an empty one renders an empty reading column — which is a fair page
 // but a poor specimen. Every other group ignores this.
-const slotsFor = (group: SpecimenGroup): Record<string, string> | undefined =>
-  group.surface === 'document' ? { default: '<p>Specimen body.</p>' } : undefined;
+const slotsFor = (group: SpecimenGroup): Record<string, string> | undefined => {
+  if (group.surface === 'document') return { default: '<p>Specimen body.</p>' };
+  if (group.component === 'ContentNote') return { default: '<h1>Note body</h1><p>Evidence.</p>' };
+  return undefined;
+};
 
 describe('every specimen renders', () => {
   for (const group of SPECIMENS) {

@@ -117,6 +117,26 @@ export interface SiteShellProps {
   searchable?: boolean;
 }
 
+/** Controlled vocabulary shown on a reader page; links appear only when the instance has a route. */
+export interface TagChipsProps {
+  tags: string[];
+  /** Fully based route prefix, e.g. `/my-foundry/tags`. */
+  tagBase?: string;
+}
+
+/** The invariant frame around a typed note; domain-specific furniture enters through slots. */
+export interface ContentNoteProps {
+  title: string;
+  summary?: string;
+  tags?: string[];
+  tagBase?: string;
+  back?: { href: string; label: string };
+  /** Bodies that already open with their own H1 leave this false. */
+  showHeading?: boolean;
+  /** The instance owns prose typography; the reader owns the article boundary. */
+  articleClass?: string;
+}
+
 /**
  * What the header takes: the identity's navigation half, plus where the reader is.
  *
@@ -255,6 +275,20 @@ export function styleGaps(
     ...tokens.filter((token) => !css.includes(`${token}:`)),
     ...classes.filter((selector) => !css.includes(selector)),
   ];
+}
+
+/** Theme roles used by ContentNote and TagChips, supplied by the instance. */
+export const CONTENT_READER_TOKENS = [
+  '--color-brand',
+  '--color-surface-raised',
+  '--color-border-subtle',
+  '--color-text-secondary',
+  '--color-text-muted',
+  '--font-mono',
+] as const;
+
+export function contentReaderStyleGaps(css: string): string[] {
+  return styleGaps(css, CONTENT_READER_TOKENS);
 }
 
 /**

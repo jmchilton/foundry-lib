@@ -1,0 +1,51 @@
+{
+  "name": "@galaxy-foundry/content-reader",
+  "version": "0.1.0",
+  "description": "Collection-backed content and wiki-link plumbing shared by Foundry sites; schemas, routes, and domain presentation stay per-instance.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmchilton/foundry-lib.git",
+    "directory": "packages/content-reader"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "foundry",
+    "content-reader",
+    "content",
+    "wiki-links"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@galaxy-foundry/kind-schema": "workspace:^",
+    "@galaxy-foundry/wiki-links": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

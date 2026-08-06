@@ -82,6 +82,21 @@ The public surface includes:
 
 Start with [Compose a reference contract](guides/composing-reference-contracts.md).
 
+## `@galaxy-foundry/content-reader`
+
+The public surface includes:
+
+- the collection binding: `createContentReader` and `ContentReader`;
+- file and ID enumeration: `markdownFiles`, `noteFiles`, `noteIds`, and
+  `noteIdFromPath`;
+- link-map and rendering methods: `wikiLinkMap`, `resolveLink`, `remarkWikiLinks`, and
+  `resolveMarkdown`;
+- standalone map-bound helpers: `resolveContentLink`, `remarkContentWikiLinks`, and
+  `resolveContentMarkdown`; and
+- route target types: `ContentTarget`, `ExtraContentTarget`, and `ContentLink`.
+
+Start with the [Content-reader boundary](architecture/content-reader-boundary.md).
+
 ## `@galaxy-foundry/site-kit`
 
 The public surface includes:
@@ -90,14 +105,15 @@ The public surface includes:
 - navigation helpers: `resolveNav`, `shellBase`, and `shellHref`;
 - the fixed reading measure: `CONTAINER`;
 - the style contract: `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, and the per-component
-  `REFERENCE_TOKENS`, `LICENSE_BADGE_TOKENS`, `LICENSE_FILE_TOKENS` lists with their
-  `referenceStyleGaps`, `licenseBadgeStyleGaps`, `licenseFileStyleGaps` checks — all `styleGaps`
-  with a different list;
+  `CONTENT_READER_TOKENS`, `REFERENCE_TOKENS`, `LICENSE_BADGE_TOKENS`, `LICENSE_FILE_TOKENS` lists
+  with their `contentReaderStyleGaps`, `referenceStyleGaps`, `licenseBadgeStyleGaps`,
+  `licenseFileStyleGaps` checks — all `styleGaps` with a different list;
 - the vendored-licence route: `LICENSE_FILE_ROUTE`, `licenseFileHref`, `licensesUnderFile`, and
   the `LicenseFileUse` type;
 - the search-index check: `PAGEFIND_BODY_ATTR` and `searchIndexGaps`; and
-- the shipped `./SiteShell.astro`, `./ReferenceContract.astro`, `./LicenseBadge.astro`, and
-  `./LicenseFileBody.astro` component entry points.
+- the shipped `./SiteShell.astro`, `./ContentNote.astro`, `./TagChips.astro`,
+  `./ReferenceContract.astro`, `./LicenseBadge.astro`, and `./LicenseFileBody.astro` component
+  entry points.
 
 Astro compiles the components from shipped source. Read the
 [`site-kit` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)

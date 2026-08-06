@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" width="760" height="560" role="img" aria-labelledby="title desc">
+  <title id="title">ContentNote shared frame and local slots</title>
+  <desc id="desc">ContentNote owns a vertical frame containing a back link, metadata slot, badges and shared TagChips row, optional heading and summary, reference slot, and article. Metadata, badges, references, and article content come from the Foundry instance.</desc>
+  <defs>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .shared { fill: #262b32; stroke: #0e1013; stroke-width: 2; }
+      .slot { fill: #f6ded4; stroke: #e2552b; stroke-width: 2; }
+      .article { fill: #e3f1eb; stroke: #23745e; stroke-width: 2; }
+      .label { fill: #fbfaf6; font: 700 16px Arial, sans-serif; }
+      .local-label { fill: #1a1d22; font: 700 16px Arial, sans-serif; }
+      .detail { fill: #555b63; font: 13px Arial, sans-serif; }
+      .eyebrow { fill: #9a3a1f; font: 700 12px Arial, sans-serif; letter-spacing: 1.5px; }
+    </style>
+  </defs>
+  <rect class="bg" x="1" y="1" width="758" height="558" rx="14"/>
+  <text class="eyebrow" x="38" y="36">READERNOTE — SHARED ORDER AND SEMANTICS</text>
+
+  <rect class="shared" x="70" y="58" width="620" height="52" rx="7"/>
+  <text class="label" x="380" y="90" text-anchor="middle">Back link</text>
+
+  <rect class="slot" x="70" y="124" width="620" height="64" rx="7"/>
+  <text class="local-label" x="380" y="151" text-anchor="middle">Metadata slot</text>
+  <text class="detail" x="380" y="173" text-anchor="middle">source metadata or Package facts — instance-owned</text>
+
+  <rect class="slot" x="70" y="202" width="300" height="64" rx="7"/>
+  <text class="local-label" x="220" y="229" text-anchor="middle">Badges slot</text>
+  <text class="detail" x="220" y="251" text-anchor="middle">kind status or domain labels</text>
+  <rect class="shared" x="390" y="202" width="300" height="64" rx="7"/>
+  <text class="label" x="540" y="229" text-anchor="middle">Shared TagChips</text>
+  <text class="detail" x="540" y="251" text-anchor="middle" style="fill:#d9dde2">instance supplies values and route</text>
+
+  <rect class="shared" x="70" y="280" width="620" height="64" rx="7"/>
+  <text class="label" x="380" y="307" text-anchor="middle">Optional heading and summary</text>
+  <text class="detail" x="380" y="329" text-anchor="middle" style="fill:#d9dde2">instance chooses whether the frame or body owns H1</text>
+
+  <rect class="slot" x="70" y="358" width="620" height="64" rx="7"/>
+  <text class="local-label" x="380" y="385" text-anchor="middle">Reference slot</text>
+  <text class="detail" x="380" y="407" text-anchor="middle">evidence or reference furniture — instance-owned</text>
+
+  <rect class="article" x="70" y="436" width="620" height="82" rx="7"/>
+  <text class="local-label" x="380" y="466" text-anchor="middle">Article boundary</text>
+  <text class="detail" x="380" y="490" text-anchor="middle">instance prose classes + rendered domain content</text>
+</svg>

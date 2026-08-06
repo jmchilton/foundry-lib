@@ -23,8 +23,9 @@ the status column distinguishes converged substrate from the two explicitly docu
 | `kind-manifest`      | admitted           | What kinds does this instance publish?                        | manifest format, validation, and derivation  | peer `zod@^4`                      |
 | `kind-schema`        | admitted           | How are local kind definitions assembled and routed?          | schema machinery, not kind definitions       | peer `zod@^4` and `kind-manifest`  |
 | `license-policy`     | admitted           | What redistribution posture applies to this license?          | the complete policy table                    | `js-yaml`                          |
+| `content-reader`     | admitted           | Which local notes and links feed a content site?              | collection-backed content mechanics          | `kind-schema` and `wiki-links`     |
 | `reference-contract` | admitted           | What may a Mold's `references[]` entry say?                   | four of five reference vocabularies          | `js-yaml`                          |
-| `site-kit`           | admitted           | How does a Foundry render its common reading shell?           | Astro shell source and navigation rules      | peers `astro` and `astro-pagefind` |
+| `site-kit`           | admitted           | How does a Foundry render common reading surfaces?            | Astro components and navigation rules        | peers `astro` and `astro-pagefind` |
 | `tag-registry`       | admitted           | What may a note's `tags:` say?                                | registry format and accessors, no vocabulary | `js-yaml`                          |
 | `wiki-links`         | admitted           | Where does this `[[Target]]` point?                           | grammar and transforms, no link map          | none                               |
 
@@ -97,6 +98,23 @@ cross-field policy. Those remain with the instance.
 [Read the package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/kind-schema)
 or inspect the [generated API](api/typedoc/index.html ':ignore').
 
+## `@galaxy-foundry/content-reader`
+
+Choose this package for:
+
+- enumerating files selected by an instance-owned collection table;
+- deriving stable note IDs;
+- constructing the content site's wiki-link map from its routed collections;
+- binding the same map into remark and raw-Markdown rendering; or
+- adding explicit content targets that do not belong to a typed collection.
+
+The instance supplies schemas, collections, content paths, routes, and any extra targets. The
+package does not assemble Astro collection exports or render domain fields.
+
+[Read the content-reader boundary](architecture/content-reader-boundary.md), the
+[package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/content-reader), or the
+[generated API](api/typedoc/index.html ':ignore').
+
 ## `@galaxy-foundry/reference-contract`
 
 Choose this package for:
@@ -117,7 +135,7 @@ license. Those live in the instance's validator.
 
 Choose this package for:
 
-- rendering the shared Astro document shell, header, and footer;
+- rendering the shared Astro document shell, note frame, tags, header, and footer;
 - deriving active navigation and the overflow menu from site-owned links; or
 - checking the emitted stylesheet for every token and class the shell expects.
 

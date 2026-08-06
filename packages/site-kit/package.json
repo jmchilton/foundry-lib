@@ -1,7 +1,7 @@
 {
   "name": "@galaxy-foundry/site-kit",
   "version": "0.7.0",
-  "description": "The reading shell for Foundry-pattern instances — document skeleton, header with derived nav, and footer, as Astro components taking a site's identity as data. The values, the styles and the corpus stay per-instance.",
+  "description": "Reusable reading surfaces for Foundry-pattern instances — shell, note frame, tags, references, and licences. Values, domain furniture, theme, and corpus stay per-instance.",
   "type": "module",
   "exports": {
     ".": {
@@ -17,7 +17,9 @@
     "./SiteFooter.astro": "./src/components/SiteFooter.astro",
     "./ReferenceContract.astro": "./src/components/ReferenceContract.astro",
     "./LicenseBadge.astro": "./src/components/LicenseBadge.astro",
-    "./LicenseFileBody.astro": "./src/components/LicenseFileBody.astro"
+    "./LicenseFileBody.astro": "./src/components/LicenseFileBody.astro",
+    "./ContentNote.astro": "./src/components/ContentNote.astro",
+    "./TagChips.astro": "./src/components/TagChips.astro"
   },
   "files": [
     "dist",

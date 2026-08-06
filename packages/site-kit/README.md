@@ -123,6 +123,37 @@ own content. See `CONTAINER`.
 
 Parameterizing a difference is how an accident becomes a policy.
 
+## The note frame and tag chips
+
+`ContentNote.astro` owns the invariant frame around a typed note: back navigation, metadata and
+domain-furniture slots, tags, an optional heading and summary, and the article boundary.
+`TagChips.astro` owns tag markup. An instance passes `tagBase` only when it has a browse route;
+without one the same controlled metadata renders without a false link.
+
+```astro
+---
+import ContentNote from '@galaxy-foundry/site-kit/ContentNote.astro';
+---
+<ContentNote
+  title={entry.data.title}
+  summary={entry.data.summary}
+  tags={entry.data.tags}
+  tagBase={hasTagPages ? `${base}/tags` : undefined}
+  back={{ href: `${base}/packages/`, label: 'Packages' }}
+  articleClass="prose"
+>
+  <PackageFacts slot="metadata" entry={entry} />
+  <Content />
+</ContentNote>
+```
+
+The slots are the boundary: package facts, evidence contracts, source metadata, and kind badges
+stay with the instance. The shared component does not inspect frontmatter or know any domain kind.
+It names the roles in `CONTENT_READER_TOKENS`; consumers can check them with `contentReaderStyleGaps(css)`.
+
+See the [content-reader boundary](../../docs/architecture/content-reader-boundary.md) for how this
+presentation layer composes with `@galaxy-foundry/content-reader` and explicit Astro collections.
+
 ## The reference card
 
 `ReferenceContract.astro` renders a note's typed `references:` manifest against the contract it was
