@@ -92,11 +92,11 @@ export {
   type SkillContext,
   type SkillSection,
   type SkillSectionContributor,
-  type SlugAliases,
 } from './caster/hooks.js';
 
 export {
   castOneRef,
+  duplicateDestinations,
   expandCompanions,
   resolveMoldRef,
   type RefResolution,

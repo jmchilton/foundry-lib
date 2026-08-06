@@ -38,7 +38,13 @@ import {
 } from '../provenance.js';
 import { reconcileAbsent, reconcileText } from '../reconcile.js';
 import type { BundleFile, CastHooks } from './hooks.js';
-import { castOneRef, expandCompanions, resolveMoldRef, type ResolvedRef } from './refs.js';
+import {
+  castOneRef,
+  duplicateDestinations,
+  expandCompanions,
+  resolveMoldRef,
+  type ResolvedRef,
+} from './refs.js';
 import { renderSkillMarkdown } from './skill.js';
 import { ownedSubtrees, type TargetConfig } from './target-config.js';
 
@@ -80,6 +86,13 @@ export interface CastRequest<Ext extends object = Record<string, never>> {
   mold: CastSubject;
   castContract: CastContract;
   refKinds: Record<string, KindTerm>;
+  /**
+   * Every address a note answers to, already resolved to its path.
+   *
+   * Built by the instance, which is also where a note gets any SECOND address — Galaxy's CLI
+   * command notes answer to `[[gxwf validate]]` as well as to their filename. A cast reads this
+   * map and never adds to it, so how many ways a note can be named is settled before it arrives.
+   */
   slugMap: ReadonlyMap<string, string>;
   metaByPath: ReadonlyMap<string, Frontmatter>;
   hooks: CastHooks;
@@ -209,6 +222,8 @@ export async function castMold<Ext extends object = Record<string, never>>(
     const companion = Number(Boolean(a.companion_of)) - Number(Boolean(b.companion_of));
     return companion !== 0 ? companion : a.dst.localeCompare(b.dst);
   });
+
+  errors.push(...duplicateDestinations(resolved));
 
   // Assemble against a private copy of the current bundle. Every reconciliation therefore
   // reports the same drift it would find on the real tree while leaving the checkout untouched,

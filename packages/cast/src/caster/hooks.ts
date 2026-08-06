@@ -119,15 +119,6 @@ export interface SkillContext extends CastContext {
  */
 export type SkillSectionContributor = (context: SkillContext) => readonly SkillSection[];
 
-/**
- * Extra wiki-link addresses a note answers to, beyond the slug of its own filename.
- *
- * Galaxy's CLI command notes are addressable as `[[gxwf validate]]` as well as by filename,
- * because that is how someone writing a Mold thinks of them. Nothing general requires a note to
- * have a second address; an instance that supplies none gets filename addressing alone.
- */
-export type SlugAliases = (meta: Frontmatter) => readonly string[];
-
 /** What a bundle check is given: the finished cast, and where it was written. */
 export interface BundleCheckContext extends CastContext {
   readonly bundleRoot: string;
@@ -191,8 +182,6 @@ export interface CastHooks {
   readonly skillLede: string;
   /** Everything below that paragraph. */
   readonly skillSections: SkillSectionContributor;
-  /** Second addresses for a note, beyond the slug of its filename. */
-  readonly slugAliases: SlugAliases;
   /**
    * The file a `payload-companion` kind ships in its note's place.
    *

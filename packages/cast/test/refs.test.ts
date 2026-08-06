@@ -12,6 +12,7 @@ import type { CastContract } from '../src/cast-contract.js';
 import type { CastHooks } from '../src/caster/hooks.js';
 import {
   castOneRef,
+  duplicateDestinations,
   expandCompanions,
   resolveMoldRef,
   type RefResolution,
@@ -34,7 +35,6 @@ const bareHooks: CastHooks = {
   bundleFiles: [],
   skillLede: '',
   skillSections: () => [],
-  slugAliases: () => [],
   bundleChecks: [],
 };
 
@@ -266,5 +266,39 @@ describe('casting a ref whose bytes come from a package export', () => {
   it('refuses when the Foundry registers no packageLoader', async () => {
     const out = await castOneRef(packaged('spec'), '/repo', bundle, { renderers: {} });
     expect(out.error).toMatch(/nothing registers a packageLoader hook/);
+  });
+});
+
+describe('two refs cannot claim the same place in the bundle', () => {
+  const at = (dst: string, extra: Partial<ResolvedRef> = {}): ResolvedRef => ({
+    kind: 'pattern',
+    mode: 'verbatim',
+    ref: `[[${dst}]]`,
+    src: `content/patterns/${dst}`,
+    dst,
+    used_at: 'runtime',
+    load: 'on-demand',
+    ...extra,
+  });
+
+  it('reports a destination two refs both write', () => {
+    // Companion destinations are the kind's directory plus the companion's own filename, so two
+    // notes of one kind that each declare `table.csv` land on one path. Last write wins, the
+    // orphan sweep sees a path something claims, and provenance records two entries with
+    // different src_hash pointing at one file — no step in a cast notices.
+    const dupes = duplicateDestinations([
+      at('references/patterns/a.md'),
+      at('references/patterns/table.csv', { companion_of: 'references/patterns/a.md' }),
+      at('references/patterns/b.md'),
+      at('references/patterns/table.csv', { companion_of: 'references/patterns/b.md' }),
+    ]);
+    expect(dupes).toHaveLength(1);
+    expect(dupes[0]).toContain('references/patterns/table.csv');
+  });
+
+  it('says nothing when every ref lands somewhere of its own', () => {
+    expect(
+      duplicateDestinations([at('references/patterns/a.md'), at('references/patterns/b.md')]),
+    ).toEqual([]);
   });
 });
