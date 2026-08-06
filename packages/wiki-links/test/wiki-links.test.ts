@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import {
   WIKI_LINK_RE,
+  fileSlug,
   parseWikiLink,
   resolveWikiLink,
   slugify,
@@ -35,6 +36,31 @@ describe('slugify', () => {
   it('keeps an internal hyphen, so nf-core and nfcore are different keys', () => {
     expect(slugify('Convert nf-core Module')).toBe('convert-nf-core-module');
     expect(slugify('Convert nf-core Module')).not.toBe(slugify('convert-nfcore-module'));
+  });
+});
+
+describe('fileSlug', () => {
+  it('takes the basename, without the extension', () => {
+    expect(fileSlug('content/patterns/double-dipping.md')).toBe('double-dipping');
+    expect(fileSlug('/abs/content/cli/nf-core.md')).toBe('nf-core');
+  });
+
+  it('names a directory note for its directory, not for `index`', () => {
+    expect(fileSlug('content/patterns/subworkflow/index.md')).toBe('subworkflow');
+    expect(fileSlug('content/molds/summarize-nextflow/index.md')).toBe('summarize-nextflow');
+  });
+
+  it('reads a Windows path, since a repo path may arrive either way', () => {
+    expect(fileSlug('content\\patterns\\subworkflow\\index.md')).toBe('subworkflow');
+  });
+
+  it('meets slugify, which is the only reason a lookup works', () => {
+    // The map is built one way and queried the other. If these two ever stop agreeing, a link
+    // that resolved yesterday reads as a missing note rather than as a broken rule.
+    const notes = ['content/patterns/double-dipping.md', 'content/molds/nf-core-module/index.md'];
+    const bySlug = new Map(notes.map((notePath) => [fileSlug(notePath), notePath]));
+    expect(resolveWikiLink('[[Double Dipping]]', bySlug)).toBe(notes[0]);
+    expect(resolveWikiLink('[[nf-core Module]]', bySlug)).toBe(notes[1]);
   });
 });
 

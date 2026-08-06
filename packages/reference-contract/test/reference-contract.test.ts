@@ -213,12 +213,22 @@ describe('parsing an arbitrary table', () => {
     ).toThrow(/`used_at` is empty/);
   });
 
-  it('rejects an unknown ref_shape', () => {
+  it('rejects a field the group does not own', () => {
+    // `ref_shape` is a kind's. On a `used_at` term it is a belief about the term that nothing
+    // will ever read — which is the whole failure, whether or not the value is a valid shape.
     expect(() =>
       parseInheritedVocabularies(
-        'used_at:\n  now: {label: N, description: d, ref_shape: hyperlink}\nload:\n  e: {label: E, description: d}\nmodes:\n  c: {label: C, description: d}\nevidence:\n  g: {label: G, description: d, standing: grounded}',
+        'used_at:\n  now: {label: N, description: d, ref_shape: wiki-link}\nload:\n  e: {label: E, description: d}\nmodes:\n  c: {label: C, description: d}\nevidence:\n  g: {label: G, description: d, standing: grounded}',
       ),
-    ).toThrow(/unknown ref_shape `hyperlink`/);
+    ).toThrow(/used_at\.now has unknown field\(s\) ref_shape \(known: label, description, href\)/);
+  });
+
+  it('rejects a standing on a group that is not evidence', () => {
+    expect(() =>
+      parseInheritedVocabularies(
+        valid.replace('copy: {label: Copy', 'copy: {standing: grounded, label: Copy'),
+      ),
+    ).toThrow(/modes\.copy has unknown field\(s\) standing/);
   });
 
   it('names the source in the error, so a caller knows which file failed', () => {
@@ -336,6 +346,58 @@ describe('reading an instance file', () => {
     const contractPath = writeContract('spec_url: http://example.invalid\n');
     try {
       expect(() => loadInstanceKinds(contractPath)).toThrow(/has no `kinds` block/);
+    } finally {
+      removeTemporaryDirectory();
+    }
+  });
+
+  it('rejects an unknown ref_shape', () => {
+    const contractPath = writeContract(
+      'kinds:\n  pattern: {label: Pattern, description: d, ref_shape: hyperlink}\n',
+    );
+    try {
+      expect(() => loadInstanceKinds(contractPath)).toThrow(/unknown ref_shape `hyperlink`/);
+    } finally {
+      removeTemporaryDirectory();
+    }
+  });
+
+  it('refuses a kind field no reader here claims, rather than dropping it', () => {
+    // The `cast:` block is the real case: it says what a caster does with the kind, and this
+    // parser has no use for it. Dropped silently, an instance that declares casting behaviour
+    // and runs no caster gets a contract that parses, a site that renders, and a block that
+    // does nothing — indistinguishable from working.
+    const contractPath = writeContract(
+      'kinds:\n  pattern:\n    label: Pattern\n    description: d\n    cast: {resolve: note}\n',
+    );
+    try {
+      expect(() => loadInstanceKinds(contractPath)).toThrow(
+        /kinds\.pattern has unknown field\(s\) cast .*delegatedFields/s,
+      );
+    } finally {
+      removeTemporaryDirectory();
+    }
+  });
+
+  it('keeps a delegated field out of its own result, having only permitted it', () => {
+    const contractPath = writeContract(
+      'kinds:\n  pattern:\n    label: Pattern\n    description: d\n    cast: {resolve: note}\n',
+    );
+    try {
+      expect(loadInstanceKinds(contractPath, { delegatedFields: ['cast'] })).toEqual({
+        pattern: { label: 'Pattern', description: 'd' },
+      });
+    } finally {
+      removeTemporaryDirectory();
+    }
+  });
+
+  it('catches a typo inside a term, which is what dropping used to hide', () => {
+    const contractPath = writeContract(
+      'kinds:\n  pattern: {label: Pattern, description: d, ref_shpae: wiki-link}\n',
+    );
+    try {
+      expect(() => loadInstanceKinds(contractPath)).toThrow(/unknown field\(s\) ref_shpae/);
     } finally {
       removeTemporaryDirectory();
     }

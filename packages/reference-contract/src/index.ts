@@ -114,16 +114,56 @@ function throwValidationError(sourcePath: string | undefined, message: string): 
   throw new Error(sourcePath ? `${sourcePath}: ${message}` : message);
 }
 
+/** Every group's terms carry these three. */
+const COMMON_TERM_FIELDS = ['label', 'description', 'href'] as const;
+
+/**
+ * What each group's terms may carry beyond {@link COMMON_TERM_FIELDS}.
+ *
+ * Per group rather than a single union, because a union is not a check: `standing` on a `kind`
+ * or `ref_shape` on a `mode` would pass one, and both are the author believing something about
+ * a term that nothing will ever read.
+ */
+const GROUP_TERM_FIELDS: Record<ContractGroup, readonly string[]> = {
+  kinds: ['ref_shape'],
+  used_at: [],
+  load: [],
+  modes: [],
+  evidence: ['standing'],
+};
+
+interface ParseTermOptions {
+  /** Falls back for a term that names no `href` of its own. */
+  href?: string;
+  /** Fields this term may carry, beyond {@link COMMON_TERM_FIELDS}. */
+  extra: readonly string[];
+}
+
 function parseTerm(
   termPath: string,
   rawTerm: unknown,
   sourcePath: string | undefined,
-  href?: string,
+  { href, extra }: ParseTermOptions,
 ): KindTerm {
   if (typeof rawTerm !== 'object' || rawTerm === null || Array.isArray(rawTerm)) {
     throwValidationError(sourcePath, `${termPath} is not a mapping`);
   }
   const fields = rawTerm as Record<string, unknown>;
+
+  // Reject rather than drop. A key this parser does not recognise is a declaration its author
+  // expected something to act on, and dropping it silently is the one outcome that looks like
+  // success: the term parses, the page renders, and the field does nothing forever. A field
+  // another parser owns is legitimate, but the instance has to SAY so — see `delegatedFields`.
+  const known = [...COMMON_TERM_FIELDS, ...extra];
+  const unknownFields = Object.keys(fields).filter((field) => !known.includes(field));
+  if (unknownFields.length > 0) {
+    throwValidationError(
+      sourcePath,
+      `${termPath} has unknown field(s) ${unknownFields.join(', ')} (known: ${known.join(', ')}) — ` +
+        'a field another parser owns must be named in `delegatedFields`',
+    );
+  }
+
   for (const field of ['label', 'description'] as const) {
     if (typeof fields[field] !== 'string' || !fields[field]) {
       throwValidationError(sourcePath, `${termPath} missing required field \`${field}\``);
@@ -181,20 +221,23 @@ function requireStandings(
 type ParsedTerm = KindTerm & { standing?: Standing };
 
 function parseGroup(
-  group: string,
+  group: ContractGroup,
   rawGroup: unknown,
   sourcePath: string | undefined,
-  href?: string,
+  options: { href?: string; delegatedFields?: readonly string[] } = {},
 ): Record<string, ParsedTerm> {
   if (typeof rawGroup !== 'object' || rawGroup === null || Array.isArray(rawGroup)) {
     throwValidationError(sourcePath, `\`${group}\` is not a mapping`);
   }
   const entries = Object.entries(rawGroup as Record<string, unknown>);
   if (entries.length === 0) throwValidationError(sourcePath, `\`${group}\` is empty`);
+  const extra = [...GROUP_TERM_FIELDS[group], ...(options.delegatedFields ?? [])];
+  const termOptions: ParseTermOptions =
+    options.href === undefined ? { extra } : { href: options.href, extra };
   return Object.fromEntries(
     entries.map(([termKey, termValue]) => [
       termKey,
-      parseTerm(`${group}.${termKey}`, termValue, sourcePath, href),
+      parseTerm(`${group}.${termKey}`, termValue, sourcePath, termOptions),
     ]),
   );
 }
@@ -218,12 +261,13 @@ export function parseInheritedVocabularies(
     );
   }
 
+  const options = specUrl === undefined ? {} : { href: specUrl };
   return {
-    used_at: parseGroup('used_at', contractData['used_at'], sourcePath, specUrl),
-    load: parseGroup('load', contractData['load'], sourcePath, specUrl),
-    modes: parseGroup('modes', contractData['modes'], sourcePath, specUrl),
+    used_at: parseGroup('used_at', contractData['used_at'], sourcePath, options),
+    load: parseGroup('load', contractData['load'], sourcePath, options),
+    modes: parseGroup('modes', contractData['modes'], sourcePath, options),
     evidence: requireStandings(
-      parseGroup('evidence', contractData['evidence'], sourcePath, specUrl),
+      parseGroup('evidence', contractData['evidence'], sourcePath, options),
       sourcePath,
     ),
   };
@@ -318,7 +362,26 @@ export function buildReferenceContract({
   };
 }
 
-export function loadInstanceKinds(contractPath: string): Record<string, KindTerm> {
+export interface LoadInstanceKindsOptions {
+  /**
+   * Keys on a kind that a DIFFERENT parser reads — permitted here, and left unread.
+   *
+   * A reference kind is described in more than one register: this package keeps the fields a
+   * site renders, and `@galaxy-foundry/cast` keeps the `cast:` block that says what the caster
+   * does with the kind. One file, two readers, on purpose — that is what stops the two halves
+   * of a kind from disagreeing.
+   *
+   * Naming a key here is the instance stating that the second reader exists. An instance whose
+   * contract carries a `cast:` block and which never runs a caster names nothing, and finds out
+   * at load: the block is refused, rather than parsed by no one.
+   */
+  delegatedFields?: readonly string[];
+}
+
+export function loadInstanceKinds(
+  contractPath: string,
+  { delegatedFields }: LoadInstanceKindsOptions = {},
+): Record<string, KindTerm> {
   if (!existsSync(contractPath)) throw new Error(`missing reference contract: ${contractPath}`);
   const parsedValue: unknown = yaml.load(readFileSync(contractPath, 'utf8'));
   if (typeof parsedValue !== 'object' || parsedValue === null || Array.isArray(parsedValue)) {
@@ -336,7 +399,8 @@ export function loadInstanceKinds(contractPath: string): Record<string, KindTerm
       );
     }
   }
-  return parseGroup('kinds', contractData['kinds'], contractPath);
+  const options = delegatedFields === undefined ? {} : { delegatedFields };
+  return parseGroup('kinds', contractData['kinds'], contractPath, options);
 }
 
 export function findReferenceContractPath(startDirectory: string = process.cwd()): string {

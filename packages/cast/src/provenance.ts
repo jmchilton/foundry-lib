@@ -15,7 +15,16 @@
  */
 export const PROVENANCE_SCHEMA_VERSION = 4;
 
-/** One resolved reference, and what casting did with it. */
+/**
+ * One resolved reference, and what casting did with it.
+ *
+ * The optional fields read `?: T | undefined` rather than `?: T`, and the record types below
+ * follow the same rule. They are filled by copying frontmatter a note may not carry, so the
+ * value a caster has in hand for an absent field IS `undefined` — and `JSON.stringify` drops an
+ * explicitly-undefined key exactly as it drops an absent one, so the two are the same document.
+ * Declared `?: T`, every such copy would have to be rewritten into a conditional assignment to
+ * say something the emitted JSON cannot tell apart.
+ */
 export interface ProvenanceRefEntry {
   kind: string;
   mode: string;
@@ -24,10 +33,10 @@ export interface ProvenanceRefEntry {
   dst: string;
   used_at: string;
   load: string;
-  evidence?: string;
-  purpose?: string;
-  trigger?: string;
-  verification?: string;
+  evidence?: string | undefined;
+  purpose?: string | undefined;
+  trigger?: string | undefined;
+  verification?: string | undefined;
   src_hash: string | null;
   dst_hash: string | null;
   /**
@@ -36,7 +45,7 @@ export interface ProvenanceRefEntry {
    * it from the absence of anything else.
    */
   source: 'deterministic';
-  companion_of?: string;
+  companion_of?: string | undefined;
   /**
    * License lineage of the upstream work this ref draws on.
    *
@@ -45,15 +54,15 @@ export interface ProvenanceRefEntry {
    * for attribution — `derived` is what says whether any of the source's expression survives into
    * the bytes. See `applyLicensePolicy`.
    */
-  license?: string;
+  license?: string | undefined;
   /**
    * How this note relates to the work `license` names — the posture recorded when the note was
    * written. Absent for refs that are not authored notes (a vendored schema, an upstream doc),
    * which are pass-through by definition.
    */
-  derived?: string;
-  license_file?: string;
-  license_file_hash?: string;
+  derived?: string | undefined;
+  license_file?: string | undefined;
+  license_file_hash?: string | undefined;
 }
 
 /** The outcome of running a declared validator over a produced artifact. */
@@ -85,19 +94,19 @@ export interface Provenance {
   mold: {
     name: string;
     path: string;
-    revision?: number;
+    revision?: number | undefined;
     content_hash: string;
     commit: string | null;
   };
-  cast_method?: string;
-  cast_agent?: string;
+  cast_method?: string | undefined;
+  cast_agent?: string | undefined;
   cast_at: string;
-  cast_date?: string;
-  cast_revision?: number;
-  cast_history?: CastHistoryEntry[];
+  cast_date?: string | undefined;
+  cast_revision?: number | undefined;
+  cast_history?: CastHistoryEntry[] | undefined;
   refs: ProvenanceRefEntry[];
-  validation_results?: ValidationResult[];
-  open_questions?: string[];
+  validation_results?: ValidationResult[] | undefined;
+  open_questions?: string[] | undefined;
 }
 
 /** Everything the record carries before `refs`. */
@@ -123,8 +132,8 @@ export type ProvenanceTail = Pick<Provenance, 'validation_results' | 'open_quest
 export function provenanceRecord<Ext extends object = Record<string, never>>(parts: {
   head: ProvenanceHead;
   refs: ProvenanceRefEntry[];
-  extensions?: Ext;
-  tail?: ProvenanceTail;
+  extensions?: Ext | undefined;
+  tail?: ProvenanceTail | undefined;
 }): Provenance & Ext {
   const { head, refs, extensions, tail } = parts;
   // Written out rather than spread so this function, not its caller's literal, fixes the order.
@@ -161,13 +170,13 @@ export interface CastHistoryEntry {
 }
 
 export interface ProvenanceCarryOver {
-  cast_method?: string;
-  cast_agent?: string;
-  cast_date?: string;
-  cast_revision?: number;
-  cast_history?: CastHistoryEntry[];
-  open_questions?: string[];
-  validation_results?: ValidationResult[];
+  cast_method?: string | undefined;
+  cast_agent?: string | undefined;
+  cast_date?: string | undefined;
+  cast_revision?: number | undefined;
+  cast_history?: CastHistoryEntry[] | undefined;
+  open_questions?: string[] | undefined;
+  validation_results?: ValidationResult[] | undefined;
 }
 
 /**

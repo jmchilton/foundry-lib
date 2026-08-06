@@ -15,6 +15,26 @@ export function slugify(name: string): string {
     .replace(/-+/g, '-');
 }
 
+/**
+ * The slug a note file answers to, from its path.
+ *
+ * The other half of {@link slugify}. A wiki-link's text becomes a slug one way and a note's
+ * path becomes one the other way, and a lookup only works because the two agree — so they
+ * belong in one place. Held apart, the pair drifts silently: the map is built from paths and
+ * queried from prose, and a link that stops resolving looks like a missing note rather than
+ * like two rules that no longer meet.
+ *
+ * A directory note is named for its directory, not for `index` — `patterns/subworkflow/index.md`
+ * is `[[subworkflow]]`. Path separators only; this takes no `node:path` dependency, because the
+ * package is consumed in browser bundles as well as in build scripts.
+ */
+export function fileSlug(filePath: string): string {
+  const segments = filePath.split(/[/\\]/).filter(Boolean);
+  const base = (segments.at(-1) ?? '').replace(/\.md$/, '');
+  if (base === 'index') return segments.at(-2) ?? '';
+  return base;
+}
+
 export interface WikiLink {
   target: string;
   anchor: string;
