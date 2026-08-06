@@ -1,3 +1,4 @@
+import { bundledPolicy } from '@galaxy-foundry/license-policy';
 import {
   buildReferenceContract,
   type KindTerm,
@@ -5,6 +6,8 @@ import {
 } from '@galaxy-foundry/reference-contract';
 
 import type {
+  LicenseBadgeProps,
+  LicenseFileBodyProps,
   ReferenceContractProps,
   ResolvedReference,
   SiteFooterProps,
@@ -458,14 +461,136 @@ export const SHELL_SPECIMENS: SpecimenGroup<SiteShellProps> = {
 };
 
 /**
+ * The table these licence specimens are read against: the one the package bundles.
+ *
+ * Unlike {@link SPECIMEN_CONTRACT} this is not invented, and for the opposite reason. Which
+ * reference KINDS exist is the instance's own declaration, so specimens for that component have to
+ * bring a vocabulary of their own. What a licence permits is not: it is the shared table, the same
+ * twenty-three rows in every instance, and a made-up one here would render a row no reader will
+ * ever meet while the real rows went unshown. A row edited in `license-policy` changes these cards.
+ */
+const SPECIMEN_POLICY = bundledPolicy();
+
+export const LICENSE_BADGE_SPECIMENS: SpecimenGroup<LicenseBadgeProps> = {
+  id: 'license-badge',
+  component: 'LicenseBadge',
+  importPath: '@galaxy-foundry/site-kit/LicenseBadge.astro',
+  summary: 'What a licence permits, as chips, from the id a note declares.',
+  surface: 'inline',
+  specimens: [
+    {
+      id: 'verbatim-ok',
+      name: 'Redistributable',
+      why: 'The baseline. `MIT` is also 1 of the 23 rows whose name equals its id, which is why rendering the id instead of the name looked right for sixteen notes.',
+      props: { license: 'MIT', policy: SPECIMEN_POLICY },
+    },
+    {
+      id: 'copyleft',
+      name: 'Redistributable, and copyleft',
+      why: 'The third chip appears only when the row calls for it. Copyleft is a property of the licence and not of the policy — a reader has to be able to see both at once.',
+      props: { license: 'GPL-3.0-only', policy: SPECIMEN_POLICY },
+    },
+    {
+      id: 'own-words-only',
+      name: 'Not redistributable',
+      why: 'The chip that has to be distinguishable from `verbatim OK` at a glance, because it means the opposite thing. Its colour is a token: as a raw hex in two repositories nothing could change it and nothing could break it either.',
+      props: { license: 'CC-BY-NC-4.0', policy: SPECIMEN_POLICY },
+    },
+    {
+      id: 'custom-ref',
+      name: 'A LicenseRef, not an SPDX id',
+      why: "Why the badge renders `name` rather than the id: `LicenseRef-arXiv-nonexclusive-distrib-1.0` is a pill that teaches a reader nothing. The id stays reachable as the chip's title.",
+      props: {
+        license: 'LicenseRef-arXiv-nonexclusive-distrib-1.0',
+        policy: SPECIMEN_POLICY,
+      },
+    },
+    {
+      id: 'unresolved',
+      name: 'An id the table does not have',
+      why: 'Deny-by-default, rendered. An unknown id resolves to the default row — own-words-only, flagged a defect — rather than to a gap, because a conservative chip beats a blank where a licence should be.',
+      props: { license: 'NOT-A-REAL-ID', policy: SPECIMEN_POLICY },
+    },
+  ],
+};
+
+/** Short stand-in text. A real licence is pages long, and none of these cases is about its length. */
+const COPY_TEXT = `Permission is granted to redistribute this text verbatim.
+The canonical terms are at https://creativecommons.org/licenses/by/4.0/ and
+questions go to https://example.org/contact — this copy is a courtesy.`;
+
+export const LICENSE_FILE_SPECIMENS: SpecimenGroup<LicenseFileBodyProps> = {
+  id: 'license-file-body',
+  component: 'LicenseFileBody',
+  importPath: '@galaxy-foundry/site-kit/LicenseFileBody.astro',
+  summary: 'What one vendored licence copy governs, who redistributes under it, and its text.',
+  surface: 'inline',
+  specimens: [
+    {
+      id: 'one-license',
+      name: 'One copy, one licence',
+      why: 'The baseline, and the URLs in the text are the case worth looking at: a licence is the one document a reader most plausibly wants to leave, and the canonical terms are what they are leaving for.',
+      props: {
+        licenseFile: { id: 'cc-by-4.0', filename: 'cc-by-4.0.LICENSE', text: COPY_TEXT },
+        policy: SPECIMEN_POLICY,
+        uses: [
+          { href: '#', label: 'trimming-reads', licenseId: 'CC-BY-4.0' },
+          { href: '#', label: 'aligning-reads', licenseId: 'CC-BY-4.0' },
+        ],
+      },
+    },
+    {
+      id: 'several-licenses',
+      name: 'One copy, several licences',
+      why: "A copy is keyed by SOURCE, so what it governs has more than one answer: the users' own ids, deduped and resolved. Both instances derived this the same way, which is why the derivation ships rather than the list.",
+      props: {
+        licenseFile: { id: 'upstream', filename: 'upstream.LICENSE', text: COPY_TEXT },
+        policy: SPECIMEN_POLICY,
+        uses: [
+          { href: '#', label: 'a-note', licenseId: 'MIT' },
+          { href: '#', label: 'another-note', licenseId: 'Apache-2.0' },
+          { href: '#', label: 'a-third-note', licenseId: 'MIT' },
+        ],
+      },
+    },
+    {
+      id: 'no-declared-license',
+      name: 'Users that declare no id',
+      why: 'The policy section disappears entirely rather than rendering empty. Nothing was resolved because nothing was declared, and a row of chips derived from no ids would be an answer the notes never gave.',
+      props: {
+        licenseFile: { id: 'vendored', filename: 'vendored.LICENSE', text: COPY_TEXT },
+        policy: SPECIMEN_POLICY,
+        uses: [{ href: '#', label: 'a-note-with-no-license' }],
+      },
+    },
+    {
+      id: 'no-links-in-the-text',
+      name: 'Text with nothing to leave for',
+      why: 'The other half of the URL cut. Everything outside a match is emitted verbatim, whitespace included — reflowing a redistributed licence is exactly what the obligation forbids.',
+      props: {
+        licenseFile: {
+          id: 'terse',
+          filename: 'terse.LICENSE',
+          text: 'All rights reserved.\n\n    Reproduced here by permission.',
+        },
+        policy: SPECIMEN_POLICY,
+        uses: [{ href: '#', label: 'a-manuscript', licenseId: 'LicenseRef-all-rights-reserved' }],
+      },
+    },
+  ],
+};
+
+/**
  * Every group the kit ships, in reading order.
  *
- * Typed as `SpecimenGroup<unknown>`, which is what a list of groups for four different components
+ * Typed as `SpecimenGroup<unknown>`, which is what a list of groups for six different components
  * can be. A page rendering a group imports that group's own export and keeps its props typed; this
  * list is for the things that do not care — an index, a route manifest, a count.
  */
 export const SPECIMENS: readonly SpecimenGroup[] = [
   REFERENCE_SPECIMENS,
+  LICENSE_BADGE_SPECIMENS,
+  LICENSE_FILE_SPECIMENS,
   HEADER_SPECIMENS,
   FOOTER_SPECIMENS,
   SHELL_SPECIMENS,

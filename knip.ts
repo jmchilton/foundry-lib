@@ -22,7 +22,25 @@ const config: KnipConfig = {
     astro: (text: string) => text.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '',
   },
   workspaces: {
-    '.': { entry: ['scripts/*.mjs'], project: ['scripts/*.mjs'] },
+    '.': {
+      entry: ['scripts/*.mjs'],
+      project: ['scripts/*.mjs'],
+      /*
+       * Both are run by `lint:packages`, through `pnpm --filter "./packages/*" exec`.
+       *
+       * knip reads the unfiltered `pnpm -r exec publint` and misses the filtered spelling. The
+       * filter is not cosmetic: `apps/` holds a private app, and publint on something with no
+       * `exports` reports problems about a package nobody publishes.
+       */
+      ignoreDependencies: ['publint', '@arethetypeswrong/cli'],
+    },
+    'apps/gallery': {
+      entry: ['src/pages/**/*.astro', 'test/**/*.test.ts'],
+      project: ['src/**/*.ts', 'src/**/*.astro', 'test/**/*.ts'],
+      // Named by `@import 'tailwindcss'` in the two stylesheets, and knip does not follow CSS.
+      // Without it neither gallery has a single utility rule.
+      ignoreDependencies: ['tailwindcss'],
+    },
     'packages/audit-citations': {
       entry: ['test/**/*.test.ts'],
       project: ['src/**/*.ts', 'test/**/*.ts'],

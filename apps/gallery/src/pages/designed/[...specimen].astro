@@ -1,0 +1,27 @@
+---
+import '../../styles/designed.css';
+
+import { specimenPath } from '@galaxy-foundry/site-kit/specimens';
+
+import { framedGroups } from '../../lib/gallery';
+import StandalonePage from '../../components/StandalonePage.astro';
+
+/**
+ * A route per specimen the kit says cannot share a page, under this theme.
+ *
+ * Derived from the kit's own `surface`, so a group that changes its answer gains or loses routes
+ * here without this file being edited.
+ */
+export function getStaticPaths() {
+  return framedGroups.flatMap((group) =>
+    group.specimens.map((specimen) => ({
+      params: { specimen: specimenPath(group, specimen) },
+      props: { groupId: group.id, id: specimen.id },
+    })),
+  );
+}
+
+const { groupId, id } = Astro.props;
+---
+
+<StandalonePage theme="designed" groupId={groupId} id={id} />

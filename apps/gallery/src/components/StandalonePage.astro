@@ -1,0 +1,73 @@
+---
+import SiteHeader from '@galaxy-foundry/site-kit/SiteHeader.astro';
+import SiteShell from '@galaxy-foundry/site-kit/SiteShell.astro';
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
+
+import { base, framedGroups, THEME, type ThemeId } from '../lib/gallery';
+
+/**
+ * One specimen that cannot share a page, on the page of its own the kit says it needs.
+ *
+ * Two shapes, taken from the group's `surface` rather than from its name: a `document` specimen IS
+ * the page and is rendered as it stands, while an `isolated` one is put in an otherwise empty
+ * document. Reading the surface here means a new group of either kind arrives working.
+ */
+interface Props {
+  theme: ThemeId;
+  groupId: string;
+  id: string;
+}
+
+const { theme, groupId, id } = Astro.props;
+
+const RENDERERS: Record<string, AstroComponentFactory> = { SiteHeader, SiteShell };
+
+const group = framedGroups.find((candidate) => candidate.id === groupId);
+const specimen = group?.specimens.find((candidate) => candidate.id === id);
+const Component = group ? RENDERERS[group.component] : undefined;
+if (!group || !specimen || !Component) {
+  throw new Error(`gallery has no standalone route for ${groupId}/${id}`);
+}
+
+const props = specimen.props as Record<string, unknown>;
+const backHref = `${base}/${theme}/#${groupId}`;
+---
+
+{
+  group.surface === 'document' ? (
+    <Component {...props}>
+      <h1 class="text-2xl font-bold">{specimen.name}</h1>
+      <p class="mt-2">{specimen.why}</p>
+      <p class="mt-4">
+        A <code>{group.component}</code> specimen under the {THEME[theme].label.toLowerCase()}{' '}
+        stylesheet. The chrome is the component; this column is its slot.
+      </p>
+      <p class="mt-4">
+        <a href={backHref}>Back to the gallery</a>
+      </p>
+    </Component>
+  ) : (
+    <html lang="en">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>{specimen.name} - site-kit gallery</title>
+        {/* Not in the search index and not worth a crawler's time: this document is one component
+            and no prose. The gallery index is where a reader is meant to arrive. */}
+        <meta name="robots" content="noindex" />
+        {/* The shell's own pre-paint script, because this page is framed inside one that ran it.
+            Reading only `prefers-color-scheme` here renders a dark header in a light gallery for
+            any reader who chose light against a dark OS — and the component being framed is the
+            toggle that writes `localStorage.theme`, so the frame would ignore its own subject. */}
+        <script is:inline>
+          {`const dark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+document.documentElement.classList.toggle('dark', dark);
+document.documentElement.dataset.pfTheme = dark ? 'dark' : 'light';`}
+        </script>
+      </head>
+      <body style="background: var(--color-surface)">
+        <Component {...props} />
+      </body>
+    </html>
+  )
+}

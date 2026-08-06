@@ -1,0 +1,10 @@
+---
+// The stylesheet FIRST: import order decides where Astro puts the <link>, and the theme has to
+// land ahead of anything a component ships. Which stylesheet is the only difference between this
+// page and its sibling — everything else comes from `GalleryPage`.
+import '../../styles/designed.css';
+
+import GalleryPage from '../../components/GalleryPage.astro';
+---
+
+<GalleryPage theme="designed" />

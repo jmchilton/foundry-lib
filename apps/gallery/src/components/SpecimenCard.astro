@@ -1,0 +1,26 @@
+---
+import { specimenPath, type Specimen, type SpecimenGroup } from '@galaxy-foundry/site-kit/specimens';
+
+/**
+ * The frame around one case: its name, why it exists, and the component itself.
+ *
+ * `why` is rendered as prominently as the specimen because without it a gallery is a set of
+ * pictures. A card with no accent bar and a card that is broken look identical; the sentence is
+ * what says which one a reader is looking at.
+ */
+interface Props {
+  group: SpecimenGroup;
+  specimen: Specimen;
+}
+
+const { group, specimen } = Astro.props;
+const anchor = specimenPath(group, specimen).replace('/', '--');
+---
+
+<article id={anchor} class="scroll-mt-24 mt-6 rounded-lg border p-4" style="border-color: var(--color-border-subtle)">
+  <h3 class="font-bold">
+    <a href={`#${anchor}`} style="color: var(--color-text-primary)">{specimen.name}</a>
+  </h3>
+  <p class="mt-1 mb-4 text-sm" style="color: var(--color-text-secondary)">{specimen.why}</p>
+  <slot />
+</article>

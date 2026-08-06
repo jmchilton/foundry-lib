@@ -1,9 +1,11 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { describe, expect, it } from 'vitest';
 
+import LicenseBadge from '../src/components/LicenseBadge.astro';
+import LicenseFileBody from '../src/components/LicenseFileBody.astro';
 import ReferenceContract from '../src/components/ReferenceContract.astro';
 import SiteFooter from '../src/components/SiteFooter.astro';
 import SiteHeader from '../src/components/SiteHeader.astro';
@@ -27,6 +29,8 @@ import {
 // So every specimen is rendered here, through the same Astro transform a build gives it.
 
 const COMPONENTS: Record<string, AstroComponentFactory> = {
+  LicenseBadge,
+  LicenseFileBody,
   ReferenceContract,
   SiteHeader,
   SiteFooter,
@@ -91,6 +95,46 @@ describe('a specimen is addressable', () => {
     for (const group of SPECIMENS) {
       expect(exposed, `${group.component} import path`).toContain(group.importPath);
     }
+  });
+});
+
+/**
+ * Components deliberately without specimens, and why.
+ *
+ * Empty is a claim rather than a stub. It stays empty unless a component has a reason a reader
+ * would accept — and "nobody got to it" is not one, which is the whole point of writing the reason
+ * beside the name rather than keeping it in someone's head.
+ */
+const UNSPECIMENED: Record<string, string> = {};
+
+describe('the components the kit ships', () => {
+  const shipped = (): string[] =>
+    readdirSync(new URL('../src/components', import.meta.url))
+      .filter((entry) => entry.endsWith('.astro'))
+      .map((entry) => entry.replace(/\.astro$/, ''));
+
+  it('all have specimens, or a declared reason not to', () => {
+    // Read from the directory, not from a list here. Two components shipped for months with no
+    // cases at all, and nothing was wrong with the specimens that existed — the gap was that
+    // nothing compared them to what the package contains. A second consumer found it by reaching
+    // for a component the specimens had never heard of.
+    const covered = new Set(SPECIMENS.map((group) => group.component));
+    const missing = shipped().filter(
+      (component) => !covered.has(component) && !(component in UNSPECIMENED),
+    );
+    expect(missing, '\ncomponents with no specimens').toEqual([]);
+  });
+
+  it('are the only components the groups name', () => {
+    // The mirror image, and what keeps the exemption list honest: a name left behind after a
+    // component is renamed goes on excusing a file that no longer exists.
+    const components = new Set(shipped());
+    const named = [...SPECIMENS.map((group) => group.component), ...Object.keys(UNSPECIMENED)];
+
+    expect(
+      named.filter((component) => !components.has(component)),
+      '\nnamed but not shipped',
+    ).toEqual([]);
   });
 });
 

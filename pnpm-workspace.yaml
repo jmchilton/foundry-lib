@@ -1,2 +1,5 @@
 packages:
   - 'packages/*'
+  # Not published. `apps/` is where something that CONSUMES the packages lives, which is the only
+  # way this repository finds out what using them is like before an instance does.
+  - 'apps/*'

@@ -4,3 +4,4 @@ pnpm-lock.yaml
 CHANGELOG.md
 packages/*/data/
 docs/api/typedoc*
+apps/*/.astro/

@@ -1,6 +1,5 @@
 ---
-import type { LicenseFile, LicensePolicy } from '@galaxy-foundry/license-policy';
-import { licensesUnderFile, type LicenseFileUse } from '../index.js';
+import { licensesUnderFile, type LicenseFileBodyProps } from '../index.js';
 
 /**
  * What one vendored licence copy governs, who redistributes under it, and its text.
@@ -14,19 +13,7 @@ import { licensesUnderFile, type LicenseFileUse } from '../index.js';
  * What is shared is the part both instances derived identically: which licences a copy covers,
  * the notes that use it, and the text rendered so a reader can follow the URLs inside it.
  */
-interface Props {
-  licenseFile: LicenseFile;
-  /** The instance's loaded table — see `LicenseBadge` for why this is a prop. */
-  policy: LicensePolicy;
-  /**
-   * The notes redistributing under this copy, already resolved to hrefs.
-   *
-   * Passed in rather than discovered, because finding them is the one genuinely per-instance step:
-   * one site walks a single note collection and links `/{id}/`, the other walks three and links
-   * `/{collection}/{id}/`. Filter with `redistributesUnder`.
-   */
-  uses: LicenseFileUse[];
-}
+type Props = LicenseFileBodyProps;
 
 const { licenseFile, policy, uses } = Astro.props;
 

@@ -11,7 +11,7 @@
     "lint": "eslint packages/*/src/ packages/*/test/",
     "lint:unused": "knip",
     "lint:unused:ci": "knip --include files,dependencies,unlisted,binaries,unresolved",
-    "lint:packages": "pnpm -r exec publint && pnpm -r exec attw --pack . --profile esm-only --entrypoints .",
+    "lint:packages": "pnpm --filter \"./packages/*\" exec publint && pnpm --filter \"./packages/*\" exec attw --pack . --profile esm-only --entrypoints .",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "smoke": "node scripts/smoke-packages.mjs",
