@@ -1,5 +1,12 @@
 # @galaxy-foundry/site-kit
 
+## 0.4.2
+
+### Patch Changes
+
+- Updated dependencies [[`befe66a`](https://github.com/jmchilton/foundry-lib/commit/befe66a7386e7ba6a0e68e2c317af2772f36f0b5)]:
+  - @galaxy-foundry/reference-contract@0.4.0
+
 ## 0.4.1
 
 ### Patch Changes

@@ -1,5 +1,16 @@
 # @galaxy-foundry/wiki-links
 
+## 0.4.0
+
+### Minor Changes
+
+- [#62](https://github.com/jmchilton/foundry-lib/pull/62) [`c4a1e4f`](https://github.com/jmchilton/foundry-lib/commit/c4a1e4f7bbfd3c8cf6b43333fa28e922a98c4206) Thanks [@jmchilton](https://github.com/jmchilton)! - `fileSlug` — the slug a note file answers to, from its path.
+
+  The other half of `slugify`. A lookup map is built from paths and queried from prose, so the
+  two rules only work because they agree; held in separate repos they drift silently and a link
+  that stops resolving reads as a missing note. Takes no `node:path` dependency, so the package
+  stays usable in a browser bundle.
+
 ## 0.3.0
 
 ### Minor Changes
