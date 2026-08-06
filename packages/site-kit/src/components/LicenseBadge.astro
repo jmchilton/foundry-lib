@@ -1,5 +1,6 @@
 ---
-import { resolveLicenseRow, type LicensePolicy } from '@galaxy-foundry/license-policy';
+import { resolveLicenseRow } from '@galaxy-foundry/license-policy';
+import type { LicenseBadgeProps } from '../index.js';
 
 /**
  * What a licence PERMITS, as chips, from the id a note declares.
@@ -16,16 +17,7 @@ import { resolveLicenseRow, type LicensePolicy } from '@galaxy-foundry/license-p
  * about its licence", and every value here falls on the first side. The credit line a particular
  * source needs, and whether a vendored copy travels with it, are the second.
  */
-interface Props {
-  /** The note's `license` frontmatter: an SPDX id, or a `LicenseRef-` custom ref. */
-  license: string;
-  /**
-   * The instance's loaded table. Passed rather than bundled, because an instance validates its
-   * corpus against one specific version of the policy and a component reaching for its own copy
-   * could disagree with the schema that admitted the note.
-   */
-  policy: LicensePolicy;
-}
+type Props = LicenseBadgeProps;
 
 const { license, policy } = Astro.props;
 

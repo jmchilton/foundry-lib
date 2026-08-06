@@ -1,6 +1,7 @@
 import {
   licenseFileIdFromPath,
   resolveLicenseRow,
+  type LicenseFile,
   type LicenseFileId,
   type LicenseId,
   type LicensePolicy,
@@ -152,6 +153,33 @@ export interface ReferenceContractProps {
   contract: ReferenceContract;
   /** How a `ref` becomes a link here. See {@link ResolvedReference}. */
   resolveRef?: (ref: string) => ResolvedReference | null;
+}
+
+/** What the licence badge takes: the id a note declares, and the table to resolve it against. */
+export interface LicenseBadgeProps {
+  /** The note's `license` frontmatter: an SPDX id, or a `LicenseRef-` custom ref. */
+  license: string;
+  /**
+   * The instance's loaded table. Passed rather than bundled, because an instance validates its
+   * corpus against one specific version of the policy and a component reaching for its own copy
+   * could disagree with the schema that admitted the note.
+   */
+  policy: LicensePolicy;
+}
+
+/** What the licence-file body takes. See {@link licensesUnderFile} for what it derives. */
+export interface LicenseFileBodyProps {
+  licenseFile: LicenseFile;
+  /** The instance's loaded table — see {@link LicenseBadgeProps.policy} for why this is a prop. */
+  policy: LicensePolicy;
+  /**
+   * The notes redistributing under this copy, already resolved to hrefs.
+   *
+   * Passed in rather than discovered, because finding them is the one genuinely per-instance step:
+   * one site walks a single note collection and links `/{id}/`, the other walks three and links
+   * `/{collection}/{id}/`. Filter with `redistributesUnder`.
+   */
+  uses: LicenseFileUse[];
 }
 
 /**

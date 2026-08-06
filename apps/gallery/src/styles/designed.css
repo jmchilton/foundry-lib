@@ -1,0 +1,110 @@
+/*
+ * The same components with an opinion: everything an instance may add on top of the contract.
+ *
+ * `minimum.css` is bounded by the documented lists, so it cannot show what an instance actually
+ * does. This file has no ceiling, and the difference between the two galleries is the answer to
+ * "how much of the look is the package's?" — the markup and the structural rules are the same in
+ * both, and everything else here is a theme decision the kit never made.
+ *
+ * Three kinds of addition are worth looking for, because none of them is in the contract:
+ *
+ * 1. A dark palette. The shell's pre-paint script toggles `.dark` and the kit reads tokens; which
+ *    values those tokens take in the dark is nobody's decision but the instance's. The minimum
+ *    theme defines one palette, so its theme toggle changes almost nothing.
+ * 2. Per-kind tints via `[data-kind]`. The card ships no per-kind colour on purpose — `kinds` is
+ *    the group each instance declares — so the accent bar is where an instance's own vocabulary
+ *    becomes visible. Two of the specimen kinds are tinted here and the rest take `--color-brand`,
+ *    which is the fallback, not a gap.
+ * 3. Type and shadow. Ordinary design, included because its absence in the minimum gallery is
+ *    otherwise easy to read as something missing from the kit.
+ */
+@import 'tailwindcss';
+
+@source "../../../../packages/site-kit/src";
+
+@theme {
+  --color-chrome: #1d2b3a;
+  --color-accent: #f0b429;
+  --color-surface: #fbfaf7;
+  --color-text-primary: #1b2733;
+  --color-text-on-dark: #f7f9fb;
+  --font-sans: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+
+  --color-brand: #2f6f8f;
+  --color-surface-raised: #ffffff;
+  --color-surface-hover: #eef3f6;
+  --color-border-subtle: #d6e0e6;
+  --color-link: #1c6b8c;
+  --color-link-hover: #10465c;
+  --color-text-secondary: #46586b;
+  --color-text-muted: #74849a;
+  --color-evidence-provisional-bg: #fdf3d8;
+  --color-evidence-provisional-text: #7a5a12;
+  --color-evidence-grounded-bg: #ddeee2;
+  --color-evidence-grounded-text: #21563a;
+  --font-mono: 'SF Mono', ui-monospace, monospace;
+
+  --color-license-verbatim: #2f855a;
+  --color-license-own-words: #b7791f;
+  --color-license-copyleft: #c53030;
+}
+
+/* Nothing in the contract says what dark means. This is the instance answering. */
+.dark {
+  --color-chrome: #10161d;
+  --color-surface: #131a21;
+  --color-surface-raised: #1a232c;
+  --color-surface-hover: #22303b;
+  --color-border-subtle: #2c3a47;
+  --color-text-primary: #e8edf2;
+  --color-text-secondary: #b3c0cc;
+  --color-text-muted: #8496a6;
+  --color-link: #7fc2df;
+  --color-link-hover: #a9d9ee;
+  --color-evidence-provisional-bg: #3b3117;
+  --color-evidence-provisional-text: #f0d79a;
+  --color-evidence-grounded-bg: #1c3527;
+  --color-evidence-grounded-text: #a9dcc0;
+}
+
+/* The two kinds the specimen contract declares. A kind nothing tints keeps `--color-brand`. */
+[data-kind='mold'] {
+  --color-kind-accent: var(--color-accent);
+}
+[data-kind='research'] {
+  --color-kind-accent: #7f6fb0;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 50;
+  padding: 0.6rem 1.1rem;
+  border-radius: 0 0 0.5rem 0;
+  background: var(--color-chrome);
+  color: var(--color-text-on-dark);
+  font-family: var(--font-sans);
+}
+.skip-link:focus {
+  left: 0;
+}
+
+.bg-grid {
+  background-image: radial-gradient(var(--color-border-subtle) 1px, transparent 1px);
+  background-size: 1.5rem 1.5rem;
+}
+
+.nav-link-active {
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+}
+
+/* Beyond the contract entirely: what an instance layers on once the names resolve. */
+body {
+  font-family: var(--font-sans);
+}
+h1,
+h2 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}

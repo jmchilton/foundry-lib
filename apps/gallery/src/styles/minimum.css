@@ -1,0 +1,89 @@
+/*
+ * The documented contract, and nothing else.
+ *
+ * Every name below appears in one of the kit's exported token lists — SHELL_TOKENS,
+ * REFERENCE_TOKENS, LICENSE_BADGE_TOKENS, LICENSE_FILE_TOKENS — or in SHELL_CLASSES. Nothing else
+ * is defined here, which is what makes the pages built from this file EVIDENCE rather than a demo:
+ * an instance that supplies exactly the documented list gets exactly this, so anything rendering
+ * unstyled here is a name the documentation is short, not a theme that forgot something.
+ *
+ * A test compares this file against those lists in both directions. Adding a colour to make a page
+ * look better fails it, and that is the intent: what makes this stylesheet useful is its ceiling.
+ *
+ * The values are deliberately plain. A reader is meant to look at these pages and see the shape of
+ * the components, not a design — `designed.css` is where the same specimens get an opinion.
+ */
+@import 'tailwindcss';
+
+/*
+ * Tailwind does not scan `node_modules`, and this package's markup lives there.
+ *
+ * Without this line every utility the kit writes is missing and the whole gallery renders
+ * unstyled — silently, with a green build. It is the first of the two lines the README warns
+ * about, and the gallery is the one place in this repo where getting it wrong is visible.
+ */
+@source "../../../../packages/site-kit/src";
+
+@theme {
+  /* The shell */
+  --color-chrome: #33383f;
+  --color-accent: #b08d2e;
+  --color-surface: #ffffff;
+  --color-text-primary: #1f2328;
+  --color-text-on-dark: #f4f5f6;
+  --font-sans: system-ui, sans-serif;
+
+  /* The reference card */
+  --color-brand: #33383f;
+  --color-surface-raised: #f7f7f8;
+  --color-surface-hover: #eeeff1;
+  --color-border-subtle: #d8dade;
+  --color-link: #2b5f9e;
+  --color-link-hover: #1d4374;
+  --color-text-secondary: #4b5158;
+  --color-text-muted: #6d747c;
+  --color-evidence-provisional-bg: #f2ede0;
+  --color-evidence-provisional-text: #6b5a24;
+  --color-evidence-grounded-bg: #e4ece4;
+  --color-evidence-grounded-text: #2f5136;
+  --font-mono: ui-monospace, monospace;
+
+  /* The licence badge */
+  --color-license-verbatim: #16a34a;
+  --color-license-own-words: #d97706;
+  --color-license-copyleft: #dc2626;
+}
+
+/*
+ * The three classes the shell WEARS and does not define.
+ *
+ * Not utilities — Tailwind never has an opinion about them, so a missing one is markup carrying a
+ * class no rule matches. The skip link is the case worth seeing: unstyled, it is a visible link
+ * above the header on every page, which reads as a layout bug rather than as an accessibility
+ * feature that lost its rule.
+ */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 50;
+  padding: 0.5rem 1rem;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+.skip-link:focus {
+  left: 0;
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(var(--color-border-subtle) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border-subtle) 1px, transparent 1px);
+  background-size: 2rem 2rem;
+  background-position: center;
+}
+
+.nav-link-active {
+  text-decoration: underline;
+  text-underline-offset: 0.35rem;
+}

@@ -24,6 +24,7 @@
   - [TypeDoc reference](api/typedoc/index.html ':ignore')
 - **Development**
   - [Contributing](development/contributing.md)
+  - [Component gallery](development/component-gallery.md)
   - [Testing and smoke checks](development/testing-and-smoke.md)
   - [Adding a package](development/adding-a-package.md)
   - [Publication](development/publication.md)

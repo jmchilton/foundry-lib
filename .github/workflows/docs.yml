@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'docs/**'
+      - 'apps/**'
       - 'packages/**'
       - 'scripts/check-doc-links.mjs'
       - 'package.json'
@@ -15,6 +16,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'apps/**'
       - 'packages/**'
       - 'scripts/check-doc-links.mjs'
       - 'package.json'

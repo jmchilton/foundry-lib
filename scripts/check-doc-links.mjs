@@ -12,7 +12,9 @@ async function walk(directory) {
   const files = [];
 
   for (const entry of entries) {
-    if (entry.name === 'typedoc' || entry.name === 'typedoc.json') {
+    // Generated, and not authored markdown: the API reference and the built component gallery both
+    // land under docs/ so the Pages upload takes them, and neither has links this checker owns.
+    if (entry.name === 'typedoc' || entry.name === 'typedoc.json' || entry.name === 'gallery') {
       continue;
     }
 

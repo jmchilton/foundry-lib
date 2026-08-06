@@ -1,0 +1,145 @@
+---
+import LicenseBadge from '@galaxy-foundry/site-kit/LicenseBadge.astro';
+import LicenseFileBody from '@galaxy-foundry/site-kit/LicenseFileBody.astro';
+import ReferenceContract from '@galaxy-foundry/site-kit/ReferenceContract.astro';
+import SiteFooter from '@galaxy-foundry/site-kit/SiteFooter.astro';
+import SiteShell from '@galaxy-foundry/site-kit/SiteShell.astro';
+import { specimenPath } from '@galaxy-foundry/site-kit/specimens';
+import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
+
+import {
+  base,
+  framedGroups,
+  groupAnchor,
+  identity,
+  inlineGroups,
+  sources,
+  specimenHref,
+  THEME,
+  THEMES,
+  type ThemeId,
+} from '../lib/gallery';
+import SpecimenCard from './SpecimenCard.astro';
+
+interface Props {
+  theme: ThemeId;
+}
+
+const { theme } = Astro.props;
+
+/**
+ * Which component renders which group.
+ *
+ * The one thing this gallery holds that the kit cannot: a group is props and a name, and turning a
+ * name into a component is an import. A group the kit adds arrives here with no entry and the build
+ * STOPS — better than a section that renders nothing, which on a page of specimens reads as a
+ * component that renders nothing.
+ */
+const RENDERERS: Record<string, AstroComponentFactory> = {
+  ReferenceContract,
+  LicenseBadge,
+  LicenseFileBody,
+  SiteFooter,
+};
+
+const unrenderable = inlineGroups.filter((group) => !RENDERERS[group.component]);
+if (unrenderable.length > 0) {
+  throw new Error(`gallery has no renderer for: ${unrenderable.map((g) => g.id).join(', ')}`);
+}
+
+const other = THEMES.find((id) => id !== theme)!;
+---
+
+<SiteShell
+  title={`${THEME[theme].label} theme`}
+  description={THEME[theme].blurb}
+  base={base}
+  pathname={`/${theme}/`}
+  identity={identity(theme)}
+>
+  <h1 class="text-3xl font-bold">The {THEME[theme].label.toLowerCase()} gallery</h1>
+  <p class="mt-3 max-w-3xl" style="color: var(--color-text-secondary)">{THEME[theme].blurb}</p>
+  <p class="mt-3 max-w-3xl" style="color: var(--color-text-secondary)">
+    The chrome around this page is <code>SiteShell</code> — the gallery is built out of the components
+    it documents. Read the same specimens under the
+    <a href={`${base}/${other}/`}>{THEME[other].label.toLowerCase()} stylesheet</a> to see which parts
+    of the page belong to the package and which to whoever themed it.
+  </p>
+
+  <dl class="mt-6 text-sm" style="color: var(--color-text-muted)">
+    {
+      sources().map((source) => (
+        <div class="flex gap-2">
+          <dt class="font-bold">{source.label}:</dt>
+          <dd>{source.detail}</dd>
+        </div>
+      ))
+    }
+  </dl>
+
+  <ul class="my-8 grid gap-2 sm:grid-cols-2">
+    {
+      [...inlineGroups, ...framedGroups].map((group) => (
+        <li
+          class="rounded-lg border p-3"
+          style="border-color: var(--color-border-subtle); background: var(--color-surface-raised)"
+        >
+          <a href={`#${groupAnchor(group)}`} class="font-bold">
+            {group.component}
+          </a>
+          <span class="ml-2 text-xs uppercase" style="color: var(--color-text-muted)">
+            {group.specimens.length} · {group.surface}
+          </span>
+          <p class="mt-1 text-sm" style="color: var(--color-text-secondary)">{group.summary}</p>
+        </li>
+      ))
+    }
+  </ul>
+
+  {
+    inlineGroups.map((group) => {
+      const Component = RENDERERS[group.component]!;
+      return (
+        <section id={groupAnchor(group)} class="scroll-mt-24 mt-12">
+          <h2 class="text-2xl font-bold">{group.component}</h2>
+          <p class="mt-2" style="color: var(--color-text-secondary)">
+            {group.summary}
+          </p>
+          {group.specimens.map((specimen) => (
+            <SpecimenCard group={group} specimen={specimen}>
+              <Component {...(specimen.props as Record<string, unknown>)} />
+            </SpecimenCard>
+          ))}
+        </section>
+      );
+    })
+  }
+
+  {
+    framedGroups.map((group) => (
+      <section id={groupAnchor(group)} class="scroll-mt-24 mt-12">
+        <h2 class="text-2xl font-bold">{group.component}</h2>
+        <p class="mt-2" style="color: var(--color-text-secondary)">
+          {group.summary} Each is a page of its own — <code>{group.surface}</code> means it cannot
+          share this one — so what is below are the real routes, framed.
+        </p>
+        {group.specimens.map((specimen) => (
+          <SpecimenCard group={group} specimen={specimen}>
+            <iframe
+              src={specimenHref(theme, group, specimen)}
+              title={`${group.component}: ${specimen.name}`}
+              loading="lazy"
+              class="block h-96 w-full rounded border-0"
+              style="background: var(--color-surface)"
+            />
+            <p class="mt-2 text-xs">
+              <a href={specimenHref(theme, group, specimen)}>
+                Open {specimenPath(group, specimen)} full width
+              </a>
+            </p>
+          </SpecimenCard>
+        ))}
+      </section>
+    ))
+  }
+</SiteShell>

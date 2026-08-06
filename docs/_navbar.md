@@ -2,5 +2,6 @@
 - [The Pattern](https://galaxyproject.github.io/foundry-pattern/)
 - [Packages](packages/README.md)
 - [API](api/README.md)
+- [Gallery](gallery/minimum/index.html ':ignore')
 - [GitHub](https://github.com/jmchilton/foundry-lib)
 - [npm](https://www.npmjs.com/org/galaxy-foundry)
