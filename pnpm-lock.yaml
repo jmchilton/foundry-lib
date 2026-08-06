@@ -169,6 +169,9 @@ importers:
 
   packages/site-kit:
     dependencies:
+      '@galaxy-foundry/license-policy':
+        specifier: workspace:^
+        version: link:../license-policy
       '@galaxy-foundry/reference-contract':
         specifier: workspace:^
         version: link:../reference-contract

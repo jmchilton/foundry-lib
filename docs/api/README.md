@@ -24,14 +24,15 @@ Start with [Citation audit architecture and schemas](architecture/audit-citation
 
 The public surface includes:
 
-- policy types: `LicensePolicy`, `LicenseRow`, and `RedistributionPolicy`;
+- policy types: `LicensePolicy`, `LicenseRow`, `RedistributionPolicy`, and `LicenseId`;
 - bundled data access: `bundledPolicy`, `bundledPolicyText`, and `bundledPolicyPath`;
 - parsing and discovery: `parseLicensePolicy`, `loadLicensePolicy`, and
   `findLicensePolicyPath`;
 - resolution helpers: `licenseIds`, `isValidLicenseId`, `resolveLicenseRow`, and
   `declaresVerbatimCarry`; and
-- license files: `loadLicenseFiles`, `findLicenseFileById`, `licenseIdFromFilePath`, and the
-  `LicenseFile` type; and
+- license files: `loadLicenseFiles`, `findLicenseFileById`, `licenseFileIdFromPath`, `redistributesUnder`, and the
+  `LicenseFile` and `LicenseFileId` types — a `LicenseFileId` names a vendored COPY (`msmb`) and
+  is not a `LicenseId` (`CC-BY-NC-SA-2.0`); and
 - constants: `LICENSE_POLICY_FILE`, `LICENSE_REF_RE`, and `LICENSE_FILE_EXTENSION`.
 
 Start with [Adopt the license policy](guides/adopting-license-policy.md) for an integration
@@ -88,8 +89,15 @@ The public surface includes:
 - shell data types: `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, and `ResolvedNav`;
 - navigation helpers: `resolveNav`, `shellBase`, and `shellHref`;
 - the fixed reading measure: `CONTAINER`;
-- the style contract: `SHELL_TOKENS`, `SHELL_CLASSES`, and `shellStyleGaps`; and
-- the shipped `./SiteShell.astro` component entry point.
+- the style contract: `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, and the per-component
+  `REFERENCE_TOKENS`, `LICENSE_BADGE_TOKENS`, `LICENSE_FILE_TOKENS` lists with their
+  `referenceStyleGaps`, `licenseBadgeStyleGaps`, `licenseFileStyleGaps` checks — all `styleGaps`
+  with a different list;
+- the vendored-licence route: `LICENSE_FILE_ROUTE`, `licenseFileHref`, `licensesUnderFile`, and
+  the `LicenseFileUse` type;
+- the search-index check: `PAGEFIND_BODY_ATTR` and `searchIndexGaps`; and
+- the shipped `./SiteShell.astro`, `./ReferenceContract.astro`, `./LicenseBadge.astro`, and
+  `./LicenseFileBody.astro` component entry points.
 
 Astro compiles the components from shipped source. Read the
 [`site-kit` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)

@@ -1,0 +1,168 @@
+---
+import type { LicenseFile, LicensePolicy } from '@galaxy-foundry/license-policy';
+import { licensesUnderFile, type LicenseFileUse } from '../index.js';
+
+/**
+ * What one vendored licence copy governs, who redistributes under it, and its text.
+ *
+ * The body only. The page's `<h1>` and its wrapper stay with the instance, deliberately: one site
+ * marks this route with `data-pagefind-body` and its title with `data-pagefind-meta`, and Pagefind
+ * reads the FIRST of those as "index only pages like this one" — so a component that shipped the
+ * wrapper would be deciding a site's whole search index from inside a licence page. See
+ * `searchIndexGaps`.
+ *
+ * What is shared is the part both instances derived identically: which licences a copy covers,
+ * the notes that use it, and the text rendered so a reader can follow the URLs inside it.
+ */
+interface Props {
+  licenseFile: LicenseFile;
+  /** The instance's loaded table — see `LicenseBadge` for why this is a prop. */
+  policy: LicensePolicy;
+  /**
+   * The notes redistributing under this copy, already resolved to hrefs.
+   *
+   * Passed in rather than discovered, because finding them is the one genuinely per-instance step:
+   * one site walks a single note collection and links `/{id}/`, the other walks three and links
+   * `/{collection}/{id}/`. Filter with `redistributesUnder`.
+   */
+  uses: LicenseFileUse[];
+}
+
+const { licenseFile, policy, uses } = Astro.props;
+
+const licenses = licensesUnderFile(policy, uses);
+
+/**
+ * The licence text, cut so bare URLs inside it become links.
+ *
+ * A licence is the one document on a site whose text a reader most plausibly wants to leave —
+ * `creativecommons.org/licenses/by/4.0/` is the canonical terms, and the vendored copy is a
+ * courtesy. One instance did this and the other rendered a `<pre>` a reader had to retype from.
+ *
+ * Everything outside a match is emitted verbatim, including whitespace: this is a redistributed
+ * licence, and reflowing it is exactly what the `license_file` obligation exists to prevent.
+ */
+const URL_PATTERN = /https?:\/\/[^\s)]+/g;
+const segments: { text: string; href?: string }[] = [];
+let cursor = 0;
+for (const match of licenseFile.text.matchAll(URL_PATTERN)) {
+  const at = match.index;
+  if (at > cursor) segments.push({ text: licenseFile.text.slice(cursor, at) });
+  segments.push({ text: match[0], href: match[0] });
+  cursor = at + match[0].length;
+}
+if (cursor < licenseFile.text.length) segments.push({ text: licenseFile.text.slice(cursor) });
+---
+{licenses.length > 0 && (
+  <section class="license-file-policies">
+    {licenses.map(({ id, row }) => (
+      <div class="license-file-policy">
+        <p class="license-file-policy-head">
+          <code>{id}</code>
+          <span class="license-file-policy-label">
+            {row.policy === 'own-words-only' ? 'own-words only' : 'verbatim OK'}
+            {row.copyleft ? ' · copyleft' : ''}
+          </span>
+        </p>
+        <p class="license-file-obligations">{row.obligations}</p>
+      </div>
+    ))}
+  </section>
+)}
+
+{uses.length > 0 && (
+  <section class="license-file-uses">
+    <h2>Redistributed by <span class="license-file-count">({uses.length})</span></h2>
+    <ul>
+      {uses.map(use => (
+        <li>
+          <a href={use.href} class="license-file-link">{use.label}</a>
+          {use.licenseId && <span class="license-file-spdx">{use.licenseId}</span>}
+        </li>
+      ))}
+    </ul>
+  </section>
+)}
+
+<pre class="license-file-text">{segments.map(segment => segment.href
+  ? <a href={segment.href} class="license-file-link">{segment.text}</a>
+  : segment.text)}</pre>
+
+<style>
+  .license-file-policies {
+    display: grid;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+  }
+  .license-file-policy {
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.5rem;
+    background: var(--color-surface-raised);
+  }
+  .license-file-policy-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--color-text-primary);
+  }
+  .license-file-policy-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    color: var(--color-text-secondary);
+  }
+  .license-file-obligations {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+  }
+  .license-file-uses {
+    margin-bottom: 1.5rem;
+  }
+  .license-file-uses h2 {
+    margin: 0 0 0.6rem;
+    font-size: 1rem;
+    color: var(--color-text-primary);
+  }
+  .license-file-count {
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+  }
+  .license-file-uses ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.35rem;
+  }
+  .license-file-spdx {
+    margin-left: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+  }
+  .license-file-text {
+    margin: 0;
+    padding: 1.25rem 1.4rem;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.5rem;
+    background: var(--color-surface-raised);
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.65;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .license-file-link {
+    color: var(--color-link);
+  }
+  .license-file-link:hover {
+    color: var(--color-link-hover);
+  }
+</style>

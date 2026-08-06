@@ -6,6 +6,17 @@ import yaml from 'js-yaml';
 
 export type RedistributionPolicy = 'verbatim-ok' | 'own-words-only';
 
+/**
+ * A licence, as a note names one: an SPDX id or a `LicenseRef-` custom ref.
+ *
+ * This is what `license:` frontmatter carries, what `licenses:` below is keyed by, and what
+ * {@link resolveLicenseRow} takes. `MIT`, `CC-BY-4.0`, `LicenseRef-all-rights-reserved`.
+ *
+ * Distinct from {@link LicenseFileId}, which identifies a vendored COPY rather than a licence.
+ * The two were both spelled `licenseId` until they met on one line of a route.
+ */
+export type LicenseId = string;
+
 export interface LicenseRow {
   name: string;
   policy: RedistributionPolicy;
@@ -129,17 +140,17 @@ export function findLicensePolicyPath(startDirectory: string = process.cwd()): s
   }
 }
 
-export function licenseIds(policy: LicensePolicy): string[] {
+export function licenseIds(policy: LicensePolicy): LicenseId[] {
   return Object.keys(policy.licenses);
 }
 
-export function isValidLicenseId(policy: LicensePolicy, licenseId: string): boolean {
+export function isValidLicenseId(policy: LicensePolicy, licenseId: LicenseId): boolean {
   return policy.licenses[licenseId] !== undefined || LICENSE_REF_RE.test(licenseId);
 }
 
 export function resolveLicenseRow(
   policy: LicensePolicy,
-  licenseId: string | undefined | null,
+  licenseId: LicenseId | undefined | null,
 ): LicenseRow {
   if (typeof licenseId === 'string') {
     const licenseRow = policy.licenses[licenseId];
@@ -178,7 +189,9 @@ export function declaresVerbatimCarry(derived: string | undefined | null): boole
 export {
   LICENSE_FILE_EXTENSION,
   findLicenseFileById,
-  licenseIdFromFilePath,
+  licenseFileIdFromPath,
   loadLicenseFiles,
+  redistributesUnder,
   type LicenseFile,
+  type LicenseFileId,
 } from './license-files.js';
