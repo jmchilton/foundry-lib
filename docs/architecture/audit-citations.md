@@ -29,7 +29,7 @@ matcher decides membership and `trackedOnly` only ever narrows the corpus.
 
 ## Component flow
 
-![Citation audit component flow from consumer configuration through extraction, evidence acquisition or replay, evaluation, adjudication, and reports.](assets/diagrams/audit-citations-flow.svg)
+![Citation audit component flow from consumer configuration through extraction, evidence acquisition or replay, evaluation, adjudication, and reports.](../assets/diagrams/audit-citations-flow.svg)
 
 Extraction, evidence acquisition, evaluation, and review are separate phases. This prevents a
 provider outage from becoming an `unresolved` citation and prevents manual review from rewriting
@@ -43,7 +43,7 @@ extractor diagnostic and is never promoted to a candidate.
 
 ## Entity relationships
 
-![CitationScan and CitationEvidenceSnapshot entities feeding a CitationAuditRun that retains candidates and references normalized evidence by ID.](assets/diagrams/audit-citations-entities.svg)
+![CitationScan and CitationEvidenceSnapshot entities feeding a CitationAuditRun that retains candidates and references normalized evidence by ID.](../assets/diagrams/audit-citations-entities.svg)
 
 `collectEvidence` returns two snapshots. `cache` is everything known, including evidence no current
 candidate references, and is what belongs on disk. `snapshot` is exactly the evidence the supplied

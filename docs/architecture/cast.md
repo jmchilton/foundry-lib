@@ -51,7 +51,7 @@ nothing, because how a caller renders four unresolved refs is the caller's decis
 The helpers below it remain exported and composable for callers that want a step rather than a
 cast:
 
-![Casting composition flow from consumer-owned renderers, target declarations, and existing provenance through placement, reconciliation, licensing, and aggregated verdicts.](assets/diagrams/cast-flow.svg)
+![Casting composition flow from consumer-owned renderers, target declarations, and existing provenance through placement, reconciliation, licensing, and aggregated verdicts.](../assets/diagrams/cast-flow.svg)
 
 The arrows describe information ownership, not a mandatory call order. For example, a consumer may
 resolve every reference before rendering anything so it can report all unresolved inputs together.

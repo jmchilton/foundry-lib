@@ -24,7 +24,7 @@ expected to challenge. Do not create speculative base packages around it. See
 
 Use the existing packages as the baseline:
 
-![Standard workspace package layout, including optional runtime data, source, tests, configuration, and published package documentation.](assets/diagrams/package-layout.svg)
+![Standard workspace package layout, including optional runtime data, source, tests, configuration, and published package documentation.](../assets/diagrams/package-layout.svg)
 
 The package should:
 
