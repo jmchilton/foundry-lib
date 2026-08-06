@@ -34,6 +34,23 @@ hand restated what casting always writes, and a restatement is only ever a chanc
 `_provenance.json` stays the caster's, exported as `PROVENANCE_FILE`. Everything that reads a
 bundle without knowing which target produced it finds the record by that name.
 
+## A command shell, behind its own entry point
+
+`@galaxy-foundry/cast/command` adds `castCommand`, `parseCastArgs` and `castReport` — the shape
+every casting CLI has anyway: one Mold as a positional, `--target`, `--check`, `--note`,
+`--root`, and a report that tells "nothing to do" from "the bundle on disk disagrees" from
+"this could not be built".
+
+It is a separate entry point on purpose. The barrel promises nothing in it prints, and that is
+worth keeping literally true, so importing the terminal-shaped part is a choice to be a command
+rather than a consequence of casting. `castReport` returns lines and an exit code as a value;
+only `castCommand` puts them on a stream, and it sets `process.exitCode` rather than calling
+`process.exit`, so nothing is cut off mid-write.
+
+A Foundry supplies three things nothing can guess — what to call itself in a usage line, its
+`CastHooks`, and how to read its corpus. Mold path, contract path, default target and the
+provenance extension have defaults that hold for a conventional layout.
+
 Not addressed, and named in the code rather than generalised on one example: the document's
 `name:`/`description:` frontmatter. The target already declares that pair in
 `skill_constraints.frontmatter_required` and the caster still hardcodes it, but closing the gap

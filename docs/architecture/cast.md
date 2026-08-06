@@ -35,6 +35,7 @@ for the consumer-owned resolver, renderer, and target in one repository composit
 | Note/license coherence                    | does not own                  | validates before casting            |
 | Provenance record shape and carry-over    | owns                          | assembles and persists the record   |
 | Error aggregation and process exit status | returns values; never exits   | owns                                |
+| Flags, and which ending a run had         | `/command`, opt-in            | supplies hooks and corpus           |
 
 The library cannot truthfully choose what to render, where source notes live, which kinds a
 corpus has, or whether one failed artifact should fail a release. Those decisions require the
