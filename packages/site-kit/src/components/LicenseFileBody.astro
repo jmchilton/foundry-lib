@@ -13,6 +13,10 @@ import { licensesUnderFile, type LicenseFileUse } from '../index.js';
  *
  * What is shared is the part both instances derived identically: which licences a copy covers,
  * the notes that use it, and the text rendered so a reader can follow the URLs inside it.
+ *
+ * All three are `<section>`s with their own heading, including the text — the page's subject
+ * cannot be the one part of it with no heading, or a reader moving by heading arrives at the note
+ * list and the terms are somewhere past the end of it.
  */
 interface Props {
   licenseFile: LicenseFile;
@@ -84,9 +88,12 @@ if (cursor < licenseFile.text.length) segments.push({ text: licenseFile.text.sli
   </section>
 )}
 
-<pre class="license-file-text">{segments.map(segment => segment.href
-  ? <a href={segment.href} class="license-file-link">{segment.text}</a>
-  : segment.text)}</pre>
+<section class="license-file-terms">
+  <h2>License text</h2>
+  <pre class="license-file-text">{segments.map(segment => segment.href
+    ? <a href={segment.href} class="license-file-link">{segment.text}</a>
+    : segment.text)}</pre>
+</section>
 
 <style>
   .license-file-policies {
@@ -123,7 +130,8 @@ if (cursor < licenseFile.text.length) segments.push({ text: licenseFile.text.sli
   .license-file-uses {
     margin-bottom: 1.5rem;
   }
-  .license-file-uses h2 {
+  .license-file-uses h2,
+  .license-file-terms h2 {
     margin: 0 0 0.6rem;
     font-size: 1rem;
     color: var(--color-text-primary);
