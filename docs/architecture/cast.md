@@ -2,8 +2,10 @@
 
 `@galaxy-foundry/cast` implements casting: everything between a loaded Mold and a published
 bundle, plus the deterministic mechanics underneath it. What a consuming Foundry still owns is
-its own knowledge — which kinds exist, what a skill document should say, how a non-verbatim mode
-renders — and that reaches the caster through `CastHooks` rather than through a fork of it.
+its own knowledge — which kinds exist, what the cast document should say, how a non-verbatim mode
+renders — and that reaches the caster through `CastHooks` rather than through a fork of it. What
+the document is called, and what a cast of a Mold is called, are the target's, declared in
+`_target.yml` under `document:`.
 
 The package remains an early extraction. Its first consumer has a committed bundle corpus that
 acts as a byte-identity oracle, but an independent second caster has not yet tested every
@@ -17,20 +19,22 @@ for the consumer-owned resolver, renderer, and target in one repository composit
 
 ## Ownership boundary
 
-| Concern                                   | Package                     | Consuming Foundry                   |
-| ----------------------------------------- | --------------------------- | ----------------------------------- |
-| Target-relative bundle placement          | resolves and validates      | declares `_target.yml`              |
-| Conventional `casts/<target>/` root       | offers a helper             | may adopt or replace                |
-| Mold and reference resolution             | owns                        | declares the kinds and the contract |
-| Which kinds exist and how each resolves   | does not own                | owns, in `reference_contract.yml`   |
-| Target-specific rendering                 | calls a registered renderer | owns the renderer                   |
-| What a skill document says                | owns title and section form | owns the lede and every section     |
-| File and tree reconciliation              | owns                        | supplies expected paths and bytes   |
-| Write versus inert check behavior         | owns at helper level        | selects the mode                    |
-| Redistribution-policy application         | owns                        | supplies resolved reference entries |
-| Note/license coherence                    | does not own                | validates before casting            |
-| Provenance record shape and carry-over    | owns                        | assembles and persists the record   |
-| Error aggregation and process exit status | returns values; never exits | owns                                |
+| Concern                                   | Package                       | Consuming Foundry                   |
+| ----------------------------------------- | ----------------------------- | ----------------------------------- |
+| Target-relative bundle placement          | resolves and validates        | declares `_target.yml`              |
+| Conventional `casts/<target>/` root       | offers a helper               | may adopt or replace                |
+| Mold and reference resolution             | owns                          | declares the kinds and the contract |
+| Which kinds exist and how each resolves   | does not own                  | owns, in `reference_contract.yml`   |
+| Target-specific rendering                 | calls a registered renderer   | owns the renderer                   |
+| What the cast document says               | owns title and section form   | owns the lede and every section     |
+| What the cast document is called          | writes what the target names  | declares `document.path`            |
+| What a cast of a Mold is called           | substitutes the declared noun | declares `document.noun`            |
+| File and tree reconciliation              | owns                          | supplies expected paths and bytes   |
+| Write versus inert check behavior         | owns at helper level          | selects the mode                    |
+| Redistribution-policy application         | owns                          | supplies resolved reference entries |
+| Note/license coherence                    | does not own                  | validates before casting            |
+| Provenance record shape and carry-over    | owns                          | assembles and persists the record   |
+| Error aggregation and process exit status | returns values; never exits   | owns                                |
 
 The library cannot truthfully choose what to render, where source notes live, which kinds a
 corpus has, or whether one failed artifact should fail a release. Those decisions require the

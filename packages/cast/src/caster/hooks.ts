@@ -171,14 +171,14 @@ export interface CastHooks {
    */
   readonly renderers: RefRenderers;
   /**
-   * Bundle-root files beyond `SKILL.md` and `_provenance.json`.
+   * Bundle-root files beyond the target's document and `_provenance.json`.
    *
-   * Both of ours describe Galaxy: which tools a skill needs installed, and how to verify what it
-   * produces. A Foundry of research notes contributes none, and gets a bundle of exactly the two
-   * files casting itself writes.
+   * The first casting Foundry contributes two, both describing Galaxy: which tools a bundle needs
+   * installed, and how to verify what it produces. A Foundry of research notes contributes none,
+   * and gets a bundle of exactly the two files casting itself writes.
    */
   readonly bundleFiles: readonly BundleFileContributor[];
-  /** The paragraph under the skill's title, before the first section. */
+  /** The paragraph under the document's title, before the first section. */
   readonly skillLede: string;
   /** Everything below that paragraph. */
   readonly skillSections: SkillSectionContributor;

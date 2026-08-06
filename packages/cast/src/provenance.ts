@@ -16,6 +16,15 @@
 export const PROVENANCE_SCHEMA_VERSION = 4;
 
 /**
+ * What the record is called in a bundle.
+ *
+ * Unlike the document beside it, this filename is NOT the target's to choose. The record is the
+ * caster's own account of what it did, and everything that reads a bundle without knowing which
+ * target produced it — a drift gate, a verifier, a site — finds it by this name.
+ */
+export const PROVENANCE_FILE = '_provenance.json';
+
+/**
  * One resolved reference, and what casting did with it.
  *
  * The optional fields read `?: T | undefined` rather than `?: T`, and the record types below
