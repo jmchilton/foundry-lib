@@ -38,9 +38,15 @@ import {
 } from '../provenance.js';
 import { reconcileAbsent, reconcileText } from '../reconcile.js';
 import type { BundleFile, CastHooks } from './hooks.js';
-import { castOneRef, expandCompanions, resolveMoldRef, type ResolvedRef } from './refs.js';
+import {
+  castOneRef,
+  duplicateDestinations,
+  expandCompanions,
+  resolveMoldRef,
+  type ResolvedRef,
+} from './refs.js';
 import { renderSkillMarkdown } from './skill.js';
-import type { TargetConfig } from './target-config.js';
+import { ownedSubtrees, type TargetConfig } from './target-config.js';
 
 /** The Mold being cast, already read off disk. */
 export interface CastSubject {
@@ -80,6 +86,13 @@ export interface CastRequest<Ext extends object = Record<string, never>> {
   mold: CastSubject;
   castContract: CastContract;
   refKinds: Record<string, KindTerm>;
+  /**
+   * Every address a note answers to, already resolved to its path.
+   *
+   * Built by the instance, which is also where a note gets any SECOND address — Galaxy's CLI
+   * command notes answer to `[[gxwf validate]]` as well as to their filename. A cast reads this
+   * map and never adds to it, so how many ways a note can be named is settled before it arrives.
+   */
   slugMap: ReadonlyMap<string, string>;
   metaByPath: ReadonlyMap<string, Frontmatter>;
   hooks: CastHooks;
@@ -210,6 +223,8 @@ export async function castMold<Ext extends object = Record<string, never>>(
     return companion !== 0 ? companion : a.dst.localeCompare(b.dst);
   });
 
+  errors.push(...duplicateDestinations(resolved));
+
   // Assemble against a private copy of the current bundle. Every reconciliation therefore
   // reports the same drift it would find on the real tree while leaving the checkout untouched,
   // and hooks inspect the complete expected bundle — new refs, contributed files and provenance
@@ -262,7 +277,7 @@ export async function castMold<Ext extends object = Record<string, never>>(
     if (skillDrift.reason) drift.push({ file: 'SKILL.md', reason: skillDrift.reason });
     staged.add('SKILL.md');
 
-    // Reduce `references/` to exactly what provenance lists.
+    // Reduce the subtrees this cast owns to exactly what provenance lists.
     //
     // Casting writes each ref and never looked at what was already there, so a file that stops
     // being a ref stayed in the bundle forever. Undeclaring one companion was enough to prove it:
@@ -270,18 +285,22 @@ export async function castMold<Ext extends object = Record<string, never>>(
     // and the file sat in nine bundles regardless — invisible to every check, and still the first
     // thing an agent listing the directory would find.
     //
-    // Scoped to `references/` because that subtree is the only part of a bundle casting owns —
-    // `runs/` is harvested output and is not ours to delete.
+    // Scoped to where the TARGET places its kinds, which is the only part of a bundle casting
+    // owns — harvested output and instance contributions land elsewhere and are not ours to
+    // delete. See `ownedSubtrees`.
     const declaredRefs = new Set(refEntries.map((entry) => entry.dst));
-    drift.push(
-      ...reconcileTreeTo({
-        root: path.join(stagedBundleRoot, 'references'),
-        declared: declaredRefs,
-        relativeTo: stagedBundleRoot,
-        reason: () => 'orphan (no ref claims it)',
-        check: false,
-      }),
-    );
+    const owned = ownedSubtrees(request.target);
+    for (const subtree of owned) {
+      drift.push(
+        ...reconcileTreeTo({
+          root: path.join(stagedBundleRoot, subtree),
+          declared: declaredRefs,
+          relativeTo: stagedBundleRoot,
+          reason: () => 'orphan (no ref claims it)',
+          check: false,
+        }),
+      );
+    }
 
     // Bundle-root files this instance contributes are reconciled into the staged bundle before
     // checks run. A checker therefore sees the bytes this cast proposes, never a stale manifest
@@ -410,13 +429,15 @@ export async function castMold<Ext extends object = Record<string, never>>(
 
     // Removals, which copying cannot express: refs that stopped being refs, and contributions
     // whose declaration says the file must not be there.
-    reconcileTreeTo({
-      root: path.join(bundleRoot, 'references'),
-      declared: declaredRefs,
-      relativeTo: bundleRoot,
-      reason: () => 'orphan (no ref claims it)',
-      check: false,
-    });
+    for (const subtree of owned) {
+      reconcileTreeTo({
+        root: path.join(bundleRoot, subtree),
+        declared: declaredRefs,
+        relativeTo: bundleRoot,
+        reason: () => 'orphan (no ref claims it)',
+        check: false,
+      });
+    }
     reconcileBundleFiles(
       contributed.filter((file) => file.content === null),
       bundleRoot,

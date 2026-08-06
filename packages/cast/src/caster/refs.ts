@@ -310,6 +310,33 @@ export function expandCompanions(resolved: ResolvedRef[], ctx: RefResolution): R
 }
 
 /**
+ * Destinations more than one ref claims, one message each.
+ *
+ * A bundle path is a ref's identity everywhere downstream: the orphan sweep asks what claims a
+ * path, provenance is keyed by it, and SKILL.md names it. Two refs on one path therefore look
+ * like one everywhere the answer matters — the second write silently replaces the first, the
+ * sweep sees a claimed path and keeps it, and the record carries two entries with different
+ * `src_hash` for a file that can only have one. Nothing else in a cast is positioned to notice.
+ *
+ * The reachable case is companions: their destination is the kind's directory plus the
+ * companion's own filename, so two notes of one kind that each ship a `table.csv` collide.
+ */
+export function duplicateDestinations(refs: readonly ResolvedRef[]): string[] {
+  const byDst = new Map<string, ResolvedRef[]>();
+  for (const ref of refs) {
+    const claimants = byDst.get(ref.dst);
+    if (claimants) claimants.push(ref);
+    else byDst.set(ref.dst, [ref]);
+  }
+  return [...byDst.entries()]
+    .filter(([, claimants]) => claimants.length > 1)
+    .map(([dst, claimants]) => {
+      const sources = claimants.map((c) => c.src || c.ref).join(', ');
+      return `${dst} is claimed by ${claimants.length} refs (${sources}) — a bundle path names one file, so the later write would replace the earlier and both would be recorded`;
+    });
+}
+
+/**
  * Place one ref's bytes and report what it took.
  *
  * There is no check mode in here. Assembly always writes, because it writes into a staged copy
@@ -327,13 +354,18 @@ export async function castOneRef(
   const renderers = hooks.renderers;
   const dstAbs = path.join(bundleRoot, resolved.dst);
 
-  // Package-vendored schema: import the named export, JSON.stringify, write verbatim.
+  // Package-vendored payload: import the named export, JSON.stringify, write verbatim.
   // No file `src` exists; src_hash and dst_hash are both the hash of the synthesized JSON.
+  //
+  // Which KINDS arrive here is the contract's to say — `package-export` is declared per kind,
+  // and what a kind is called is exactly what varies between Foundries. Only the mode is
+  // checked, because that is a fact about these bytes rather than about one instance's
+  // vocabulary: the value IS the file, so there is no source for a renderer to transform.
   if (resolved.package_source) {
-    if (resolved.kind !== 'schema' || resolved.mode !== 'verbatim') {
+    if (resolved.mode !== 'verbatim') {
       return {
         entry: { ...skeleton(resolved), src_hash: null, dst_hash: null, source: 'deterministic' },
-        error: `package_source ref must be kind=schema mode=verbatim (got ${resolved.kind}/${resolved.mode})`,
+        error: `${resolved.ref} resolves via package-export, which synthesizes its own bytes and so must be mode=verbatim (got ${resolved.mode})`,
       };
     }
     // Imported by the INSTANCE, not here. A bare `import(spec)` resolves relative to the file
