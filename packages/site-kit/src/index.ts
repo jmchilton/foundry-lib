@@ -265,6 +265,33 @@ export function referenceStyleGaps(css: string): string[] {
 }
 
 /**
+ * The custom properties the licence badge NAMES and does not define.
+ *
+ * The three `--color-license-*` entries are why this list is worth having. They arrived in both
+ * instances as raw hexes — the same three, to the byte — so nothing could go wrong with them and
+ * nothing could change them either. As tokens they can do both, and the failure they can now have
+ * is the quiet one: a chip whose background resolves to nothing is still legible, still plausible,
+ * and no longer distinguishable from the chip beside it that means the opposite thing.
+ *
+ * Named for the POLICY, not the palette. `--color-license-own-words` is whatever an instance uses
+ * to mean "this text may not be redistributed", and a site with a caution colour already maps it
+ * on in one line. A name like `--color-amber` would pin a decision that belongs to whoever reads.
+ */
+export const LICENSE_BADGE_TOKENS = [
+  '--color-license-verbatim',
+  '--color-license-own-words',
+  '--color-license-copyleft',
+  '--color-accent',
+  '--color-text-secondary',
+  '--font-mono',
+] as const;
+
+/** What {@link LICENSE_BADGE_TOKENS} names that a built stylesheet does not supply. */
+export function licenseBadgeStyleGaps(css: string): string[] {
+  return styleGaps(css, LICENSE_BADGE_TOKENS);
+}
+
+/**
  * A reference's target, once the instance has resolved it.
  *
  * The component takes a resolver rather than a link map, because how a `ref` becomes an href is

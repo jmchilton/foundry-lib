@@ -1,0 +1,85 @@
+---
+import { resolveLicenseRow, type LicensePolicy } from '@galaxy-foundry/license-policy';
+
+/**
+ * What a licence PERMITS, as chips, from the id a note declares.
+ *
+ * Both instances that depend on the policy table wrote this row of chips themselves, and arrived
+ * at the same three colours as literals — `#16a34a`, `#d97706`, `#dc2626` — in two repositories.
+ * The markup agreed too; only the padding and the letter-spacing differed, by amounts nobody
+ * chose. Those are the residue of typing the same thing twice, so this settles them rather than
+ * parameterizing them.
+ *
+ * The badge is deliberately NOT the box around it. It reads `license` and the row, and nothing
+ * else — no `license_file`, no attribution, no link. That is what makes it shareable: the table's
+ * own header comment draws the line at "what does this licence permit" versus "is this note right
+ * about its licence", and every value here falls on the first side. The credit line a particular
+ * source needs, and whether a vendored copy travels with it, are the second.
+ */
+interface Props {
+  /** The note's `license` frontmatter: an SPDX id, or a `LicenseRef-` custom ref. */
+  license: string;
+  /**
+   * The instance's loaded table. Passed rather than bundled, because an instance validates its
+   * corpus against one specific version of the policy and a component reaching for its own copy
+   * could disagree with the schema that admitted the note.
+   */
+  policy: LicensePolicy;
+}
+
+const { license, policy } = Astro.props;
+
+// Unknown or missing ids resolve to the default row — own-words-only, and flagged as a defect.
+// That is the safe answer rather than the accurate one, and it still renders: a chip that says
+// something conservative beats a gap where a licence should be.
+const row = resolveLicenseRow(policy, license);
+
+/**
+ * The label, from the column that exists to be read.
+ *
+ * `name` equals the id in 1 of 23 rows. Rendering the id instead is legible for `MIT` and survives
+ * `Apache-2.0`, which is why one instance did it for sixteen notes without noticing — and it turns
+ * `LicenseRef-arXiv-nonexclusive-distrib-1.0` into a pill that teaches a reader nothing. The id
+ * stays reachable as the chip's title, so the precise answer is a hover away.
+ */
+const policyLabel = row.policy === 'own-words-only' ? 'own-words only' : 'verbatim OK';
+---
+<span class="license-badge">
+  <span class="license-chip license-name" title={license}>{row.name}</span>
+  <span class="license-chip license-policy" data-policy={row.policy}>{policyLabel}</span>
+  {row.copyleft && <span class="license-chip license-copyleft">copyleft</span>}
+</span>
+
+<style>
+  .license-badge {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .license-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.16rem 0.5rem;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--color-text-secondary);
+  }
+  .license-name {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+  /* Keyed on the row's own value, never on a licence name. A selector listing ids would be a copy
+     of the table kept where the table cannot see it — and silently no opinion at all about the
+     next row added upstream. */
+  .license-policy[data-policy='verbatim-ok'] {
+    background: color-mix(in srgb, var(--color-license-verbatim) 16%, transparent);
+  }
+  .license-policy[data-policy='own-words-only'] {
+    background: color-mix(in srgb, var(--color-license-own-words) 18%, transparent);
+  }
+  .license-copyleft {
+    background: color-mix(in srgb, var(--color-license-copyleft) 16%, transparent);
+  }
+</style>

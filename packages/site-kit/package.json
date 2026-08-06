@@ -15,7 +15,8 @@
     "./SiteShell.astro": "./src/components/SiteShell.astro",
     "./SiteHeader.astro": "./src/components/SiteHeader.astro",
     "./SiteFooter.astro": "./src/components/SiteFooter.astro",
-    "./ReferenceContract.astro": "./src/components/ReferenceContract.astro"
+    "./ReferenceContract.astro": "./src/components/ReferenceContract.astro",
+    "./LicenseBadge.astro": "./src/components/LicenseBadge.astro"
   },
   "files": [
     "dist",
@@ -47,6 +48,7 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@galaxy-foundry/license-policy": "workspace:^",
     "@galaxy-foundry/reference-contract": "workspace:^"
   },
   "peerDependencies": {

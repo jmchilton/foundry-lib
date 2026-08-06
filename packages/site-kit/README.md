@@ -161,6 +161,50 @@ Evidence chips are styled from the standing each term **declares**
 (`@galaxy-foundry/reference-contract` ships `standing: provisional | grounded`), not from a list of
 term names in a selector. A term added to the vocabulary gets a colour without a component release.
 
+## The licence badge
+
+`LicenseBadge.astro` renders what a licence **permits**, from the id a note declares and the table
+in `@galaxy-foundry/license-policy`: the licence name, its redistribution policy, and a copyleft
+chip where the row calls for one.
+
+```astro
+---
+import LicenseBadge from '@galaxy-foundry/site-kit/LicenseBadge.astro';
+import { licensePolicy } from '../lib/registries';
+---
+<LicenseBadge license={entry.data.license} policy={licensePolicy} />
+```
+
+The table is passed in rather than bundled. An instance validates its corpus against one specific
+version of the policy, and a component reaching for its own copy could disagree with the schema
+that admitted the note.
+
+**What the badge is not** is the box around it. It reads `license` and the row, and nothing else —
+no `license_file`, no attribution line, no link. That boundary is the policy table's own, stated in
+its header comment: what a licence permits is shared, whether a _note_ is right about its licence
+is instance-local. The credit line a particular source needs, and whether a vendored copy travels
+with it, are the second question and stay per-instance.
+
+The chip label is the row's `name`, not the SPDX id, which stays reachable as the chip's `title`.
+`name` equals the id in 1 of 23 rows — rendering the id is fine for `MIT`, survives `Apache-2.0`,
+and turns `LicenseRef-arXiv-nonexclusive-distrib-1.0` into a pill that teaches a reader nothing.
+
+The policy chip is keyed on `data-policy`, the row's own value, so a row added upstream is styled
+without a component release. Its three colours are `LICENSE_BADGE_TOKENS`, checked with
+`licenseBadgeStyleGaps` — they were raw hexes in both instances that grew this component, the same
+three to the byte, which is a duplication nothing could have caught and nothing could change.
+
+```css
+:root {
+  --color-license-verbatim: #16a34a;
+  --color-license-own-words: #d97706;
+  --color-license-copyleft: #dc2626;
+}
+```
+
+Named for the policy rather than the palette: `--color-license-own-words` is whatever this site
+uses to mean "this text may not be redistributed".
+
 ## The search index
 
 The header renders a Pagefind search box. What goes IN the index is the other half, and its rule
@@ -244,22 +288,23 @@ vocabulary is on screen; then add your own kinds' specimens beside them.
 
 ## Exports
 
-| Import                                             | What                                                                                                                                                                                                                                                                                                                                                                           |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `ResolvedReference`, `PAGEFIND_BODY_ATTR`, `searchIndexGaps`, `SiteShellProps`, `SiteHeaderProps`, `SiteFooterProps`, `ReferenceContractProps` |
-| `@galaxy-foundry/site-kit/specimens`               | `Specimen`, `SpecimenGroup`, `SpecimenSurface`, `SPECIMENS`, `REFERENCE_SPECIMENS`, `HEADER_SPECIMENS`, `FOOTER_SPECIMENS`, `SHELL_SPECIMENS`, `SPECIMEN_CONTRACT`, `sharesPage`, `specimenPath`                                                                                                                                                                               |
-| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                                                                                                                                            |
-| `@galaxy-foundry/site-kit/SiteHeader.astro`        | the header alone — a gallery cannot show it otherwise                                                                                                                                                                                                                                                                                                                          |
-| `@galaxy-foundry/site-kit/SiteFooter.astro`        | the footer alone                                                                                                                                                                                                                                                                                                                                                               |
-| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                                                                                                                                             |
+| Import                                             | What                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@galaxy-foundry/site-kit`                         | `SiteIdentity`, `ShellLink`, `ResolvedShellLink`, `ResolvedNav`, `resolveNav`, `shellBase`, `shellHref`, `CONTAINER`, `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, `styleGaps`, `REFERENCE_TOKENS`, `referenceStyleGaps`, `LICENSE_BADGE_TOKENS`, `licenseBadgeStyleGaps`, `ResolvedReference`, `PAGEFIND_BODY_ATTR`, `searchIndexGaps`, `SiteShellProps`, `SiteHeaderProps`, `SiteFooterProps`, `ReferenceContractProps` |
+| `@galaxy-foundry/site-kit/specimens`               | `Specimen`, `SpecimenGroup`, `SpecimenSurface`, `SPECIMENS`, `REFERENCE_SPECIMENS`, `HEADER_SPECIMENS`, `FOOTER_SPECIMENS`, `SHELL_SPECIMENS`, `SPECIMEN_CONTRACT`, `sharesPage`, `specimenPath`                                                                                                                                                                                                                               |
+| `@galaxy-foundry/site-kit/SiteShell.astro`         | the shell component                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `@galaxy-foundry/site-kit/SiteHeader.astro`        | the header alone — a gallery cannot show it otherwise                                                                                                                                                                                                                                                                                                                                                                         |
+| `@galaxy-foundry/site-kit/SiteFooter.astro`        | the footer alone                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `@galaxy-foundry/site-kit/ReferenceContract.astro` | the reference card                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `@galaxy-foundry/site-kit/LicenseBadge.astro`      | the licence badge                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 `resolveNav` is exported because it is the only part of the shell with behaviour worth asserting
 on: a destination is active on its own page and everything beneath it, compared on whole path
 segments, so `/tag/` does not light up on `/tags/`.
 
 `shellStyleGaps` is exported for the opposite reason — it asserts on something the kit deliberately
-does NOT do. See "Define the tokens" above. `referenceStyleGaps` is the same check for the card,
-and both are `styleGaps` with a different list.
+does NOT do. See "Define the tokens" above. `referenceStyleGaps` and `licenseBadgeStyleGaps` are
+the same check for the card and the badge, and all three are `styleGaps` with a different list.
 
 The shell also owns a small client runtime: initial dark-mode selection, persisted theme toggling,
 Pagefind palette synchronization, and the overflow menu's click, outside-click, and Escape-key
