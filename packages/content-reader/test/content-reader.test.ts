@@ -70,6 +70,16 @@ describe('collection-backed content reader', () => {
     expect(noteIdFromPath('one.md')).toBe('one');
   });
 
+  it('returns every routed note target in deterministic collection and path order', () => {
+    expect(contentReader.noteTargets()).toEqual([
+      { collection: 'packages', id: 'alpha', target: { path: 'packages/alpha' } },
+      { collection: 'papers', id: 'nested', target: { path: 'papers/nested' } },
+    ]);
+    expect(contentReader.noteTargets('papers')).toEqual([
+      { collection: 'papers', id: 'nested', target: { path: 'papers/nested' } },
+    ]);
+  });
+
   it('keeps the broader markdown inventory separate from typed notes', () => {
     expect(contentReader.markdownFiles()).toEqual([
       'glossary.md',
@@ -87,6 +97,7 @@ describe('collection-backed content reader', () => {
   it('does not read note contents when frontmatter features are unused', () => {
     const readFile = vi.spyOn(fs, 'readFileSync');
     try {
+      contentReader.noteTargets();
       contentReader.wikiLinkMap();
       expect(readFile).not.toHaveBeenCalled();
     } finally {
@@ -115,9 +126,26 @@ describe('collection-backed content reader', () => {
     });
 
     const readFile = vi.spyOn(fs, 'readFileSync');
-    const map = reader.wikiLinkMap();
+    const targets = reader.noteTargets();
     expect(readFile).toHaveBeenCalledTimes(2);
     readFile.mockRestore();
+    expect(targets).toEqual([
+      {
+        collection: 'packages',
+        id: 'alpha',
+        target: { path: 'packages/alpha', title: 'Validate a Galaxy workflow.' },
+      },
+      {
+        collection: 'papers',
+        id: 'nested',
+        target: {
+          path: 'papers/nested',
+          title: 'Turn a Nextflow pipeline into a structured summary.',
+        },
+      },
+    ]);
+
+    const map = reader.wikiLinkMap();
     expect(map.get('gxwf-validate')).toEqual({
       path: 'packages/alpha',
       title: 'Validate a Galaxy workflow.',
@@ -241,6 +269,13 @@ describe('wiki-link address precedence', () => {
 
   it('lets later collections win primary collisions', () => {
     expect(reader.wikiLinkMap().get('same')).toEqual({ path: 'second/same' });
+  });
+
+  it('keeps every routed target even when wiki-link primary addresses collide', () => {
+    expect(reader.noteTargets().filter(({ id }) => id === 'same')).toEqual([
+      { collection: 'first', id: 'same', target: { path: 'first/same' } },
+      { collection: 'second', id: 'same', target: { path: 'second/same' } },
+    ]);
   });
 
   it('never lets an alias overwrite a primary address', () => {

@@ -34,6 +34,12 @@ The collection table is also the target boundary: companions beside a routed not
 addressable unless their own collection row admits them. Primary collisions follow collection
 property order with later collections winning; aliases cannot overwrite primaries.
 
+The reader exposes two target views for different questions. `noteTargets()` preserves every
+routed note and is the source for route/build coverage. `wikiLinkMap()` is an address map: primary
+collisions may collapse, aliases add addresses, and explicit extra targets may override them.
+Using the address map as a route inventory silently drops a real page whenever two note ids share
+one primary slug.
+
 ## Why Astro collection exports stay local
 
 The tempting final step is a package that maps an arbitrary collection catalog into Astro's

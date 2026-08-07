@@ -31,6 +31,7 @@ export const contentReader = createContentReader({
 
 contentReader.noteFiles('papers');
 contentReader.noteIds('papers');
+contentReader.noteTargets('papers');
 contentReader.wikiLinkMap();
 contentReader.remarkWikiLinks({ base: '/my-foundry' });
 contentReader.resolveMarkdown(source, { base: '/my-foundry' });
@@ -56,6 +57,12 @@ Address precedence is deterministic:
 
 Only files admitted by the collection table become primary or alias targets. Markdown companions
 and other adjacent files remain visible to `markdownFiles()` but cannot leak into `wikiLinkMap()`.
+
+`noteTargets()` is the complete routed-note view before wiki-link addressing. It returns each
+note's collection, id, and instance-supplied target in deterministic collection/path order; pass a
+collection name to narrow it. Unlike `wikiLinkMap()`, it does not collapse primary-address
+collisions, add aliases, or include explicit extra targets. Use it when every routed note matters,
+such as checking that a static build emitted a page for each one.
 
 ## Boundary
 
