@@ -35,6 +35,20 @@ describe('what a cast command was asked to do', () => {
     expect(() => parse('m', '--dry-run')).toThrow(/--dry-run/);
   });
 
+  it('refuses a value flag given no value, rather than eating the next flag', () => {
+    // `--target --check` read `--check` as the target name. The run then had check=false and
+    // wrote the bundle it was asked to inspect — the accident this parser exists to refuse.
+    expect(() => parse('m', '--target', '--check')).toThrow(/--target needs a value/);
+    expect(() => parse('m', '--target')).toThrow(/--target needs a value/);
+    expect(() => parse('m', '--note')).toThrow(/--note needs a value/);
+    expect(() => parse('m', '--root')).toThrow(/--root needs a value/);
+  });
+
+  it('still takes a value that merely looks odd, as long as it is not a flag', () => {
+    expect(parse('m', '--note', '-1 thing').note).toBe('-1 thing');
+    expect(parse('m', '--note=--check').note).toBe('--check');
+  });
+
   it('names itself in the usage line, because two Foundries invoke this differently', () => {
     expect(() => parse()).toThrow(/statgen-foundry-build cast/);
     expect(() => parse('a', 'b')).toThrow(/statgen-foundry-build cast/);

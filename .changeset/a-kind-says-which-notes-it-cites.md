@@ -29,3 +29,14 @@ now lists the accepted types rather than the kind name.
 An empty list is refused. A kind that cannot be cast says so by having no `cast:` block at all;
 an empty `note_types` would be a kind that is castable in principle and fails every reference in
 practice.
+
+## Two fixes in the command shell and the noun substitution
+
+`parseCastArgs` now refuses a value-taking flag given no value. `--target --check` read `--check` as
+the target name, leaving `check` false — so a run asked to inspect a bundle wrote it instead,
+which is the exact accident the parser refuses unknown flags to avoid.
+
+`runtimeProcedureBody` treats the noun as text on both sides of the substitution. It arrives from
+a YAML file, so it is data in a pattern and data in a replacement: `$&` means "the matched text"
+to `String.replace`, so a noun containing one put the words back (`The Mold` → `The The Mold`),
+and a `(` threw outright.

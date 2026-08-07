@@ -40,6 +40,18 @@ describe('the noun a cast of a Mold goes by', () => {
     );
   });
 
+  it('treats the noun as text on both sides of the substitution', () => {
+    // It arrives from a YAML file, so it is data in a pattern AND data in a replacement.
+    // `$&` means "the matched text" to `String.replace`, so this used to put the words back:
+    // `The Mold` came out as `The The Mold`. A `(` in the pattern half threw outright.
+    expect(runtimeProcedureBody('The Mold does X.', 'm', '$&')).toBe('The $& does X.');
+    expect(runtimeProcedureBody('The Mold does X.', 'm', 'card (v2)')).toBe(
+      'The card (v2) does X.',
+    );
+    expect(() => runtimeProcedureBody('The Mold does X.', 'm', 'note(')).not.toThrow();
+    expect(runtimeProcedureBody('The Mold does X.', 'm', 'a|b')).toBe('The a|b does X.');
+  });
+
   it('drops the heading the document already spends on its title', () => {
     const out = runtimeProcedureBody(body, 'do-a-thing', 'skill');
     expect(out.startsWith('### Step')).toBe(true);
