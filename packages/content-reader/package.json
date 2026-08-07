@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/content-reader",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Collection-backed content and wiki-link plumbing shared by Foundry sites; schemas, routes, and domain presentation stay per-instance.",
   "type": "module",
   "exports": {

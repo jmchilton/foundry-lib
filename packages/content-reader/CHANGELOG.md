@@ -1,5 +1,13 @@
 # @galaxy-foundry/content-reader
 
+## 0.2.1
+
+### Patch Changes
+
+- [#86](https://github.com/jmchilton/foundry-lib/pull/86) [`f9eef81`](https://github.com/jmchilton/foundry-lib/commit/f9eef81c1f74fb3380ebe6a5342b79d77ea05a93) Thanks [@jmchilton](https://github.com/jmchilton)! - Expose every collection-backed note through `noteTargets()`, preserving colliding routes before
+  wiki-link aliases and address precedence are applied. Instances can now derive built-page coverage
+  from the same route policy used by the reader instead of maintaining a hand-written route list.
+
 ## 0.2.0
 
 ### Minor Changes
