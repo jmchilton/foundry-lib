@@ -9,6 +9,6 @@ describe('contentReaderStyleGaps', () => {
   });
 
   it('reports a missing role even when component CSS references it', () => {
-    expect(contentReaderStyleGaps('.x{color:var(--color-brand)}')).toContain('--color-brand');
+    expect(contentReaderStyleGaps('.x{color:var(--color-link)}')).toContain('--color-link');
   });
 });

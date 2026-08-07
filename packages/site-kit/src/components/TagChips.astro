@@ -16,19 +16,28 @@ const { tags, tagBase } = Astro.props;
     gap: 0.4rem;
   }
 
+  /* A tag is a way in, so it is coloured as one. The bordered mono pill this used to draw is what
+     both adopting instances use for frontmatter shown as written — same surface, same border, same
+     face — so a chip matching it tells the reader nothing about which of the two is clickable.
+     Both instances had already removed that pill before the package reintroduced it. */
   .content-tag {
-    border: 1px solid var(--color-border-subtle);
+    display: inline-block;
     border-radius: 999px;
-    background: var(--color-surface-raised);
-    color: var(--color-text-muted);
-    padding: 0.15rem 0.55rem;
-    font-family: var(--font-mono);
+    background: var(--color-surface-hover);
+    color: var(--color-link);
+    padding: 0.125rem 0.5rem;
     font-size: 0.75rem;
+    font-weight: 500;
     text-decoration: none;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
   }
 
+  /* Only the anchor lights up. An unlinked chip that changed on hover would promise a destination
+     the instance has not built. */
   a.content-tag:hover {
-    border-color: var(--color-brand);
-    color: var(--color-brand);
+    background: var(--color-accent);
+    color: var(--color-chrome);
   }
 </style>

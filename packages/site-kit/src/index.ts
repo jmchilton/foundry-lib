@@ -277,14 +277,24 @@ export function styleGaps(
   ];
 }
 
-/** Theme roles used by ContentNote and TagChips, supplied by the instance. */
+/**
+ * Theme roles used by ContentNote and TagChips, supplied by the instance.
+ *
+ * These components' styles are SCOPED, so this list is the entire surface an instance can steer
+ * them through — a colour missing here is not a colour the instance can override elsewhere.
+ *
+ * `--color-link` and `--color-accent` are the load-bearing pair: they are what makes a tag chip
+ * read as a way into the corpus rather than as one more pill of frontmatter. Resolving to nothing,
+ * they leave a chip that is still legible and no longer distinguishable from the metadata beside
+ * it — the failure {@link LICENSE_BADGE_TOKENS} names for the policy hues, in a second place.
+ */
 export const CONTENT_READER_TOKENS = [
-  '--color-brand',
-  '--color-surface-raised',
-  '--color-border-subtle',
+  '--color-surface-hover',
+  '--color-link',
+  '--color-accent',
+  '--color-chrome',
   '--color-text-secondary',
   '--color-text-muted',
-  '--font-mono',
 ] as const;
 
 export function contentReaderStyleGaps(css: string): string[] {
