@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/cast",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "The deterministic half of casting for Foundry-pattern instances — bundle placement, drift reconciliation, and the provenance record. The kinds, slug map and renderers stay per-instance.",
   "type": "module",
   "exports": {
