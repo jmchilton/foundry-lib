@@ -2,8 +2,10 @@
 import LicenseBadge from '@galaxy-foundry/site-kit/LicenseBadge.astro';
 import LicenseFileBody from '@galaxy-foundry/site-kit/LicenseFileBody.astro';
 import ReferenceContract from '@galaxy-foundry/site-kit/ReferenceContract.astro';
+import ContentNote from '@galaxy-foundry/site-kit/ContentNote.astro';
 import SiteFooter from '@galaxy-foundry/site-kit/SiteFooter.astro';
 import SiteShell from '@galaxy-foundry/site-kit/SiteShell.astro';
+import TagChips from '@galaxy-foundry/site-kit/TagChips.astro';
 import { specimenPath } from '@galaxy-foundry/site-kit/specimens';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 
@@ -37,9 +39,11 @@ const { theme } = Astro.props;
  */
 const RENDERERS: Record<string, AstroComponentFactory> = {
   ReferenceContract,
+  ContentNote,
   LicenseBadge,
   LicenseFileBody,
   SiteFooter,
+  TagChips,
 };
 
 const unrenderable = inlineGroups.filter((group) => !RENDERERS[group.component]);
@@ -107,7 +111,9 @@ const other = THEMES.find((id) => id !== theme)!;
           </p>
           {group.specimens.map((specimen) => (
             <SpecimenCard group={group} specimen={specimen}>
-              <Component {...(specimen.props as Record<string, unknown>)} />
+              <Component {...(specimen.props as Record<string, unknown>)}>
+                <p>Specimen note body.</p>
+              </Component>
             </SpecimenCard>
           ))}
         </section>

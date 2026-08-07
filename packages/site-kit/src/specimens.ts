@@ -9,10 +9,12 @@ import type {
   LicenseBadgeProps,
   LicenseFileBodyProps,
   ReferenceContractProps,
+  ContentNoteProps,
   ResolvedReference,
   SiteFooterProps,
   SiteHeaderProps,
   SiteShellProps,
+  TagChipsProps,
 } from './index.js';
 
 /**
@@ -580,6 +582,59 @@ export const LICENSE_FILE_SPECIMENS: SpecimenGroup<LicenseFileBodyProps> = {
   ],
 };
 
+export const TAG_CHIPS_SPECIMENS: SpecimenGroup<TagChipsProps> = {
+  id: 'tag-chips',
+  component: 'TagChips',
+  importPath: '@galaxy-foundry/site-kit/TagChips.astro',
+  summary: 'Controlled vocabulary shown as links only when an instance has a browse route.',
+  surface: 'inline',
+  specimens: [
+    {
+      id: 'linked',
+      name: 'Browsable tags',
+      why: 'An established content site links each chip through the one route prefix the instance supplies.',
+      props: { tags: ['method/persistent-laplacian'], tagBase: '/foundry/tags' },
+    },
+    {
+      id: 'unlinked',
+      name: 'Tags before browse exists',
+      why: 'A partial content site shows controlled metadata without claiming a destination it has not built.',
+      props: { tags: ['method/persistent-laplacian'] },
+    },
+  ],
+};
+
+export const CONTENT_NOTE_SPECIMENS: SpecimenGroup<ContentNoteProps> = {
+  id: 'content-note',
+  component: 'ContentNote',
+  importPath: '@galaxy-foundry/site-kit/ContentNote.astro',
+  summary: 'The invariant page frame around an instance-specific typed note.',
+  surface: 'inline',
+  specimens: [
+    {
+      id: 'body-heading',
+      name: 'Body owns its heading',
+      why: 'Most corpus notes already begin with H1; the frame supplies navigation, summary, tags, and the article boundary without duplicating it.',
+      props: {
+        title: 'Package A',
+        summary: 'A package profile whose Markdown body owns its title.',
+        tags: ['method/persistent-laplacian'],
+        back: { href: '/packages/', label: 'Packages' },
+      },
+    },
+    {
+      id: 'frame-heading',
+      name: 'Frame owns its heading',
+      why: 'A design record whose body starts directly in prose asks the shared frame to render its title and summary.',
+      props: {
+        title: 'Content-reader architecture',
+        summary: 'Why content mechanics are shared and the content model is local.',
+        showHeading: true,
+      },
+    },
+  ],
+};
+
 /**
  * Every group the kit ships, in reading order.
  *
@@ -588,6 +643,8 @@ export const LICENSE_FILE_SPECIMENS: SpecimenGroup<LicenseFileBodyProps> = {
  * list is for the things that do not care — an index, a route manifest, a count.
  */
 export const SPECIMENS: readonly SpecimenGroup[] = [
+  CONTENT_NOTE_SPECIMENS,
+  TAG_CHIPS_SPECIMENS,
   REFERENCE_SPECIMENS,
   LICENSE_BADGE_SPECIMENS,
   LICENSE_FILE_SPECIMENS,

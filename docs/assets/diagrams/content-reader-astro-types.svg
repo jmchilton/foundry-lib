@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 340" width="900" height="340" role="img" aria-labelledby="title desc">
+  <title id="title">Astro collection typing boundary</title>
+  <desc id="desc">On the left, explicit exports of Book, Paper, and Mold schemas retain a discriminated union with all domain fields. On the right, feeding schemas A, B, and C through a generic loop produces their widest common shape and loses domain-specific fields.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e2552b"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .good { fill: #e3f1eb; stroke: #23745e; stroke-width: 2; }
+      .wide { fill: #f6ded4; stroke: #e2552b; stroke-width: 2; }
+      .schema { fill: #ffffff; stroke: #b9b1a2; stroke-width: 1.5; }
+      .heading { fill: #1a1d22; font: 700 18px Arial, sans-serif; }
+      .label { fill: #1a1d22; font: 700 15px Arial, sans-serif; }
+      .detail { fill: #555b63; font: 13px Arial, sans-serif; }
+      .edge { fill: none; stroke: #e2552b; stroke-width: 3; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" x="1" y="1" width="898" height="338" rx="14"/>
+
+  <text class="heading" x="225" y="42" text-anchor="middle">Explicit collection exports</text>
+  <rect class="schema" x="40" y="72" width="140" height="48" rx="6"/>
+  <text class="label" x="110" y="102" text-anchor="middle">Book schema</text>
+  <rect class="schema" x="40" y="137" width="140" height="48" rx="6"/>
+  <text class="label" x="110" y="167" text-anchor="middle">Paper schema</text>
+  <rect class="schema" x="40" y="202" width="140" height="48" rx="6"/>
+  <text class="label" x="110" y="232" text-anchor="middle">Mold schema</text>
+  <path class="edge" d="M 180 96 H 235 V 160 H 270"/>
+  <path class="edge" d="M 180 161 H 270"/>
+  <path class="edge" d="M 180 226 H 235 V 161"/>
+  <rect class="good" x="270" y="112" width="150" height="98" rx="8"/>
+  <text class="label" x="345" y="145" text-anchor="middle">Book | Paper | Mold</text>
+  <text class="detail" x="345" y="173" text-anchor="middle">collection discriminates</text>
+  <text class="detail" x="345" y="194" text-anchor="middle">domain fields remain</text>
+
+  <text class="heading" x="675" y="42" text-anchor="middle">Generic schema loop</text>
+  <rect class="schema" x="490" y="72" width="140" height="48" rx="6"/>
+  <text class="label" x="560" y="102" text-anchor="middle">Schema A</text>
+  <rect class="schema" x="490" y="137" width="140" height="48" rx="6"/>
+  <text class="label" x="560" y="167" text-anchor="middle">Schema B</text>
+  <rect class="schema" x="490" y="202" width="140" height="48" rx="6"/>
+  <text class="label" x="560" y="232" text-anchor="middle">Schema C</text>
+  <path class="edge" d="M 630 96 H 685 V 160 H 720"/>
+  <path class="edge" d="M 630 161 H 720"/>
+  <path class="edge" d="M 630 226 H 685 V 161"/>
+  <rect class="wide" x="720" y="112" width="150" height="98" rx="8"/>
+  <text class="label" x="795" y="145" text-anchor="middle">Common shape</text>
+  <text class="detail" x="795" y="173" text-anchor="middle">domain fields widen</text>
+  <text class="detail" x="795" y="194" text-anchor="middle">narrowing is lost</text>
+
+  <text class="detail" x="225" y="292" text-anchor="middle">Keep this declaration in the instance</text>
+  <text class="detail" x="675" y="292" text-anchor="middle">Do not abstract this into content-reader</text>
+</svg>

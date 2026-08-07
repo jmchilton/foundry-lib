@@ -220,6 +220,40 @@ const SMOKE = {
       throw new Error('packed transform rewrote code — a backtick means the syntax');
     }
   },
+  '@galaxy-foundry/content-reader': (mod) => {
+    const contentRoot = mkdtempSync(path.join(tmpdir(), 'foundry-smoke-content-reader-'));
+    try {
+      mkdirSync(path.join(contentRoot, 'packages'));
+      writeFileSync(path.join(contentRoot, 'packages', 'one.md'), '# One\n');
+      writeFileSync(path.join(contentRoot, 'packages', 'ignored.txt'), 'not a note\n');
+
+      const contentReader = mod.createContentReader({
+        collections: {
+          packages: { base: 'packages', pattern: ['one.md'], kind: 'package' },
+        },
+        contentPath: (relativePath) => path.join(contentRoot, relativePath),
+        targetOf: (collection, id) => ({ path: `${collection}/${id}` }),
+      });
+      if (contentReader.noteFiles('packages').join() !== 'packages/one.md') {
+        throw new Error('packed content reader did not apply the collection route');
+      }
+      if (contentReader.noteIds('packages').join() !== 'one') {
+        throw new Error('packed content reader did not derive the note id');
+      }
+      const link = contentReader.resolveLink('[[one]]', { base: '/foundry' });
+      if (link.href !== '/foundry/packages/one/' || link.label !== 'one') {
+        throw new Error(`packed content reader resolved to ${JSON.stringify(link)}`);
+      }
+      if (
+        contentReader.resolveMarkdown('see [[one]]', { base: '/foundry' }) !==
+        'see [one](/foundry/packages/one/)'
+      ) {
+        throw new Error('packed content reader did not bind raw Markdown links');
+      }
+    } finally {
+      rmSync(contentRoot, { recursive: true, force: true });
+    }
+  },
   '@galaxy-foundry/site-kit': async (mod, _peer, unpacked) => {
     // The nav rule, from the packed JS rather than the source tree.
     const nav = mod.resolveNav(
@@ -251,7 +285,7 @@ const SMOKE = {
     // compiles them at the consumer. So `files` carrying `src/` IS the delivery, and nothing but a
     // packed tarball can prove it: every test and typecheck here reads the source tree, where the
     // files are present either way.
-    for (const component of ['SiteShell', 'SiteHeader', 'SiteFooter']) {
+    for (const component of ['SiteShell', 'SiteHeader', 'SiteFooter', 'ContentNote', 'TagChips']) {
       const file = path.join(unpacked, 'src', 'components', `${component}.astro`);
       if (!existsSync(file)) throw new Error(`tarball has no src/components/${component}.astro`);
     }

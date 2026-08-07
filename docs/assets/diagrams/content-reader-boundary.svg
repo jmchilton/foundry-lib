@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 560" width="960" height="560" role="img" aria-labelledby="title desc">
+  <title id="title">Shared content-reader and instance ownership</title>
+  <desc id="desc">The Foundry instance owns schemas, explicit Astro collections, registries, routes, identity, domain furniture, theme, and content. It supplies a collection table and paths to kind-schema and content-reader, routes and extra targets to content-reader, and props, slots, and theme tokens to site-kit. Kind-schema collection matching and wiki-links transforms feed the content-reader package.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#e2552b"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfaf6; stroke: #d6d0c3; stroke-width: 2; }
+      .shared { fill: #262b32; stroke: #0e1013; stroke-width: 2; }
+      .instance { fill: #f6ded4; stroke: #e2552b; stroke-width: 2; }
+      .label { fill: #fbfaf6; font: 700 18px Arial, sans-serif; }
+      .detail { fill: #d9dde2; font: 13px Arial, sans-serif; }
+      .local-label { fill: #1a1d22; font: 700 20px Arial, sans-serif; }
+      .local-detail { fill: #555b63; font: 14px Arial, sans-serif; }
+      .eyebrow { fill: #9a3a1f; font: 700 12px Arial, sans-serif; letter-spacing: 1.5px; }
+      .edge { fill: none; stroke: #e2552b; stroke-width: 3; marker-end: url(#arrow); }
+      .edge-label { fill: #555b63; font: 12px Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="1" y="1" width="958" height="558" rx="14"/>
+  <text class="eyebrow" x="40" y="38">FOUNDRY-LIB</text>
+
+  <rect class="shared" x="40" y="65" width="200" height="125" rx="8"/>
+  <text class="label" x="140" y="100" text-anchor="middle">kind-schema</text>
+  <text class="detail" x="140" y="130" text-anchor="middle">collection matching</text>
+  <text class="detail" x="140" y="153" text-anchor="middle">schema machinery</text>
+
+  <rect class="shared" x="380" y="65" width="200" height="125" rx="8"/>
+  <text class="label" x="480" y="100" text-anchor="middle">content-reader</text>
+  <text class="detail" x="480" y="126" text-anchor="middle">file enumeration · note IDs</text>
+  <text class="detail" x="480" y="149" text-anchor="middle">link maps · Markdown binding</text>
+
+  <rect class="shared" x="720" y="65" width="200" height="125" rx="8"/>
+  <text class="label" x="820" y="100" text-anchor="middle">site-kit</text>
+  <text class="detail" x="820" y="126" text-anchor="middle">ContentNote · TagChips</text>
+  <text class="detail" x="820" y="149" text-anchor="middle">style-token checks</text>
+
+  <rect class="shared" x="40" y="235" width="200" height="92" rx="8"/>
+  <text class="label" x="140" y="270" text-anchor="middle">wiki-links</text>
+  <text class="detail" x="140" y="298" text-anchor="middle">grammar · transforms</text>
+
+  <path class="edge" d="M 240 125 H 365"/>
+  <path class="edge" d="M 240 281 H 330 V 155 H 365"/>
+
+  <rect class="instance" x="90" y="405" width="780" height="112" rx="8"/>
+  <text class="local-label" x="480" y="442" text-anchor="middle">Foundry instance</text>
+  <text class="local-detail" x="480" y="470" text-anchor="middle">schemas · explicit Astro collections · registries · route policy · identity</text>
+  <text class="local-detail" x="480" y="494" text-anchor="middle">domain facts and furniture · prose styles · theme · content</text>
+
+  <path class="edge" d="M 220 405 V 215 H 140 V 202"/>
+  <text class="edge-label" x="232" y="360">collection table + content paths</text>
+  <path class="edge" d="M 480 405 V 205"/>
+  <text class="edge-label" x="492" y="360">route mapping + extra targets</text>
+  <path class="edge" d="M 740 405 V 205 H 820 V 202"/>
+  <text class="edge-label" x="660" y="360">props + slots + theme tokens</text>
+</svg>
