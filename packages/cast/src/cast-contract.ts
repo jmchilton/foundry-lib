@@ -56,6 +56,21 @@ export interface CastDeclaration {
    */
   slug_field?: string;
   /**
+   * The note `type`s a ref of this kind may resolve to.
+   *
+   * Defaults to the kind's own name, which is what the caster asserted outright until a second
+   * corpus disagreed. It held because the first Foundry names a kind after the notes it points
+   * at — a `research` ref reaches a `type: research` note — and that is a fact about that
+   * corpus, not about casting.
+   *
+   * The second instance splits its research corpus by publication shape: `paper`, `book` and
+   * `tutorial` are three note types that one `research` kind cites. Under the old rule every
+   * such ref was an error, and the only repairs available were renaming a kind after one of the
+   * three types it cites or retyping the corpus to match the citation — each of which deforms
+   * the corpus to satisfy the caster.
+   */
+  note_types?: readonly string[];
+  /**
    * Whether this kind's notes may carry per-note `companions:` into a bundle.
    *
    * Layout stays the kind's and membership stays the note's: this says the kind's notes
@@ -76,7 +91,7 @@ export type CastContract = Record<string, CastDeclaration>;
  */
 export const CAST_BLOCK_KEY = 'cast';
 
-const CAST_FIELDS = new Set(['resolve', 'default_mode', 'slug_field', 'companions']);
+const CAST_FIELDS = new Set(['resolve', 'default_mode', 'slug_field', 'note_types', 'companions']);
 
 function fail(sourcePath: string, message: string): never {
   throw new Error(`${sourcePath}: ${message}`);
@@ -130,6 +145,20 @@ function parseCastDeclaration(
     fail(sourcePath, `${where}.slug_field must be a non-empty string`);
   }
 
+  // Declared, it must be a non-empty list of non-empty strings. An empty list would name a kind
+  // no note can ever satisfy, which is a cast that always fails rather than a kind that is not
+  // castable — the latter is said by omitting the `cast:` block.
+  const noteTypes = fields['note_types'];
+  if (noteTypes !== undefined) {
+    if (
+      !Array.isArray(noteTypes) ||
+      noteTypes.length === 0 ||
+      noteTypes.some((t) => typeof t !== 'string' || !t.trim())
+    ) {
+      fail(sourcePath, `${where}.note_types must be a non-empty list of note type names`);
+    }
+  }
+
   const companions = fields['companions'];
   if (typeof companions !== 'boolean') {
     fail(sourcePath, `${where}.companions must be true or false`);
@@ -141,6 +170,11 @@ function parseCastDeclaration(
     companions,
   };
   if (typeof slugField === 'string') declaration.slug_field = slugField;
+  // Absent means "the kind's own name", resolved here rather than at the comparison so the
+  // default is stated once and every reader of a declaration sees the same answered question.
+  declaration.note_types = Array.isArray(noteTypes)
+    ? (noteTypes as string[]).map((t) => t.trim())
+    : [kindName];
   return declaration;
 }
 

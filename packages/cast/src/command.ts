@@ -98,8 +98,15 @@ export function parseCastArgs(
     }
     const separated = FLAGS_WITH_VALUES.find((f) => f === a);
     if (separated) {
+      // A flag that takes a value and was given none must not quietly eat the next flag.
+      // `--target --check` read `--check` as the target name, which left `check` false and
+      // wrote the bundle the run was asked to inspect — the exact accident this parser refuses
+      // unknown flags to avoid.
       const next = argv[++i];
-      if (next !== undefined) values.set(separated, next);
+      if (next === undefined || next.startsWith('--')) {
+        throw new Error(`${separated} needs a value`);
+      }
+      values.set(separated, next);
       continue;
     }
     if (a.startsWith('--')) throw new Error(`unknown flag: ${a}`);

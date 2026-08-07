@@ -46,16 +46,22 @@ export function stripWikiLinks(text: string): string {
  * `##` on its sections.
  */
 export function runtimeProcedureBody(body: string, moldName: string, noun: string): string {
+  // The noun is read from a YAML file, so it reaches both halves of `replace` as data and has to
+  // be quoted for each. In the PATTERN a `(` would throw and a `|` would silently match something
+  // else; in the REPLACEMENT `$&` means "the matched text", so a noun containing one rewrote the
+  // document with the words it was replacing — `The Mold` came back out as `The The Mold`.
+  const pattern = noun.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const literal = noun.replace(/\$/g, '$$$$');
   return stripWikiLinks(body.trim())
     .replace(new RegExp(`^#\\s+${moldName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*\\n+`), '')
     .replace(/^(#{2,5})\s/gm, '$1# ')
-    .replace(new RegExp(`\\bcast ${noun}\\b`, 'g'), noun)
-    .replace(/\bThis Mold\b/g, `This ${noun}`)
-    .replace(/\bThe Mold\b/g, `The ${noun}`)
-    .replace(/\bthis Mold\b/g, `this ${noun}`)
-    .replace(/\bthe Mold\b/g, `the ${noun}`)
-    .replace(/\bMolds\b/g, `${noun}s`)
-    .replace(/\bMold\b/g, noun);
+    .replace(new RegExp(`\\bcast ${pattern}\\b`, 'g'), literal)
+    .replace(/\bThis Mold\b/g, `This ${literal}`)
+    .replace(/\bThe Mold\b/g, `The ${literal}`)
+    .replace(/\bthis Mold\b/g, `this ${literal}`)
+    .replace(/\bthe Mold\b/g, `the ${literal}`)
+    .replace(/\bMolds\b/g, `${literal}s`)
+    .replace(/\bMold\b/g, literal);
 }
 
 function escapeFrontmatterString(text: string): string {
