@@ -18,6 +18,16 @@ export interface ContentTarget {
   title?: string;
 }
 
+/** One routed note before wiki-link addresses, aliases, or extra targets are applied. */
+export interface ContentNoteTarget<
+  Collection extends string = string,
+  Target extends ContentTarget = ContentTarget,
+> {
+  collection: Collection;
+  id: string;
+  target: Target;
+}
+
 /** A note's YAML frontmatter before an instance schema has parsed it. */
 export type Frontmatter = Record<string, unknown>;
 
@@ -74,6 +84,9 @@ export interface ContentReader<Collections extends CollectionTable, Target exten
   markdownFiles(): string[];
   noteFiles<Name extends keyof Collections & string>(name: Name): string[];
   noteIds<Name extends keyof Collections & string>(name: Name): string[];
+  noteTargets<Name extends keyof Collections & string = keyof Collections & string>(
+    name?: Name,
+  ): ContentNoteTarget<Name, Target>[];
   wikiLinkMap(extraTargets?: readonly ExtraContentTarget<Target>[]): Map<string, Target>;
   resolveLink(value: string, options?: ContentLinkOptions<Target>): ContentLink;
   remarkWikiLinks(options?: ContentLinkOptions<Target>): ReturnType<typeof remarkWikiLinks>;
@@ -198,6 +211,31 @@ export function createContentReader<
     return noteFiles(name).map((relativePath) => noteIdFromPath(relativePath.slice(prefix.length)));
   };
 
+  const notesFor = (names: readonly Name[]): Note[] => {
+    const notes: Note[] = [];
+    for (const name of names) {
+      const prefix = `${collections[name]!.base}/`;
+      for (const relativePath of noteFiles(name)) {
+        const id = noteIdFromPath(relativePath.slice(prefix.length));
+        const meta =
+          aliases || readFrontmatter ? readNoteFrontmatter(contentPath(relativePath)) : undefined;
+        notes.push({ collection: name, id, meta, target: targetOf(name, id, meta) });
+      }
+    }
+    return notes;
+  };
+
+  const noteTargets = <CollectionName extends Name = Name>(
+    name?: CollectionName,
+  ): ContentNoteTarget<CollectionName, Target>[] => {
+    const names = name === undefined ? (Object.keys(collections) as Name[]) : [name];
+    return notesFor(names).map(({ collection, id, target }) => ({
+      collection: collection as CollectionName,
+      id,
+      target,
+    }));
+  };
+
   const wikiLinkMap = (
     extraTargets: readonly ExtraContentTarget<Target>[] = [],
   ): Map<string, Target> => {
@@ -206,18 +244,8 @@ export function createContentReader<
     // Object property order is the collection-precedence contract. Keep primary registration in
     // this first pass so no alias can take an address that belongs to a routed note. Within a
     // collection noteFiles is sorted, making the full precedence deterministic.
-    const notes: Note[] = [];
-    for (const name of Object.keys(collections) as Name[]) {
-      const prefix = `${collections[name]!.base}/`;
-      for (const relativePath of noteFiles(name)) {
-        const id = noteIdFromPath(relativePath.slice(prefix.length));
-        const meta =
-          aliases || readFrontmatter ? readNoteFrontmatter(contentPath(relativePath)) : undefined;
-        const target = targetOf(name, id, meta);
-        notes.push({ collection: name, id, meta, target });
-        map.set(slugify(id.replace(/\//g, '-')), target);
-      }
-    }
+    const notes = notesFor(Object.keys(collections) as Name[]);
+    for (const { id, target } of notes) map.set(slugify(id.replace(/\//g, '-')), target);
 
     // Aliases fill empty addresses only. In an alias/alias collision, the first routed note wins;
     // in an alias/primary collision, the primary wins regardless of collection order.
@@ -243,6 +271,7 @@ export function createContentReader<
         .sort(),
     noteFiles,
     noteIds,
+    noteTargets,
     wikiLinkMap,
     resolveLink: (value, linkOptions = {}) =>
       resolveContentLink(value, wikiLinkMap(linkOptions.extraTargets), linkOptions.base),
