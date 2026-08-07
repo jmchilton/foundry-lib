@@ -43,8 +43,31 @@ describe('reading the cast half of a kind', () => {
   it('returns a declaration per castable kind', () => {
     const contractPath = writeContract({ pattern: CASTABLE });
     expect(loadCastContract(contractPath, MODES)).toEqual({
-      pattern: { resolve: 'note', default_mode: 'verbatim', companions: true },
+      // `note_types` is answered even though the kind did not ask: a corpus that names a kind
+      // after the notes it cites is the common case, not the absence of a rule.
+      pattern: {
+        resolve: 'note',
+        default_mode: 'verbatim',
+        note_types: ['pattern'],
+        companions: true,
+      },
     });
+  });
+
+  it('takes the note types a kind cites when they are not its own name', () => {
+    // One `research` kind over three publication shapes. Without this the only repairs are
+    // renaming the kind after one of the types, or retyping the corpus to match the citation.
+    const contractPath = writeContract({
+      research: {
+        ...CASTABLE,
+        cast: { ...CASTABLE.cast, note_types: ['paper', 'book', 'tutorial'] },
+      },
+    });
+    expect(loadCastContract(contractPath, MODES)['research']?.note_types).toEqual([
+      'paper',
+      'book',
+      'tutorial',
+    ]);
   });
 
   it('leaves out a kind with no cast: block, which is how a kind declines to be cast', () => {
@@ -95,6 +118,16 @@ describe('a cast declaration that cannot be honoured is refused at load', () => 
 
   it('refuses an empty slug_field, which would name no field at all', () => {
     refuses({ ...CASTABLE.cast, slug_field: '' }, /slug_field must be a non-empty string/);
+  });
+
+  it('refuses an empty note_types, which no note could ever satisfy', () => {
+    // A kind that cannot be cast says so by omitting the `cast:` block. An empty list here
+    // would be a kind that is castable in principle and fails every ref in practice.
+    refuses({ ...CASTABLE.cast, note_types: [] }, /note_types must be a non-empty list/);
+  });
+
+  it('refuses note_types that is a bare string, not a list', () => {
+    refuses({ ...CASTABLE.cast, note_types: 'paper' }, /note_types must be a non-empty list/);
   });
 
   it('names the file in every message, so a caller knows what to open', () => {

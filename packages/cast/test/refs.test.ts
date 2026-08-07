@@ -110,6 +110,31 @@ describe('an address is checked against the shape its kind declares', () => {
     );
   });
 
+  it('takes a note whose type is one the kind declares, not only the kind name', () => {
+    // A second corpus splits its research notes by publication shape, so one kind cites three
+    // types. The kind's own name is only the DEFAULT answer to which types it accepts.
+    const out = resolveMoldRef({ kind: 'pattern', ref: '[[p]]' }, 0, {
+      ...ctx(),
+      castContract: {
+        ...castContract,
+        pattern: { ...castContract['pattern']!, note_types: ['prompt', 'pattern'] },
+      },
+    });
+    expect(out.error).toBeUndefined();
+    expect(out.resolved?.src).toBe('content/prompts/p/index.md');
+  });
+
+  it('lists every accepted type when none of them matched', () => {
+    const out = resolveMoldRef({ kind: 'pattern', ref: '[[p]]' }, 0, {
+      ...ctx(),
+      castContract: {
+        ...castContract,
+        pattern: { ...castContract['pattern']!, note_types: ['book', 'paper'] },
+      },
+    });
+    expect(out.error).toContain('expected book | paper');
+  });
+
   it('refuses a mode the target does not admit for the kind', () => {
     expect(
       resolveMoldRef({ kind: 'pattern', ref: '[[double-dipping]]', mode: 'sidecar' }, 0, ctx())

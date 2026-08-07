@@ -131,8 +131,8 @@ export function resolveMoldRef(
   let dstOverride: string | undefined;
   let packageSource: { spec: string; exportName: string } | undefined;
 
-  // Every kind addresses its note the same way and expects the note's `type` to be the kind's
-  // own name; the strategies differ only in what they take FROM that note.
+  // Every kind addresses its note the same way and expects the note's `type` to be one the kind
+  // declares; the strategies differ only in what they take FROM that note.
   //
   // The address check answers to the kind's declared `ref_shape` rather than assuming every
   // castable kind is wiki-link-shaped. They all are today, which is exactly why asserting it
@@ -152,9 +152,13 @@ export function resolveMoldRef(
   if (!tp) return { error: `references[${index}]: ${kind} ref ${refStr} did not resolve` };
   // Frontmatter of the note this ref resolves to; source of its license fields.
   const noteMeta: Frontmatter | undefined = metaByPath.get(tp);
-  if (noteMeta?.type !== kind) {
+  // Which note types satisfy this kind is the KIND's to declare. It defaults to the kind's own
+  // name, so a corpus that names a kind after the notes it cites says nothing; one that cites
+  // three publication shapes under a single kind says so once, in its `cast:` block.
+  const accepted = castDecl.note_types ?? [kind];
+  if (typeof noteMeta?.type !== 'string' || !accepted.includes(noteMeta.type)) {
     return {
-      error: `references[${index}]: ${kind} ref ${refStr} resolves to type=${noteMeta?.type ?? '(none)'}, expected ${kind}`,
+      error: `references[${index}]: ${kind} ref ${refStr} resolves to type=${noteMeta?.type ?? '(none)'}, expected ${accepted.join(' | ')}`,
     };
   }
 
