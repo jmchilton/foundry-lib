@@ -15,6 +15,7 @@ import {
   findReferenceContractPath,
   loadInstanceKinds,
   parseInheritedVocabularies,
+  referenceShapeIssue,
   type KindTerm,
 } from '../src/index.js';
 
@@ -278,6 +279,39 @@ describe('the reference shape', () => {
     // would let past, and the reason this is a value.
     expect(REFERENCE_FIELDS.mode).toBe('modes');
     expect(REFERENCE_FIELDS.kind).toBe('kinds');
+  });
+
+  it("enforces a kind's declared target shape with the shared wiki-link grammar", () => {
+    const contract = buildReferenceContract({
+      kinds: {
+        pattern: {
+          label: 'Pattern',
+          description: 'A domain pattern page.',
+          ref_shape: 'wiki-link',
+        },
+        example: {
+          label: 'Example',
+          description: 'A repository fixture.',
+          ref_shape: 'path',
+        },
+      },
+    });
+
+    expect(
+      referenceShapeIssue(contract, { kind: 'pattern', ref: '[[double-dipping]]' }),
+    ).toBeNull();
+    expect(referenceShapeIssue(contract, { kind: 'pattern', ref: 'double-dipping' })).toBe(
+      'kind=pattern ref must be a [[wiki-link]] (got double-dipping)',
+    );
+    expect(
+      referenceShapeIssue(contract, { kind: 'example', ref: 'fixtures/example.yml' }),
+    ).toBeNull();
+    expect(referenceShapeIssue(contract, { kind: 'example', ref: '[[example]]' })).toBe(
+      'kind=example ref must be a path, not a [[wiki-link]] (got [[example]])',
+    );
+    expect(referenceShapeIssue(contract, { kind: 'missing', ref: 'anything' })).toBe(
+      'unknown reference kind=missing',
+    );
   });
 });
 

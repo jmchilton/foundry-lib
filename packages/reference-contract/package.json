@@ -40,6 +40,7 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@galaxy-foundry/wiki-links": "workspace:^",
     "js-yaml": "^4.1.0"
   },
   "devDependencies": {

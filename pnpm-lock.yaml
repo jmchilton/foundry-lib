@@ -212,6 +212,9 @@ importers:
 
   packages/reference-contract:
     dependencies:
+      '@galaxy-foundry/wiki-links':
+        specifier: workspace:^
+        version: link:../wiki-links
       js-yaml:
         specifier: ^4.1.0
         version: 4.3.0

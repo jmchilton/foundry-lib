@@ -47,6 +47,7 @@ import {
   contractKeys,
   findReferenceContractPath,
   loadInstanceKinds,
+  referenceShapeIssue,
 } from '@galaxy-foundry/reference-contract';
 
 const kindsPath = findReferenceContractPath();
@@ -56,10 +57,19 @@ const contract = buildReferenceContract({
 
 const referenceKinds = contractKeys(contract, 'kinds');
 const castModes = contractKeys(contract, 'modes');
+
+const issue = referenceShapeIssue(contract, {
+  kind: 'pattern',
+  ref: 'double-dipping',
+}); // kind=pattern ref must be a [[wiki-link]] (got double-dipping)
 ```
 
 Use the resulting keys to drive schema enums, validation messages, documentation,
 and browse surfaces. Do not recreate parallel arrays of valid values.
+
+Call `referenceShapeIssue()` from the instance schema's reference refinement. It applies the
+kind's declared `ref_shape` using the exact grammar from `@galaxy-foundry/wiki-links`, so an author
+gets the error before a caster or renderer tries to consume the target.
 
 `findReferenceContractPath()` walks upward from a directory. Pass an explicit path
 to `loadInstanceKinds()` when the repository layout or execution context makes that
