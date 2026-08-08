@@ -1,5 +1,17 @@
 # @galaxy-foundry/license-policy
 
+## 0.4.1
+
+### Patch Changes
+
+- [#90](https://github.com/jmchilton/foundry-lib/pull/90) [`8e23106`](https://github.com/jmchilton/foundry-lib/commit/8e23106ae52fec1b63f6ab7398b91501a32fd2af) Thanks [@jmchilton](https://github.com/jmchilton)! - Name an uncurated `LicenseRef-` after itself instead of reporting it as unresolved. Such a ref
+  identifies a real licence the table has not curated, so every policy field of the `default` row
+  still applies to it verbatim — `policy`, `license_file`, `copyleft`, `defect`, and the table's own
+  `obligations` — because its terms are genuinely unknown. Only `name` differs, which states identity
+  rather than policy: the default row's "unresolved / missing" said a resolved licence was absent. A
+  curated row still wins, and remains the right move for a ref that recurs. Adds a `LicenseBadge`
+  specimen for the state, which renders identically to the unresolved one apart from the label.
+
 ## 0.4.0
 
 ### Minor Changes
