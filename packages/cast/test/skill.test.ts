@@ -53,8 +53,13 @@ describe('the noun a cast of a Mold goes by', () => {
   });
 
   it('drops the heading the document already spends on its title', () => {
-    const out = runtimeProcedureBody(body, 'do-a-thing', 'skill');
+    const out = runtimeProcedureBody(
+      '# Do a thing for real\n\n## Step\n\nFollow it.\n',
+      'do-a-thing',
+      'skill',
+    );
     expect(out.startsWith('### Step')).toBe(true);
+    expect(out).not.toContain('# Do a thing for real');
   });
 });
 

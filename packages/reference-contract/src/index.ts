@@ -1,8 +1,11 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import yaml from 'js-yaml';
+
+import { WIKI_LINK_RE } from '@galaxy-foundry/wiki-links';
 
 export type RefShape = 'wiki-link' | 'path';
 
@@ -93,6 +96,29 @@ export type ReferenceProseField = (typeof REFERENCE_PROSE_FIELDS)[number];
  */
 export type Reference = Record<ReferenceField, string> &
   Partial<Record<ReferenceProseField, string>> & { ref: string };
+
+/**
+ * Explain why a reference target does not have the shape its kind declares.
+ *
+ * The contract owns whether a kind is addressed as a wiki link or a path, while wiki-links owns
+ * the exact bracket grammar. Keeping the dispatch here lets instance schemas enforce the same
+ * declaration the caster reads without restating either rule.
+ */
+export function referenceShapeIssue(
+  contract: ReferenceContract,
+  reference: Pick<Reference, 'kind' | 'ref'>,
+): string | null {
+  const term = contract.kinds[reference.kind];
+  if (!term) return `unknown reference kind=${reference.kind}`;
+
+  if (term.ref_shape === 'wiki-link' && !WIKI_LINK_RE.test(reference.ref)) {
+    return `kind=${reference.kind} ref must be a [[wiki-link]] (got ${reference.ref})`;
+  }
+  if (term.ref_shape === 'path' && WIKI_LINK_RE.test(reference.ref)) {
+    return `kind=${reference.kind} ref must be a path, not a [[wiki-link]] (got ${reference.ref})`;
+  }
+  return null;
+}
 
 /**
  * The reference fields whose vocabulary this package ships, in render order.
@@ -273,7 +299,27 @@ export function parseInheritedVocabularies(
   };
 }
 
-const BUNDLED_PATH = fileURLToPath(new URL('../data/reference-contract.yml', import.meta.url));
+const moduleRelativeBundledPath = fileURLToPath(
+  new URL('../data/reference-contract.yml', import.meta.url),
+);
+
+/**
+ * Find the data file both as an ordinary Node package and after a server bundler moves this module.
+ *
+ * In the package, the file sits beside `dist/` and the relative URL is the shortest truthful path.
+ * A bundler may inline this module into an application's temporary server chunk without copying the
+ * YAML beside it, at which point `import.meta.url` names the chunk rather than this package. Resolve
+ * the package's public data export from that application frame as the fallback; consumers which use
+ * the contract at build time already have this package in their dependency graph.
+ */
+function resolveBundledContractPath(): string {
+  if (existsSync(moduleRelativeBundledPath)) return moduleRelativeBundledPath;
+  return createRequire(import.meta.url).resolve(
+    '@galaxy-foundry/reference-contract/reference-contract.yml',
+  );
+}
+
+const BUNDLED_PATH = resolveBundledContractPath();
 
 let cachedBundledText: string | undefined;
 let cachedVocabularies: InheritedVocabularies | undefined;
