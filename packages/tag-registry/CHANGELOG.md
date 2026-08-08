@@ -1,5 +1,12 @@
 # @galaxy-foundry/tag-registry
 
+## 0.1.1
+
+### Patch Changes
+
+- [#88](https://github.com/jmchilton/foundry-lib/pull/88) [`860fc30`](https://github.com/jmchilton/foundry-lib/commit/860fc30ecca264ef18a164426399f51929a4c3d6) Thanks [@jmchilton](https://github.com/jmchilton)! - Group corpus tag counts into their declaring facets for browse pages, preserving registry order and
+  omitting empty or invented facets. Expose the declaring facet's label for individual tag pages.
+
 ## 0.1.0
 
 ### Minor Changes
