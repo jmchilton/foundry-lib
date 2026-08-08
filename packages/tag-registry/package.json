@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/tag-registry",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The shared meta_tags.yml format for Foundry-pattern instances — parser, validator, and accessors. The facet vocabulary stays per-instance.",
   "type": "module",
   "exports": {
