@@ -152,15 +152,19 @@ export function isValidLicenseId(policy: LicensePolicy, licenseId: LicenseId): b
  * The row governing an id: its own if the table curates one, otherwise a deny-by-default answer.
  *
  * Two states used to share the `default` row and are told apart here: an id the table cannot
- * place, and a well-formed `LicenseRef-` naming a licence nobody has curated yet. Both are
- * unknown TERMS, so both keep `own-words-only` and `defect: true` — the conservative answer is
- * the whole point of the row and does not change.
+ * place, and a well-formed `LicenseRef-` naming a licence nobody has curated yet. Exactly one
+ * field distinguishes them, and the line it falls on is what a row IS.
  *
- * What differs is the NAME. `default.name` reads "unresolved / missing", and of a custom ref that
- * is false: the author resolved the licence, used the documented escape hatch, and named it. A
- * note that did the right thing rendered identically to one that declared nothing, which reads as
- * a reproach to the author rather than a gap in this table. The ref's own slug is the only honest
- * label available, so it is used; {@link LICENSE_REF_RE} already guarantees it is printable.
+ * Every field but `name` states POLICY — what to do about terms nobody has read. Both states have
+ * unknown terms, so the table's answer applies verbatim to both, including whatever an instance
+ * wrote in `default.obligations`: "contact legal@example.org" is precisely an instruction for the
+ * uncurated case, and this is not the place to overrule it. They are spread through untouched.
+ *
+ * `name` states IDENTITY, which is not policy. `default.name` reads "unresolved / missing", and of
+ * a custom ref that is false — the author resolved the licence, used the documented escape hatch,
+ * and named it, and got told it was missing. A caller's table cannot hold an opinion about the
+ * identity of a ref it does not carry; if it did, there would be a row. So identity comes from the
+ * only place it can, the id, and {@link LICENSE_REF_RE} has already guaranteed it is printable.
  *
  * Curating a row still wins over this — see `LicenseRef-arXiv-nonexclusive-distrib-1.0` — and is
  * still the right move for a ref that recurs across instances. This governs the state before
@@ -175,11 +179,7 @@ export function resolveLicenseRow(
     if (licenseRow) return licenseRow;
 
     if (LICENSE_REF_RE.test(licenseId)) {
-      return {
-        ...policy.default,
-        name: licenseId.slice('LicenseRef-'.length),
-        obligations: "custom terms; read the source's own licence before any verbatim carry",
-      };
+      return { ...policy.default, name: licenseId.slice('LicenseRef-'.length) };
     }
   }
   return policy.default;

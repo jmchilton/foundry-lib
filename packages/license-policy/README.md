@@ -52,10 +52,13 @@ declaresVerbatimCarry('faithful-summary-with-quotes'); // true — the row appli
 resolveLicenseRow(policy, 'typo').defect; // true
 resolveLicenseRow(policy, 'typo').name; // 'unresolved / missing'
 
-// An uncurated LicenseRef keeps that conservative answer — its terms are unknown too — but is
-// named after itself, because the licence IS resolved. Curating a row overrides this.
-resolveLicenseRow(policy, 'LicenseRef-yale-non-commercial').defect; // true
-resolveLicenseRow(policy, 'LicenseRef-yale-non-commercial').name; // 'yale-non-commercial'
+// An uncurated LicenseRef keeps every policy field of that answer — its terms are unknown too,
+// including whatever YOUR table says to do about unknown terms — but is named after itself,
+// because the licence IS resolved. Curating a row overrides this.
+const ref = resolveLicenseRow(policy, 'LicenseRef-yale-non-commercial');
+ref.defect; // true
+ref.obligations; // the table's own default obligations, verbatim
+ref.name; // 'yale-non-commercial' — identity is not policy, and only it comes from the id
 ```
 
 Functions take the policy as their first argument rather than reading module state, so a kind

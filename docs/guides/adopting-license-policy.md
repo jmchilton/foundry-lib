@@ -40,11 +40,13 @@ export function checkDeclaredLicense(id: string) {
 `LicenseRef-<slug>` escape hatch. `resolveLicenseRow` is intentionally more defensive:
 unknown or missing values return the default row with `defect: true`.
 
-A `LicenseRef-` with no curated row is the one refinement on that. It keeps the defensive
-answer — `own-words-only`, `defect: true`, because its terms are genuinely unknown — but comes
-back named after the ref rather than "unresolved / missing", since the license was in fact
-resolved by whoever wrote the id. Adding a curated row for it overrides that, and remains the
-right move for a ref that shows up across instances.
+A `LicenseRef-` with no curated row is the one refinement on that, and it is deliberately
+narrow. Every policy field of your default row still applies to it verbatim — its terms are
+genuinely unknown, so whatever your table says to do about unknown terms is exactly what it
+should say here. Only `name` differs: it comes back named after the ref rather than
+"unresolved / missing", since the license was in fact resolved by whoever wrote the id, and a
+table has no opinion about the identity of a ref it does not carry. Adding a curated row for it
+overrides that, and remains the right move for a ref that shows up across instances.
 
 ## 3. Keep coherence local
 
