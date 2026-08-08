@@ -1,5 +1,14 @@
 # @galaxy-foundry/content-reader
 
+## 0.3.0
+
+### Minor Changes
+
+- [#97](https://github.com/jmchilton/foundry-lib/pull/97) [`a08a333`](https://github.com/jmchilton/foundry-lib/commit/a08a333295e5dd3f818fec7f5b529cd6976dc994) Thanks [@jmchilton](https://github.com/jmchilton)! - Expose `contentIndex()`: one deterministic collection-backed note list plus an alias-aware address
+  map pointing to the same source records. Build-time consumers such as casters can now derive source
+  paths and parsed frontmatter from the reader's existing walk instead of maintaining a second content
+  index and duplicate alias precedence.
+
 ## 0.2.1
 
 ### Patch Changes
