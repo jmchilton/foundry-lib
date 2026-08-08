@@ -14,6 +14,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 
 import {
+  contentReaderStyleGaps,
   licenseBadgeStyleGaps,
   licenseFileStyleGaps,
   referenceStyleGaps,
@@ -22,6 +23,7 @@ import {
   SHELL_TOKENS,
   REFERENCE_TOKENS,
   LICENSE_BADGE_TOKENS,
+  CONTENT_READER_TOKENS,
   LICENSE_FILE_TOKENS,
 } from '@galaxy-foundry/site-kit';
 import { SPECIMENS, specimenPath } from '@galaxy-foundry/site-kit/specimens';
@@ -64,6 +66,7 @@ describe('the minimum theme', () => {
   const documented = [
     ...new Set([
       ...SHELL_TOKENS,
+      ...CONTENT_READER_TOKENS,
       ...REFERENCE_TOKENS,
       ...LICENSE_BADGE_TOKENS,
       ...LICENSE_FILE_TOKENS,
@@ -96,10 +99,11 @@ describe('the minimum theme', () => {
   it('leaves nothing the components name unsupplied, in the built page', () => {
     // The other direction, and the one a reader would actually notice: every token the kit's four
     // lists name has a declaration in the CSS this page links. Together with the test above, the
-    // gallery says the documented list is exactly sufficient — neither short nor padded.
+    // gallery says the documented lists are exactly sufficient — neither short nor padded.
     const css = cssOf(path.join(DIST, 'minimum/index.html'));
 
     expect(shellStyleGaps(css), '\nshell').toEqual([]);
+    expect(contentReaderStyleGaps(css), '\ncontent reader').toEqual([]);
     expect(referenceStyleGaps(css), '\nreference card').toEqual([]);
     expect(licenseBadgeStyleGaps(css), '\nlicence badge').toEqual([]);
     expect(licenseFileStyleGaps(css), '\nlicence file body').toEqual([]);

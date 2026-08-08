@@ -8,10 +8,11 @@ theme the documentation describes, and once under a theme with opinions.
 
 ## Why two
 
-The kit ships no stylesheet. It names tokens and classes — `SHELL_TOKENS`, `REFERENCE_TOKENS`,
-`LICENSE_BADGE_TOKENS`, `LICENSE_FILE_TOKENS`, `SHELL_CLASSES` — and every instance supplies the
-values. That makes a single gallery ambiguous in the one way that matters: looking at a page, there
-is no telling which part came from the package and which from whoever themed it.
+The kit ships no complete theme stylesheet. It names tokens and classes — `SHELL_TOKENS`,
+`CONTENT_READER_TOKENS`, `REFERENCE_TOKENS`, `LICENSE_BADGE_TOKENS`, `LICENSE_FILE_TOKENS`,
+`SHELL_CLASSES` — and every instance supplies the values. That makes a single gallery ambiguous in
+the one way that matters: looking at a page, there is no telling which part came from the package
+and which from whoever themed it.
 
 So `minimum.css` defines **exactly** the documented names and nothing else, with plain values. Its
 pages are therefore evidence rather than decoration: an instance that satisfies the documented list

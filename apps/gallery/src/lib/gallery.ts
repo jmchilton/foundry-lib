@@ -36,7 +36,7 @@ export const THEME: Record<ThemeId, Theme> = {
     id: 'minimum',
     label: 'Minimum',
     blurb:
-      'Exactly the names the kit documents — the four token lists and the three classes, with plain values and nothing else. What renders here is what an instance gets for satisfying the contract and no more, which makes an unstyled element evidence that the documented list is short.',
+      'Exactly the names the kit documents — the five token lists and the three classes, with plain values and nothing else. What renders here is what an instance gets for satisfying the contract and no more, which makes an unstyled element evidence that the documented list is short.',
   },
   designed: {
     id: 'designed',
