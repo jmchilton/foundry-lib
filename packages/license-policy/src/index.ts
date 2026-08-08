@@ -148,6 +148,24 @@ export function isValidLicenseId(policy: LicensePolicy, licenseId: LicenseId): b
   return policy.licenses[licenseId] !== undefined || LICENSE_REF_RE.test(licenseId);
 }
 
+/**
+ * The row governing an id: its own if the table curates one, otherwise a deny-by-default answer.
+ *
+ * Two states used to share the `default` row and are told apart here: an id the table cannot
+ * place, and a well-formed `LicenseRef-` naming a licence nobody has curated yet. Both are
+ * unknown TERMS, so both keep `own-words-only` and `defect: true` — the conservative answer is
+ * the whole point of the row and does not change.
+ *
+ * What differs is the NAME. `default.name` reads "unresolved / missing", and of a custom ref that
+ * is false: the author resolved the licence, used the documented escape hatch, and named it. A
+ * note that did the right thing rendered identically to one that declared nothing, which reads as
+ * a reproach to the author rather than a gap in this table. The ref's own slug is the only honest
+ * label available, so it is used; {@link LICENSE_REF_RE} already guarantees it is printable.
+ *
+ * Curating a row still wins over this — see `LicenseRef-arXiv-nonexclusive-distrib-1.0` — and is
+ * still the right move for a ref that recurs across instances. This governs the state before
+ * that, and stops it from being a lie.
+ */
 export function resolveLicenseRow(
   policy: LicensePolicy,
   licenseId: LicenseId | undefined | null,
@@ -155,6 +173,14 @@ export function resolveLicenseRow(
   if (typeof licenseId === 'string') {
     const licenseRow = policy.licenses[licenseId];
     if (licenseRow) return licenseRow;
+
+    if (LICENSE_REF_RE.test(licenseId)) {
+      return {
+        ...policy.default,
+        name: licenseId.slice('LicenseRef-'.length),
+        obligations: "custom terms; read the source's own licence before any verbatim carry",
+      };
+    }
   }
   return policy.default;
 }

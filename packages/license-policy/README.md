@@ -50,6 +50,12 @@ declaresVerbatimCarry('faithful-summary-with-quotes'); // true — the row appli
 
 // An unknown or missing id lands on the default row: own-words-only, `defect: true`.
 resolveLicenseRow(policy, 'typo').defect; // true
+resolveLicenseRow(policy, 'typo').name; // 'unresolved / missing'
+
+// An uncurated LicenseRef keeps that conservative answer — its terms are unknown too — but is
+// named after itself, because the licence IS resolved. Curating a row overrides this.
+resolveLicenseRow(policy, 'LicenseRef-yale-non-commercial').defect; // true
+resolveLicenseRow(policy, 'LicenseRef-yale-non-commercial').name; // 'yale-non-commercial'
 ```
 
 Functions take the policy as their first argument rather than reading module state, so a kind
@@ -106,19 +112,19 @@ When the rules converge, they can move here. Until then they stay where they are
 
 ## API
 
-| Export                                  | What it does                                                         |
-| --------------------------------------- | -------------------------------------------------------------------- |
-| `bundledPolicy()`                       | The shipped table, parsed. The default source of truth.              |
-| `bundledPolicyText()`                   | Its raw bytes — for conformance-testing a local copy.                |
-| `bundledPolicyPath()`                   | Absolute path to the shipped `license-policy.yml`.                   |
-| `parseLicensePolicy(text, source?)`     | Parse and fully validate a table. `source` names the file in errors. |
-| `loadLicensePolicy(repoRoot)`           | Read and validate `<repoRoot>/license-policy.yml`.                   |
-| `findLicensePolicyPath(startDir?)`      | Walk up until a table is found.                                      |
-| `licenseIds(policy)`                    | The curated SPDX ids — drives an instance's schema grammar.          |
-| `isValidLicenseId(policy, id)`          | Curated id, or `LicenseRef-<slug>`.                                  |
-| `resolveLicenseRow(policy, id)`         | Row for an id; unknown/missing → the `default` row.                  |
-| `declaresVerbatimCarry(derived)`        | Whether a note's posture reproduces upstream expression.             |
-| `LICENSE_POLICY_FILE`, `LICENSE_REF_RE` | The conventional filename and the escape-hatch pattern.              |
+| Export                                  | What it does                                                          |
+| --------------------------------------- | --------------------------------------------------------------------- |
+| `bundledPolicy()`                       | The shipped table, parsed. The default source of truth.               |
+| `bundledPolicyText()`                   | Its raw bytes — for conformance-testing a local copy.                 |
+| `bundledPolicyPath()`                   | Absolute path to the shipped `license-policy.yml`.                    |
+| `parseLicensePolicy(text, source?)`     | Parse and fully validate a table. `source` names the file in errors.  |
+| `loadLicensePolicy(repoRoot)`           | Read and validate `<repoRoot>/license-policy.yml`.                    |
+| `findLicensePolicyPath(startDir?)`      | Walk up until a table is found.                                       |
+| `licenseIds(policy)`                    | The curated SPDX ids — drives an instance's schema grammar.           |
+| `isValidLicenseId(policy, id)`          | Curated id, or `LicenseRef-<slug>`.                                   |
+| `resolveLicenseRow(policy, id)`         | Row for an id; unknown/missing → `default`, an uncurated ref → named. |
+| `declaresVerbatimCarry(derived)`        | Whether a note's posture reproduces upstream expression.              |
+| `LICENSE_POLICY_FILE`, `LICENSE_REF_RE` | The conventional filename and the escape-hatch pattern.               |
 
 Types: `LicensePolicy`, `LicenseRow`, `RedistributionPolicy`.
 
