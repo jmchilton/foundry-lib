@@ -3,9 +3,9 @@
 `@galaxy-foundry/cast` implements casting: everything between a loaded Mold and a published
 bundle, plus the deterministic mechanics underneath it. What a consuming Foundry still owns is
 its own knowledge — which kinds exist, what the cast document should say, how a non-verbatim mode
-renders — and that reaches the caster through `CastHooks` rather than through a fork of it. What
-the document is called, and what a cast of a Mold is called, are the target's, declared in
-`_target.yml` under `document:`.
+renders — and that reaches the caster through explicit Kind/corpus inputs and `CastHooks` rather
+than through a fork of it. What the document is called, and what a cast of a Mold is called, are
+the target's, declared in `_target.yml` under `document:`.
 
 The package remains an early extraction. Its first consumer has a committed bundle corpus that
 acts as a byte-identity oracle, but an independent second caster has not yet tested every
@@ -25,6 +25,7 @@ for the consumer-owned resolver, renderer, and target in one repository composit
 | Conventional `casts/<target>/` root       | offers a helper               | may adopt or replace                |
 | Mold and reference resolution             | owns                          | declares the kinds and the contract |
 | Which kinds exist and how each resolves   | does not own                  | owns, in `reference_contract.yml`   |
+| Companion membership and disposition      | consumes the Kind layout      | declares once on each Kind          |
 | Target-specific rendering                 | calls a registered renderer   | owns the renderer                   |
 | What the cast document says               | owns title and section form   | owns the lede and every section     |
 | What the cast document is called          | writes what the target names  | declares `document.path`            |
@@ -40,6 +41,13 @@ for the consumer-owned resolver, renderer, and target in one repository composit
 The library cannot truthfully choose what to render, where source notes live, which kinds a
 corpus has, or whether one failed artifact should fail a release. Those decisions require the
 instance's corpus and policy.
+
+The Kind table reaches `castMold` as `kindLayouts`, keyed by the note's `type`. Casting consumes
+the same `shape`, `companions`, and `additionalCompanions` declaration that validation and the
+kind manifest consume. It does not accept a second `companions` permission in
+`reference_contract.yml`, and a fixed companion is not repeated on each note. The companion's
+disposition is the cast decision: `bundled` copies it; `cast-input` and `foundry-only` stay out of
+the bundle.
 
 The test of a hook being in the right place is that one Foundry supplies it and a second supplies
 nothing: a Foundry whose corpus is research notes has no artifacts, no tools and no commands, and

@@ -77,6 +77,7 @@ export {
 export {
   castMold,
   type CastDrift,
+  type CastKindLayout,
   type CastOutcome,
   type CastRequest,
   type CastSubject,
@@ -104,6 +105,7 @@ export {
   duplicateDestinations,
   expandCompanions,
   resolveMoldRef,
+  type CompanionExpansion,
   type RefResolution,
   type ResolvedRef,
 } from './caster/refs.js';

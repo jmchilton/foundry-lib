@@ -22,6 +22,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 
+import type { Companion, NoteShape } from '@galaxy-foundry/kind-manifest';
 import type { KindTerm } from '@galaxy-foundry/reference-contract';
 
 import { copyVerbatim, gitHead, reconcileTreeTo } from '../bundle.js';
@@ -60,6 +61,14 @@ export interface CastSubject {
   contentHash: string;
 }
 
+/** The layout fields casting reads from one instance-owned Kind definition. */
+export interface CastKindLayout {
+  shape: NoteShape;
+  companions: readonly Companion[];
+  /** Absent means undeclared companions are forbidden. */
+  additionalCompanions?: 'forbid' | 'allow';
+}
+
 /**
  * Everything a cast needs, found by the instance and handed over whole.
  *
@@ -95,6 +104,8 @@ export interface CastRequest<Ext extends object = Record<string, never>> {
    */
   slugMap: ReadonlyMap<string, string>;
   metaByPath: ReadonlyMap<string, Frontmatter>;
+  /** Note `type` to the Kind-owned layout that decides which companions may leave the Foundry. */
+  kindLayouts: Readonly<Record<string, CastKindLayout>>;
   hooks: CastHooks;
   extensions?: Ext;
   /** Report what a cast would do and publish nothing. */
@@ -203,8 +214,9 @@ export async function castMold<Ext extends object = Record<string, never>>(
 
   // Expand multi-file notes' declared companion files into sibling verbatim refs.
   const expanded = expandCompanions(resolved, request);
+  errors.push(...expanded.errors);
   resolved.length = 0;
-  resolved.push(...expanded);
+  resolved.push(...expanded.refs);
 
   // Stable ordering: by (kind, note, companions after the note they belong to).
   //

@@ -102,8 +102,9 @@ Dependencies stay narrow:
   instance; `kind-schema` has a real runtime dependency on `kind-manifest` for the shared manifest
   vocabulary and bridge.
 - `reference-contract` and `tag-registry` own YAML parsing through `js-yaml`.
-- `cast` depends on `license-policy` because applying redistribution policy is part of a concrete
-  cast, and owns YAML parsing for target layout.
+- `cast` depends on `kind-manifest` for the Kind-owned companion vocabulary and on
+  `license-policy` because applying redistribution policy is part of a concrete cast; it owns YAML
+  parsing for target layout.
 - `content-reader` composes `kind-schema` collection matching with `wiki-links` transforms;
   all three remain headless Node packages.
 - `site-kit` peers on Astro and `astro-pagefind` because the consumer compiles its shipped source.

@@ -23,6 +23,7 @@ import process from 'node:process';
 import {
   castMold,
   type CastDrift,
+  type CastKindLayout,
   type CastOutcome,
   type CastRequest,
 } from './caster/cast-mold.js';
@@ -56,9 +57,10 @@ export interface Corpus {
 /**
  * Everything a Foundry has to say to turn `castMold` into a command.
  *
- * The required three are the ones nothing can guess: what to call itself in a usage line, what
- * it contributes to a cast, and where its notes are. The rest have defaults that hold for a
- * Foundry laid out the conventional way, and exist so one that isn't can still use this.
+ * The required inputs are the ones nothing can guess: what to call itself in a usage line, what
+ * it contributes to a cast, where its notes are, and the layouts its note Kinds declare. The rest
+ * have defaults that hold for a Foundry laid out the conventional way, and exist so one that
+ * isn't can still use this.
  */
 export interface CastCommandSpec<Ext extends object = Record<string, never>> {
   /** How this binary is invoked, e.g. `statgen-foundry-build cast`. Shown on a usage error. */
@@ -67,6 +69,8 @@ export interface CastCommandSpec<Ext extends object = Record<string, never>> {
   readonly hooks: CastHooks;
   /** Reads the corpus once per run. Given the repo root, since `--root` may have moved it. */
   readonly corpus: (repoRoot: string) => Corpus;
+  /** Note `type` to the Kind-owned layout that casting consumes. */
+  readonly kindLayouts: Readonly<Record<string, CastKindLayout>>;
   /** Target when `--target` is not given. */
   readonly defaultTarget?: string;
   /** Repo-relative path of a Mold's source. Defaults to `content/molds/<name>/index.md`. */
@@ -276,6 +280,7 @@ export async function castOne<Ext extends object = Record<string, never>>(
     refKinds: prepared.contract.contract.kinds,
     slugMap: prepared.corpus.slugMap,
     metaByPath: prepared.corpus.metaByPath,
+    kindLayouts: spec.kindLayouts,
     hooks: spec.hooks,
     check: opts.check,
     note: opts.note ?? null,
