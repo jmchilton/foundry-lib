@@ -32,6 +32,7 @@ export const contentReader = createContentReader({
 contentReader.noteFiles('papers');
 contentReader.noteIds('papers');
 contentReader.noteTargets('papers');
+contentReader.contentIndex();
 contentReader.wikiLinkMap();
 contentReader.remarkWikiLinks({ base: '/my-foundry' });
 contentReader.resolveMarkdown(source, { base: '/my-foundry' });
@@ -50,7 +51,7 @@ Address precedence is deterministic:
 
 1. Primary note addresses are registered in collection property order, then sorted note-path
    order. A later primary overwrites an earlier primary, so collection declaration order is a
-   contractual part of a corpus with basename collisions.
+   contractual part of a content catalog with basename collisions.
 2. Aliases fill empty addresses and never overwrite a primary. The first routed note wins when
    two aliases collide.
 3. Explicit `extraTargets` are applied last and may deliberately override either.
@@ -64,6 +65,26 @@ collection name to narrow it. Unlike `wikiLinkMap()`, it does not collapse prima
 collisions, add aliases, or include explicit extra targets. Use it when every routed note matters,
 such as checking that a static build emitted a page for each one.
 
+`contentIndex()` exposes the richer build-time view from one walk. Its `notes` retain each routed
+note's content-relative source file, parsed frontmatter when enabled, and route target.
+`notesByAddress` applies the same primary and alias precedence as `wikiLinkMap()`, but its values
+point back to those note records rather than only their site targets. A caster can therefore
+project both source maps without walking or parsing the content tree again:
+
+```ts
+const index = contentReader.contentIndex();
+const sourcePath = (file: string) => `content/${file}`;
+
+const slugMap = new Map(
+  [...index.notesByAddress].map(([address, note]) => [address, sourcePath(note.file)]),
+);
+const metaByPath = new Map(index.notes.map((note) => [sourcePath(note.file), note.meta ?? {}]));
+```
+
+Configure `aliases` or `readFrontmatter: true` when a projection needs metadata. Explicit extra
+targets remain exclusive to `wikiLinkMap()` because they are addresses without collection-backed
+source records.
+
 ## Boundary
 
 This package deliberately does not assemble zod schemas or Astro collections. Astro preserves the
@@ -71,8 +92,9 @@ frontmatter type of a collection only when each schema-bearing export is written
 heterogeneous catalog collapses the inferred shapes. It also does not decide how a Package differs
 from a Paper or how either is rendered. Those are the instance's content model.
 
-The package touches the filesystem, so it belongs in build, validation, and Astro server code—not
-browser bundles. Reusable Astro presentation lives in `@galaxy-foundry/site-kit`.
+The package touches the filesystem, so it belongs in build, validation, casting composition, and
+Astro server code—not browser bundles. Reusable Astro presentation lives in
+`@galaxy-foundry/site-kit`.
 
 See the [content-reader boundary](../../docs/architecture/content-reader-boundary.md) for the
 cross-package and instance ownership map.

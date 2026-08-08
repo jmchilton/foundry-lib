@@ -108,7 +108,7 @@ extraction.
 | [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds |
 | [`@galaxy-foundry/kind-schema`](https://www.npmjs.com/package/@galaxy-foundry/kind-schema)               | assemble kind schemas and route collections without sharing kinds |
 | [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy)         | interpret a note's license as an allowed redistribution posture   |
-| [`@galaxy-foundry/content-reader`](https://www.npmjs.com/package/@galaxy-foundry/content-reader)         | bind collection files and wiki links into a content site          |
+| [`@galaxy-foundry/content-reader`](https://www.npmjs.com/package/@galaxy-foundry/content-reader)         | bind collection files into shared reader and cast projections     |
 | [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them  |
 | [`@galaxy-foundry/site-kit`](https://www.npmjs.com/package/@galaxy-foundry/site-kit)                     | render shared reading surfaces instead of hand-rolling them       |
 | [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet |

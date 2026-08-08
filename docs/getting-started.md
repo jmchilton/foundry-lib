@@ -30,7 +30,7 @@ omit it when a Foundry has another reading surface.
 | Reconcile and record deterministic cast bundles | `cast`                         | renderers, targets, reference resolution, and exit policy |
 | Define, assemble, and publish kinds             | `kind-schema`, `kind-manifest` | kind definitions, Zod context, docs, and collection map   |
 | Resolve redistribution posture                  | `license-policy`               | note-level license coherence                              |
-| Bind collections and links into a content site  | `content-reader`               | schemas, collection table, routes, and domain rendering   |
+| Bind collections into reader and cast inputs    | `content-reader`               | schemas, collection table, routes, and domain rendering   |
 | Compose typed-reference vocabularies            | `reference-contract`           | reference kinds and cross-field validation                |
 | Render shared Astro reading surfaces            | `site-kit`                     | site identity, styles, corpus, and domain furniture       |
 | Parse and query a tag catalog                   | `tag-registry`                 | facets, values, and corpus drift checks                   |

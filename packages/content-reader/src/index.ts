@@ -31,6 +31,28 @@ export interface ContentNoteTarget<
 /** A note's YAML frontmatter before an instance schema has parsed it. */
 export type Frontmatter = Record<string, unknown>;
 
+/** One routed note with the source and metadata projections build-time consumers need. */
+export interface ContentNoteRecord<
+  Collection extends string = string,
+  Target extends ContentTarget = ContentTarget,
+> extends ContentNoteTarget<Collection, Target> {
+  /** Path relative to the content root supplied through `contentPath`. */
+  file: string;
+  /** Parsed when aliases or `readFrontmatter` opt the reader into content reads. */
+  meta: Frontmatter | undefined;
+}
+
+/** One content-tree walk, exposed before consumers project it into routes or cast inputs. */
+export interface ContentIndex<
+  Collection extends string = string,
+  Target extends ContentTarget = ContentTarget,
+> {
+  /** Every routed note in deterministic collection and path order. */
+  notes: readonly ContentNoteRecord<Collection, Target>[];
+  /** Primary and alias wiki-link addresses pointing back to those same note records. */
+  notesByAddress: ReadonlyMap<string, ContentNoteRecord<Collection, Target>>;
+}
+
 /** Extra wiki-link addresses derived from an instance's own note vocabulary. */
 export type ContentAliases<Collections extends CollectionTable> = (
   meta: Frontmatter,
@@ -84,6 +106,7 @@ export interface ContentReader<Collections extends CollectionTable, Target exten
   markdownFiles(): string[];
   noteFiles<Name extends keyof Collections & string>(name: Name): string[];
   noteIds<Name extends keyof Collections & string>(name: Name): string[];
+  contentIndex(): ContentIndex<keyof Collections & string, Target>;
   noteTargets<Name extends keyof Collections & string = keyof Collections & string>(
     name?: Name,
   ): ContentNoteTarget<Name, Target>[];
@@ -179,13 +202,7 @@ export function createContentReader<
 >(options: ContentReaderOptions<Collections, Target>): ContentReader<Collections, Target> {
   const { aliases, collections, contentPath, readFrontmatter = false, targetOf } = options;
   type Name = keyof Collections & string;
-
-  interface Note {
-    collection: Name;
-    id: string;
-    meta: Frontmatter | undefined;
-    target: Target;
-  }
+  type Note = ContentNoteRecord<Name, Target>;
 
   const walk = (directory: string): string[] => {
     const absoluteDirectory = contentPath(directory);
@@ -219,10 +236,42 @@ export function createContentReader<
         const id = noteIdFromPath(relativePath.slice(prefix.length));
         const meta =
           aliases || readFrontmatter ? readNoteFrontmatter(contentPath(relativePath)) : undefined;
-        notes.push({ collection: name, id, meta, target: targetOf(name, id, meta) });
+        notes.push({
+          collection: name,
+          id,
+          file: relativePath,
+          meta,
+          target: targetOf(name, id, meta),
+        });
       }
     }
     return notes;
+  };
+
+  const notesByAddress = (notes: readonly Note[]): Map<string, Note> => {
+    const map = new Map<string, Note>();
+
+    // Object property order is the collection-precedence contract. Keep primary registration in
+    // this first pass so no alias can take an address that belongs to a routed note. Within a
+    // collection noteFiles is sorted, making the full precedence deterministic.
+    for (const note of notes) map.set(slugify(note.id.replace(/\//g, '-')), note);
+
+    // Aliases fill empty addresses only. In an alias/alias collision, the first routed note wins;
+    // in an alias/primary collision, the primary wins regardless of collection order.
+    if (aliases) {
+      for (const note of notes) {
+        for (const alias of aliases(note.meta!, note.id, note.collection)) {
+          const key = slugify(alias);
+          if (!map.has(key)) map.set(key, note);
+        }
+      }
+    }
+    return map;
+  };
+
+  const contentIndex = (): ContentIndex<Name, Target> => {
+    const notes = notesFor(Object.keys(collections) as Name[]);
+    return { notes, notesByAddress: notesByAddress(notes) };
   };
 
   const noteTargets = <CollectionName extends Name = Name>(
@@ -239,24 +288,9 @@ export function createContentReader<
   const wikiLinkMap = (
     extraTargets: readonly ExtraContentTarget<Target>[] = [],
   ): Map<string, Target> => {
-    const map = new Map<string, Target>();
-
-    // Object property order is the collection-precedence contract. Keep primary registration in
-    // this first pass so no alias can take an address that belongs to a routed note. Within a
-    // collection noteFiles is sorted, making the full precedence deterministic.
-    const notes = notesFor(Object.keys(collections) as Name[]);
-    for (const { id, target } of notes) map.set(slugify(id.replace(/\//g, '-')), target);
-
-    // Aliases fill empty addresses only. In an alias/alias collision, the first routed note wins;
-    // in an alias/primary collision, the primary wins regardless of collection order.
-    if (aliases) {
-      for (const note of notes) {
-        for (const alias of aliases(note.meta!, note.id, note.collection)) {
-          const key = slugify(alias);
-          if (!map.has(key)) map.set(key, note.target);
-        }
-      }
-    }
+    const map = new Map<string, Target>(
+      [...contentIndex().notesByAddress].map(([address, note]) => [address, note.target]),
+    );
 
     // Explicit extra targets are the caller's escape hatch and retain their existing final-write
     // behavior, including the ability to override a routed target deliberately.
@@ -271,6 +305,7 @@ export function createContentReader<
         .sort(),
     noteFiles,
     noteIds,
+    contentIndex,
     noteTargets,
     wikiLinkMap,
     resolveLink: (value, linkOptions = {}) =>

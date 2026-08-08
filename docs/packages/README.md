@@ -23,7 +23,7 @@ the status column distinguishes converged substrate from the two explicitly docu
 | `kind-manifest`      | admitted           | What kinds does this instance publish?                        | manifest format, validation, and derivation  | peer `zod@^4`                      |
 | `kind-schema`        | admitted           | How are local kind definitions assembled and routed?          | schema machinery, not kind definitions       | peer `zod@^4` and `kind-manifest`  |
 | `license-policy`     | admitted           | What redistribution posture applies to this license?          | the complete policy table                    | `js-yaml`                          |
-| `content-reader`     | admitted           | Which local notes and links feed a content site?              | collection-backed content mechanics          | `kind-schema` and `wiki-links`     |
+| `content-reader`     | admitted           | Which local notes and addresses feed readers and casters?     | collection-backed content mechanics          | `kind-schema` and `wiki-links`     |
 | `reference-contract` | admitted           | What may a Mold's `references[]` entry say?                   | four of five reference vocabularies          | `js-yaml`                          |
 | `site-kit`           | admitted           | How does a Foundry render common reading surfaces?            | Astro components and navigation rules        | peers `astro` and `astro-pagefind` |
 | `tag-registry`       | admitted           | What may a note's `tags:` say?                                | registry format and accessors, no vocabulary | `js-yaml`                          |
@@ -104,14 +104,16 @@ Choose this package for:
 
 - enumerating files selected by an instance-owned collection table;
 - deriving stable note IDs;
+- exposing routed note source records and their alias-aware address map for build-time consumers;
 - constructing the content site's wiki-link map from its routed collections;
 - registering instance-owned aliases from routed-note frontmatter;
 - binding the same map into remark and raw-Markdown rendering; or
 - adding explicit content targets that do not belong to a typed collection.
 
 The instance supplies schemas, collections, content paths, routes, alias vocabulary, and any extra
-targets. The package owns the single frontmatter read needed to derive aliases and target tooltips;
-it does not assemble Astro collection exports or render domain fields.
+targets. The package owns the single content-tree walk and frontmatter read from which routes, wiki links,
+and cast inputs can be projected; it does not assemble Astro collection exports or render domain
+fields.
 
 [Read the content-reader boundary](architecture/content-reader-boundary.md), the
 [package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/content-reader), or the
