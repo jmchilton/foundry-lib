@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/audit-citations",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Deterministic scholarly-citation extraction, resolution, evidence capture, and audit reporting.",
   "type": "module",
   "bin": {
