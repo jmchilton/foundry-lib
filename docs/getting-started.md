@@ -300,17 +300,20 @@ search, and overflow-menu behavior.
 The package validates the format but does not supply a vocabulary:
 
 ```ts
-import { findTagRegistryPath, loadTagRegistry } from '@galaxy-foundry/tag-registry';
+import { findTagRegistryPath, groupTagsInUse, loadTagRegistry } from '@galaxy-foundry/tag-registry';
 
 const tags = loadTagRegistry(findTagRegistryPath());
 
 tags.isValidTag('target/galaxy');
 tags.facetOf('target/galaxy');
 tags.tagDescription('target/galaxy');
+
+const groups = groupTagsInUse(tags, new Map([['target/galaxy', 4]]));
 ```
 
 Membership comes from declaration under a facet, not from parsing the tag's `/` prefix.
-Drive schemas, validation, and browse pages from the same loaded registry.
+The instance decides which notes count and supplies their usage totals; the registry owns facet
+membership, browse order, glosses, and empty-facet behavior.
 
 Continue with [Adopt the tag registry](guides/adopting-tag-registry.md).
 

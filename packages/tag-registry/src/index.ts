@@ -21,6 +21,18 @@ export interface FacetInfo {
   description: string;
 }
 
+/** One tag carried by the corpus, with the registry gloss that explains it. */
+export interface TagUsage {
+  tag: string;
+  count: number;
+  gloss?: string;
+}
+
+/** One declared facet with the tags under it that the corpus actually uses. */
+export interface FacetGroup extends FacetInfo {
+  tags: TagUsage[];
+}
+
 export interface TagEntry {
   facet: string;
   gloss: string;
@@ -149,6 +161,38 @@ export function tagRegistry(registryFile: TagRegistryFile): TagRegistry {
     tagDescription: (tag) => index.get(tag)?.gloss,
     allTags: () => [...index.keys()],
   };
+}
+
+/**
+ * Group tags in use by the facet that declared them.
+ *
+ * Facets retain registry order, tags are sorted by key, and unused facets are omitted. Unknown
+ * tags are omitted rather than placed in an invented catch-all facet: a conforming corpus rejects
+ * them before it reaches a browse page.
+ */
+export function groupTagsInUse(
+  registry: TagRegistry,
+  counts: ReadonlyMap<string, number>,
+): FacetGroup[] {
+  const used = [...counts.keys()].sort((a, b) => a.localeCompare(b));
+  return registry
+    .facets()
+    .map((facet) => ({
+      ...facet,
+      tags: used
+        .filter((tag) => registry.facetOf(tag) === facet.key)
+        .map((tag) => {
+          const usage = { tag, count: counts.get(tag) ?? 0 };
+          const gloss = registry.tagDescription(tag);
+          return gloss === undefined ? usage : { ...usage, gloss };
+        }),
+    }))
+    .filter((group) => group.tags.length > 0);
+}
+
+/** The display label of the facet that declared a tag. */
+export function facetLabelOf(registry: TagRegistry, tag: string): string {
+  return registry.facetLabel(registry.facetOf(tag));
 }
 
 export function loadTagRegistry(tagsPath: string): TagRegistry {

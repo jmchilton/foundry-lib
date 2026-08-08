@@ -24,6 +24,23 @@ tags.facets(); //                   [{ key, label, description }, …] in declar
 tags.allTags(); //                  every registered tag, in declaration order
 ```
 
+The corpus supplies only its usage counts; the registry owns how those tags browse:
+
+```ts
+import { groupTagsInUse, facetLabelOf } from '@galaxy-foundry/tag-registry';
+
+const groups = groupTagsInUse(
+  tags,
+  new Map([
+    ['target/galaxy', 4],
+    ['meta', 1],
+  ]),
+);
+// Declared facet order, sorted tags, no empty facets or invented "other" bucket.
+
+facetLabelOf(tags, 'target/galaxy'); // 'Target'
+```
+
 ## The format
 
 ```yaml
@@ -65,15 +82,16 @@ It does not decide what a valid tag _means_ for a note — that `tags` is requir
 minimum of one is carried, or that note-kind is never copied into `tags`. Those are schema
 rules, and they live in each instance's note schema.
 
-It does not check the registry against a corpus. A registered tag carried by zero notes is
-dead vocabulary, but only an instance can see its own notes; that check belongs in the
-instance's drift test.
+It does not collect usage from a corpus. A registered tag carried by zero notes is dead vocabulary,
+but only an instance can decide what counts as a tagged note. Pass those local counts to
+`groupTagsInUse`; corpus drift checks remain with the instance.
 
 ## API
 
 - **Loading**: `loadTagRegistry`, `findTagRegistryPath`, `parseTagRegistry`
-- **Accessors**: `tagRegistry`, `buildTagIndex`
-- **Types**: `TagRegistry`, `TagRegistryFile`, `Facet`, `FacetInfo`, `TagEntry`
+- **Accessors**: `tagRegistry`, `buildTagIndex`, `groupTagsInUse`, `facetLabelOf`
+- **Types**: `TagRegistry`, `TagRegistryFile`, `Facet`, `FacetInfo`, `FacetGroup`, `TagEntry`,
+  `TagUsage`
 - **Constant**: `TAG_REGISTRY_FILE`
 
 ## License
