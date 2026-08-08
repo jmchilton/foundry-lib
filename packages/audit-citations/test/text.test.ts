@@ -40,6 +40,21 @@ describe('personal name comparison', () => {
     expect(authorNameMatches('Hans Muller', 'Hans Müller')).toBe(true);
   });
 
+  it('reads a run of initials written without periods', () => {
+    // Vancouver style writes given names as an unpunctuated run after the family name. It
+    // normalizes to a single token and would otherwise match nothing in a provider's given-name
+    // form, reporting three correctly cited authors as a fabricated list.
+    expect(authorNameMatches('Domingos AI', 'Ana I Domingos')).toBe(true);
+    expect(authorNameMatches('Velloso LA', 'Licio A Velloso')).toBe(true);
+    expect(authorNameMatches('Sidarta-Oliveira D', 'David Sidarta-Oliveira')).toBe(true);
+  });
+
+  it('does not read a capitalized leading family name as initials', () => {
+    // A short family name in capitals sits where a family name sits, not where initials do.
+    // Expanding it would let two unrelated letters match two given names.
+    expect(authorNameMatches('LI Wang', 'Lauren I Wang')).toBe(false);
+  });
+
   it('does not treat a shared surname as the same person', () => {
     expect(authorNameMatches('Ada Lovelace', 'Grace Lovelace')).toBe(false);
     expect(authorNameMatches('Ada Lovelace', '')).toBe(false);

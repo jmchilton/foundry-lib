@@ -135,6 +135,13 @@ fabricated list, and below three compared names the check abstains unless every 
 one wrong name out of two is a transcription slip. The leading name is still compared separately in
 that case.
 
+A name is compared as tokens, so notation is not identity. Vancouver style writes given names as an
+unpunctuated run after the family name — `Domingos AI` against a provider's `Ana I Domingos` — and
+that run is expanded into one token per letter. The expansion is refused for a leading token and
+for a name with no lowercase letter anywhere, because a short family name in capitals sits exactly
+where such a run would, and two letters that matched two unrelated given names would turn a
+notation difference into a confirmed identity.
+
 ## Coverage is part of the result
 
 A resolution rate describes only the citations the extractor could read. The scan therefore records

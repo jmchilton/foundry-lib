@@ -11,7 +11,7 @@ import type {
 } from './schema.js';
 import { CITATION_AUDIT_SCHEMA_VERSION } from './schema.js';
 
-const DOI_RE = /10\.\d{4,9}\/[-._;()/:A-Z0-9]+/giu;
+const DOI_RE = /10\.\d{4,9}\/[-._;()/:A-Z0-9%]+/giu;
 const ARXIV_RE = /(?:arxiv\s*[:./]|arxiv\.org\/(?:abs|pdf)\/)(\d{4}\.\d{4,5}(?:v\d+)?)/giu;
 const PMID_RE = /(?:PMID\s*[: ]\s*|pubmed\.ncbi\.nlm\.nih\.gov\/)(\d{5,9})/giu;
 const PMCID_RE = /\b(PMC\d{5,9})\b/giu;
@@ -240,11 +240,27 @@ function plainText(text: string): string {
 }
 
 function cleanDoi(value: string): string {
-  let cleaned = value.replace(/[.,;\]]+$/u, '');
+  // Decoding precedes the trailing-parenthesis trim rather than following it, so that a DOI whose
+  // own parentheses arrive encoded is balanced by the time the trim counts them. A DOI is only
+  // ever percent-encoded because it sits in a URL, and the encoded form addresses nothing.
+  let cleaned = decodePercentEncoding(value).replace(/[.,;\]]+$/u, '');
   while (cleaned.endsWith(')') && count(cleaned, ')') > count(cleaned, '(')) {
     cleaned = cleaned.slice(0, -1);
   }
   return cleaned.toLocaleLowerCase();
+}
+
+/**
+ * A DOI may contain a literal `%`, which `decodeURIComponent` rejects rather than passes through.
+ * An identifier that cannot be decoded is kept as written instead of being dropped.
+ */
+function decodePercentEncoding(value: string): string {
+  if (!value.includes('%')) return value;
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
 }
 
 function stripArxivVersion(value: string): string {

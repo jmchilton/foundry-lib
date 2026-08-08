@@ -37,7 +37,8 @@ use the library without Git or a particular directory layout.
 
 The experimental extractor intentionally recognizes a narrow, documented grammar:
 
-- DOI strings beginning with `10.` and DOI URLs;
+- DOI strings beginning with `10.` and DOI URLs, percent-decoded, because a DOI containing
+  parentheses has to be encoded to survive a Markdown link;
 - modern arXiv identifiers such as `2401.00001`, optionally versioned, when introduced by
   `arXiv:` or an `arxiv.org/abs|pdf/` URL;
 - five-to-nine digit PMID values introduced by `PMID:` or a PubMed URL;
