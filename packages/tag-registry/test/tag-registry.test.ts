@@ -8,6 +8,8 @@ import {
   TAG_REGISTRY_FILE,
   buildTagIndex,
   findTagRegistryPath,
+  facetLabelOf,
+  groupTagsInUse,
   loadTagRegistry,
   parseTagRegistry,
   tagRegistry,
@@ -99,6 +101,75 @@ facets:
       shared: Another gloss.
 `;
     expect(() => parse(text)).toThrow(/tag `shared` is declared by both `a` and `b`/);
+  });
+});
+
+describe('browse grouping', () => {
+  const registry = tagRegistry({
+    facets: {
+      family: {
+        label: 'Family',
+        description: 'Which family of methods.',
+        values: {
+          'family/a': 'Family A.',
+          'role/solo': 'Declared here even though its prefix says otherwise.',
+        },
+      },
+      role: {
+        label: 'Role',
+        description: 'What it does.',
+        values: { 'family/b': 'Also deliberately misleading.' },
+      },
+      domain: {
+        label: 'Domain',
+        description: 'Subject matter.',
+        values: { 'domain/x': 'X.' },
+      },
+      meta: {
+        label: 'Meta',
+        description: 'About the corpus.',
+        values: { meta: 'A bare tag.' },
+      },
+    },
+  });
+  const counts = (...pairs: [string, number][]) => new Map(pairs);
+
+  it('groups by declaration rather than the tag prefix', () => {
+    const groups = groupTagsInUse(
+      registry,
+      counts(['family/a', 1], ['role/solo', 2], ['family/b', 3]),
+    );
+
+    expect(groups.map((group) => [group.key, group.tags.map((tag) => tag.tag)])).toEqual([
+      ['family', ['family/a', 'role/solo']],
+      ['role', ['family/b']],
+    ]);
+  });
+
+  it('keeps facet order, sorts tags, and omits unused facets', () => {
+    const groups = groupTagsInUse(registry, counts(['meta', 1], ['role/solo', 1], ['family/a', 1]));
+
+    expect(groups.map((group) => [group.key, group.tags.map((tag) => tag.tag)])).toEqual([
+      ['family', ['family/a', 'role/solo']],
+      ['meta', ['meta']],
+    ]);
+  });
+
+  it('carries counts and registry glosses', () => {
+    expect(groupTagsInUse(registry, counts(['meta', 7]))[0]?.tags).toEqual([
+      { tag: 'meta', count: 7, gloss: 'A bare tag.' },
+    ]);
+  });
+
+  it('does not invent a facet for an unregistered tag', () => {
+    const groups = groupTagsInUse(registry, counts(['family/a', 1], ['nowhere/at-all', 9]));
+
+    expect(groups.flatMap((group) => group.tags.map((tag) => tag.tag))).toEqual(['family/a']);
+  });
+
+  it('labels a tag by its declaring facet', () => {
+    expect(facetLabelOf(registry, 'role/solo')).toBe('Family');
+    expect(facetLabelOf(registry, 'meta')).toBe('Meta');
   });
 });
 
