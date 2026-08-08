@@ -33,6 +33,11 @@ const row = resolveLicenseRow(policy, license);
  * `Apache-2.0`, which is why one instance did it for sixteen notes without noticing — and it turns
  * `LicenseRef-arXiv-nonexclusive-distrib-1.0` into a pill that teaches a reader nothing. The id
  * stays reachable as the chip's title, so the precise answer is a hover away.
+ *
+ * An UNCURATED `LicenseRef-` is the one case where the id is the better label, and the table now
+ * hands one back already named after itself rather than "unresolved / missing". That is not a
+ * second opinion held here: the choice is between the ref's slug and a sentence that is false
+ * about it, not between a slug and a curated name. Curating a row still overrides both.
  */
 const policyLabel = row.policy === 'own-words-only' ? 'own-words only' : 'verbatim OK';
 ---

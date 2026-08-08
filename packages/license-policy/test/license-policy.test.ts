@@ -47,6 +47,33 @@ describe('the bundled table', () => {
     expect(licenseRow.defect).toBeUndefined();
   });
 
+  it('names an uncurated LicenseRef after itself, without softening the policy', () => {
+    const licenseRow = resolveLicenseRow(policy, 'LicenseRef-yale-non-commercial');
+
+    // The terms are still unknown, so the deny-by-default answer is unchanged.
+    expect(licenseRow.policy).toBe('own-words-only');
+    expect(licenseRow.defect).toBe(true);
+    expect(licenseRow.license_file).toBe(false);
+    expect(licenseRow.obligations).toBe(policy.default.obligations);
+
+    // Only the label differs: the licence is resolved, so it may not read as unresolved.
+    expect(licenseRow.name).toBe('yale-non-commercial');
+    expect(licenseRow.name).not.toBe(policy.default.name);
+  });
+
+  it('prefers a curated row over the ref that names it', () => {
+    const licenseRow = resolveLicenseRow(policy, 'LicenseRef-arXiv-nonexclusive-distrib-1.0');
+    expect(licenseRow).toBe(policy.licenses['LicenseRef-arXiv-nonexclusive-distrib-1.0']);
+    expect(licenseRow.name).toBe('arXiv non-exclusive distribution 1.0');
+    expect(licenseRow.defect).toBeUndefined();
+  });
+
+  /** A ref-shaped id is the only exception; every other unplaceable id keeps the shared row. */
+  it('leaves the default row itself untouched', () => {
+    expect(resolveLicenseRow(policy, 'LicenseRef-')).toBe(policy.default);
+    expect(policy.default.name).toBe('unresolved / missing');
+  });
+
   it('does not leak `default` into the curated id list', () => {
     expect(licenseIds(policy)).not.toContain('default');
     expect(isValidLicenseId(policy, 'default')).toBe(false);
@@ -135,6 +162,23 @@ default:
     const parsedPolicy = parseLicensePolicy(minimal);
     expect(licenseIds(parsedPolicy)).toEqual(['MIT']);
     expect(parsedPolicy.default.defect).toBe(true);
+  });
+
+  /**
+   * The boundary the uncurated-ref branch has to respect: it may supply an identity the table
+   * cannot have, and it may not answer a policy question the table already answered. An instance
+   * whose default row says "ask us first" means that most for the ids it never curated.
+   */
+  it("names an uncurated ref without overruling this table's own default row", () => {
+    const parsedPolicy = parseLicensePolicy(minimal);
+    const licenseRow = resolveLicenseRow(parsedPolicy, 'LicenseRef-house-terms');
+
+    expect(licenseRow.name).toBe('house-terms');
+
+    const { name: _name, ...policyFields } = licenseRow;
+    const { name: _defaultName, ...defaultPolicyFields } = parsedPolicy.default;
+    expect(policyFields).toEqual(defaultPolicyFields);
+    expect(licenseRow.obligations).toBe('resolve it');
   });
 
   it.each([

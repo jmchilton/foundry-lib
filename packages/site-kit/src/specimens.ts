@@ -508,6 +508,12 @@ export const LICENSE_BADGE_SPECIMENS: SpecimenGroup<LicenseBadgeProps> = {
       },
     },
     {
+      id: 'uncurated-ref',
+      name: 'A LicenseRef nobody has curated',
+      why: 'The same deny-by-default policy as the specimen below, and deliberately not the same name. This licence IS resolved — an author identified it and used the escape hatch — so labelling it `unresolved / missing` reports a real licence as an absent one, and reproaches the note that did the right thing. Its terms are still unknown, which is why the policy chip does not soften.',
+      props: { license: 'LicenseRef-yale-non-commercial', policy: SPECIMEN_POLICY },
+    },
+    {
       id: 'unresolved',
       name: 'An id the table does not have',
       why: 'Deny-by-default, rendered. An unknown id resolves to the default row — own-words-only, flagged a defect — rather than to a gap, because a conservative chip beats a blank where a licence should be.',
