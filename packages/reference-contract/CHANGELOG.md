@@ -1,5 +1,15 @@
 # @galaxy-foundry/reference-contract
 
+## 0.4.1
+
+### Patch Changes
+
+- [#102](https://github.com/jmchilton/foundry-lib/pull/102) [`5e06bdd`](https://github.com/jmchilton/foundry-lib/commit/5e06bddf09cd2cffabd1b8342588dfa3eb78b035) Thanks [@jmchilton](https://github.com/jmchilton)! - Resolve the shipped reference vocabulary through its public package export when a server bundler
+  moves the loader away from the package data directory.
+
+- [#102](https://github.com/jmchilton/foundry-lib/pull/102) [`5e06bdd`](https://github.com/jmchilton/foundry-lib/commit/5e06bddf09cd2cffabd1b8342588dfa3eb78b035) Thanks [@jmchilton](https://github.com/jmchilton)! - Expose `referenceShapeIssue()` so instance schemas can enforce each reference kind's declared
+  wiki-link or path shape with the same wiki-link grammar used by rendering and casting.
+
 ## 0.4.0
 
 ### Minor Changes

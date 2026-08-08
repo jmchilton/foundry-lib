@@ -1,5 +1,14 @@
 # @galaxy-foundry/cast
 
+## 0.11.1
+
+### Patch Changes
+
+- [#102](https://github.com/jmchilton/foundry-lib/pull/102) [`5e06bdd`](https://github.com/jmchilton/foundry-lib/commit/5e06bddf09cd2cffabd1b8342588dfa3eb78b035) Thanks [@jmchilton](https://github.com/jmchilton)! - Remove a Mold's authored H1 from the generated procedure even when its reader-facing title differs
+  from the stable Mold slug, preventing a second top-level title inside cast documents.
+- Updated dependencies [[`5e06bdd`](https://github.com/jmchilton/foundry-lib/commit/5e06bddf09cd2cffabd1b8342588dfa3eb78b035), [`5e06bdd`](https://github.com/jmchilton/foundry-lib/commit/5e06bddf09cd2cffabd1b8342588dfa3eb78b035)]:
+  - @galaxy-foundry/reference-contract@0.4.1
+
 ## 0.11.0
 
 ### Minor Changes
