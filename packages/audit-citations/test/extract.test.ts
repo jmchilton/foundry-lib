@@ -17,6 +17,25 @@ describe('citation extraction', () => {
     ]);
   });
 
+  it('decodes a percent-encoded DOI link', () => {
+    // A DOI containing parentheses has to be percent-encoded inside a Markdown link, because an
+    // unescaped closing parenthesis would end the link. Reading the encoded form literally
+    // truncates the identifier at the first escape and queries a DOI that does not exist.
+    expect(extractIdentifiers('[DOI](https://doi.org/10.1016/S1359-0278%2897%2900024-2)')).toEqual([
+      { kind: 'doi', value: '10.1016/s1359-0278(97)00024-2' },
+    ]);
+    expect(extractIdentifiers('https://doi.org/10.1016/S0006-3495%2801%2976033-X')).toEqual([
+      { kind: 'doi', value: '10.1016/s0006-3495(01)76033-x' },
+    ]);
+  });
+
+  it('keeps a stray percent that is not an escape sequence', () => {
+    // decodeURIComponent throws on a lone %, and a DOI is not worth losing to it.
+    expect(extractIdentifiers('https://doi.org/10.1000/50%off')).toEqual([
+      { kind: 'doi', value: '10.1000/50%off' },
+    ]);
+  });
+
   it('treats only configured citation-metadata hosts as scholarly pages', () => {
     const text =
       '[paper](https://proceedings.mlr.press/v235/example.html) ' +

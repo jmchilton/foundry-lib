@@ -51,8 +51,8 @@ export function titleSimilarity(left: string, right: string): number {
  * do not read as different people.
  */
 export function authorNameMatches(left: string, right: string): boolean {
-  const leftTokens = normalizeWords(left).split(' ').filter(Boolean);
-  const rightTokens = normalizeWords(right).split(' ').filter(Boolean);
+  const leftTokens = nameTokens(left);
+  const rightTokens = nameTokens(right);
   if (leftTokens.length === 0 || rightTokens.length === 0) return false;
   const [shorter, longer] =
     leftTokens.length <= rightTokens.length ? [leftTokens, rightTokens] : [rightTokens, leftTokens];
@@ -81,6 +81,29 @@ export function firstAuthorFamily(authorText: string | undefined): string | unde
   const family = final.length === 1 || final === final.toUpperCase() ? words[0] : words.at(-1);
   const normalized = family ? normalizeWords(family) : '';
   return normalized || undefined;
+}
+
+/** A capitalized run of two or three letters, which Vancouver style uses for given-name initials. */
+const INITIALS_RUN = /^\p{Lu}{2,3}$/u;
+
+/**
+ * Splits a name into comparable tokens, expanding an unpunctuated run of initials into one token
+ * per letter so that `Domingos AI` and `Ana I Domingos` describe the same person.
+ *
+ * Two conditions keep the expansion from consuming a real name. The run must not lead the name,
+ * because that is where a family name sits and a short one in capitals — `LI Wang` — would
+ * otherwise match two unrelated given names. And the name must contain a lowercase letter
+ * somewhere, because nothing inside a uniformly capitalized name distinguishes initials from a
+ * shouted spelling.
+ */
+function nameTokens(value: string): string[] {
+  const rawTokens = value.split(/[\s,]+/u).filter(Boolean);
+  const hasLowercase = /\p{Ll}/u.test(value);
+  return rawTokens.flatMap((raw, index) =>
+    index > 0 && hasLowercase && INITIALS_RUN.test(raw)
+      ? [...raw.toLocaleLowerCase()]
+      : normalizeWords(raw).split(' ').filter(Boolean),
+  );
 }
 
 function tokenMatches(left: string, right: string): boolean {
