@@ -1,5 +1,12 @@
 # @galaxy-foundry/site-kit
 
+## 0.9.2
+
+### Patch Changes
+
+- [#99](https://github.com/jmchilton/foundry-lib/pull/99) [`0d1cf87`](https://github.com/jmchilton/foundry-lib/commit/0d1cf87bf0e5aefa74c3f0b8711dc560136bf214) Thanks [@jmchilton](https://github.com/jmchilton)! - Keep the package export reference and gallery adoption guidance aligned with the complete shared
+  specimen and theme-token contract.
+
 ## 0.9.1
 
 ### Patch Changes
