@@ -42,6 +42,7 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@galaxy-foundry/kind-manifest": "workspace:^",
     "@galaxy-foundry/license-policy": "workspace:^",
     "@galaxy-foundry/reference-contract": "workspace:^",
     "@galaxy-foundry/wiki-links": "workspace:^",

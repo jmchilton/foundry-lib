@@ -9,8 +9,9 @@ rendering the skill document, sweeping what stopped being a reference, and writi
 provenance record. None of it varies by domain.
 
 What is not here is everything that names a Foundry's own world — its kinds, its slug map, its
-validators, its renderers. Those reach the caster through `CastHooks`, one value per extension
-point, so a Foundry adds its knowledge without forking the assembly.
+validators, its renderers. Kind layouts and addresses arrive as explicit request inputs; rendering
+and instance checks arrive through `CastHooks`, so a Foundry adds its knowledge without forking the
+assembly.
 
 `cast` is an early extraction rather than an admitted shared-substrate package. Its first
 consumer's committed bundles provide a byte-identity oracle; adoption by a second independent
@@ -33,6 +34,7 @@ const outcome = await castMold({
   refKinds,
   slugMap,
   metaByPath,
+  kindLayouts: DEFINITIONS,
   hooks: MY_HOOKS,
   check: args.check,
   note: null,
@@ -41,6 +43,12 @@ const outcome = await castMold({
 for (const error of outcome.errors) console.error(error);
 process.exitCode = outcome.errors.length ? 1 : 0;
 ```
+
+`kindLayouts` is the instance's Kind table, keyed by note `type`. Casting reads only its layout
+projection: `shape`, `companions`, and `additionalCompanions`. A companion with disposition
+`bundled` travels automatically; `foundry-only` and `cast-input` do not. Fixed membership is never
+repeated in note frontmatter or in the reference contract. A Kind with
+`additionalCompanions: 'allow'` may still let an individual note name its open-ended companion set.
 
 Errors and drift come back as values and nothing is printed, because a cast that found four
 unresolved refs has produced a result rather than suffered a failure — and how that is rendered

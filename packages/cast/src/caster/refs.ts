@@ -10,13 +10,14 @@ import path from 'node:path';
 import type { KindTerm } from '@galaxy-foundry/reference-contract';
 import { fileSlug, resolveWikiLink, WIKI_LINK_RE } from '@galaxy-foundry/wiki-links';
 
-import { copyVerbatim } from '../bundle.js';
+import { copyVerbatim, listFilesUnder } from '../bundle.js';
 import type { CastContract } from '../cast-contract.js';
 import { errorMessage } from '../errors.js';
 import { readMarkdown, type Frontmatter } from '../frontmatter.js';
 import type { ProvenanceRefEntry } from '../provenance.js';
 import { reconcile, reconcileText, sha256File } from '../reconcile.js';
 import type { CastHooks } from './hooks.js';
+import type { CastKindLayout } from './cast-mold.js';
 import type { TargetConfig, TargetKindConfig } from './target-config.js';
 
 /**
@@ -27,6 +28,7 @@ import type { TargetConfig, TargetKindConfig } from './target-config.js';
  * bundle around it.
  */
 export interface RefResolution {
+  repoRoot: string;
   slugMap: ReadonlyMap<string, string>;
   metaByPath: ReadonlyMap<string, Frontmatter>;
   /** How the caller addresses the target — the only thing here that has to name it. */
@@ -35,6 +37,7 @@ export interface RefResolution {
   castContract: CastContract;
   refKinds: Record<string, KindTerm>;
   hooks: CastHooks;
+  kindLayouts: Readonly<Record<string, CastKindLayout>>;
 }
 
 export interface ResolvedRef {
@@ -269,48 +272,95 @@ export function resolveMoldRef(
   };
 }
 
-// Expand companion files declared on a note's frontmatter into sibling refs.
-// A multi-file note (e.g. a vendored bundle) lists `companions:` filenames in
-// its `.md`; each is copied verbatim next to the note in the bundle so the
-// note body can reference it at runtime. Companions ship verbatim whatever the
-// parent ref's mode — a note points at its structured sibling either way. They
-// inherit the parent ref's load/used_at/trigger/purpose and carry
-// `companion_of` for provenance.
-export function expandCompanions(resolved: ResolvedRef[], ctx: RefResolution): ResolvedRef[] {
-  const { metaByPath, target, castContract } = ctx;
+// Expand a note Kind's `bundled` companions into sibling refs. Fixed membership and disposition
+// are Kind-owned; only a Kind that explicitly allows additional companions may take extra names
+// from a note's frontmatter. Companions ship verbatim whatever the parent ref's mode — a note
+// points at its structured sibling either way. They inherit the parent ref's loading metadata and
+// carry `companion_of` for provenance.
+export interface CompanionExpansion {
+  refs: ResolvedRef[];
+  errors: string[];
+}
+
+export function expandCompanions(resolved: ResolvedRef[], ctx: RefResolution): CompanionExpansion {
+  const { repoRoot, metaByPath, target, castContract, kindLayouts } = ctx;
   const out: ResolvedRef[] = [];
+  const errors: string[] = [];
   for (const r of resolved) {
     out.push(r);
-    // Whether a kind's notes may carry companions is the kind's declaration, not a pair of
-    // names checked here. The note still lists its own — membership stays declared per-note,
-    // and a file is never packaged for merely sitting in the directory.
-    if (!castContract[r.kind]?.companions) continue;
-    const rawCompanions = metaByPath.get(r.src)?.companions;
-    const companions = Array.isArray(rawCompanions) ? (rawCompanions as unknown[]) : [];
-    if (companions.length === 0) continue;
+    // These strategies already chose bytes other than the note. A payload-companion is itself
+    // the Kind-selected companion; a package export has no note directory in the bundle at all.
+    if (castContract[r.kind]?.resolve !== 'note') continue;
+    const noteMeta = metaByPath.get(r.src);
+    const noteType = typeof noteMeta?.type === 'string' ? noteMeta.type : undefined;
+    const layout = noteType === undefined ? undefined : kindLayouts[noteType];
+    if (!layout) {
+      errors.push(
+        `${r.ref} resolves to type=${noteType ?? '(none)'}, but the caster received no Kind layout for it`,
+      );
+      continue;
+    }
+    if (layout.shape !== 'directory') {
+      if (layout.companions.length > 0) {
+        errors.push(
+          `${r.ref} resolves to file-shaped type=${noteType}, which cannot declare companions`,
+        );
+      }
+      continue;
+    }
     const kindCfg = target.kinds[r.kind];
     if (!kindCfg) continue;
     const srcDir = path.posix.dirname(r.src);
-    for (const c of companions) {
-      if (typeof c !== 'string') continue;
-      out.push({
-        kind: r.kind,
-        mode: 'verbatim',
-        ref: r.ref,
-        src: path.posix.join(srcDir, c),
-        dst: path.posix.join(kindCfg.dst_dir, c),
-        used_at: r.used_at,
-        load: r.load,
-        evidence: r.evidence,
-        purpose: r.purpose,
-        trigger: r.trigger,
-        companion_of: r.dst,
-        license: r.license,
-        license_file: r.license_file,
-      });
+
+    const declared = layout.companions
+      .filter((companion) => companion.disposition === 'bundled')
+      .map((companion) => ({ file: companion.file, requirement: companion.requirement }));
+    const fixedNames = new Set(layout.companions.map((companion) => companion.file));
+    const rawAdditional = noteMeta?.companions;
+    const additional =
+      layout.additionalCompanions === 'allow' && Array.isArray(rawAdditional)
+        ? rawAdditional
+            .filter((file): file is string => typeof file === 'string')
+            // A note cannot turn a fixed foundry-only or cast-input declaration into bundled
+            // material by naming it again as an additional companion. The Kind's disposition
+            // remains authoritative wherever it has an answer.
+            .filter((file) => !fixedNames.has(file))
+            .map((file) => ({ file, requirement: 'required' as const }))
+        : [];
+
+    for (const companion of [...declared, ...additional]) {
+      const c = companion.file;
+      const src = path.posix.join(srcDir, c);
+      if (companion.requirement !== 'required' && !existsSync(path.join(repoRoot, src))) continue;
+
+      // A directory is a companion declaration, while provenance remains one entry per file.
+      // Expand its files here so hashing, collision detection and orphan sweeping keep operating
+      // on the same identity: one destination path, one record.
+      const sources =
+        c.endsWith('/') && existsSync(path.join(repoRoot, src))
+          ? listFilesUnder(path.join(repoRoot, src), repoRoot)
+          : [src];
+      for (const companionSrc of sources) {
+        const rel = path.posix.relative(srcDir, companionSrc);
+        out.push({
+          kind: r.kind,
+          mode: 'verbatim',
+          ref: r.ref,
+          src: companionSrc,
+          dst: path.posix.join(kindCfg.dst_dir, rel),
+          used_at: r.used_at,
+          load: r.load,
+          evidence: r.evidence,
+          purpose: r.purpose,
+          trigger: r.trigger,
+          companion_of: r.dst,
+          license: r.license,
+          license_file: r.license_file,
+        });
+      }
     }
   }
-  return out;
+  return { refs: out, errors };
 }
 
 /**

@@ -3,7 +3,7 @@
 //
 // A kind declares `label`, `description` and `ref_shape` to a reader, and those belong to
 // @galaxy-foundry/reference-contract. What the caster needs — where the source bytes come from,
-// what transform applies by default, whether the kind's notes may carry companions — is declared
+// what transform applies by default — is declared
 // in the same file under `cast:`, and parsed here. One file, two readers: the site renders a pill
 // and never asks how a kind resolves, the caster resolves and never renders. Both halves come
 // from one declaration, which is what keeps them from disagreeing.
@@ -70,14 +70,6 @@ export interface CastDeclaration {
    * the corpus to satisfy the caster.
    */
   note_types?: readonly string[];
-  /**
-   * Whether this kind's notes may carry per-note `companions:` into a bundle.
-   *
-   * Layout stays the kind's and membership stays the note's: this says the kind's notes
-   * are ALLOWED to declare companions, never which files they are. A note still lists its
-   * own, and a file is never picked up for sitting in the directory.
-   */
-  companions: boolean;
 }
 
 /** A reference kind the caster can compile. Kinds with no `cast:` block are not castable. */
@@ -91,7 +83,7 @@ export type CastContract = Record<string, CastDeclaration>;
  */
 export const CAST_BLOCK_KEY = 'cast';
 
-const CAST_FIELDS = new Set(['resolve', 'default_mode', 'slug_field', 'note_types', 'companions']);
+const CAST_FIELDS = new Set(['resolve', 'default_mode', 'slug_field', 'note_types']);
 
 function fail(sourcePath: string, message: string): never {
   throw new Error(`${sourcePath}: ${message}`);
@@ -159,15 +151,9 @@ function parseCastDeclaration(
     }
   }
 
-  const companions = fields['companions'];
-  if (typeof companions !== 'boolean') {
-    fail(sourcePath, `${where}.companions must be true or false`);
-  }
-
   const declaration: CastDeclaration = {
     resolve: resolve as CastResolve,
     default_mode: defaultMode,
-    companions,
   };
   if (typeof slugField === 'string') declaration.slug_field = slugField;
   // Absent means "the kind's own name", resolved here rather than at the comparison so the

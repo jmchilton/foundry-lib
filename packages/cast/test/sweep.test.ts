@@ -39,13 +39,15 @@ const CONTRACT = `kinds:
     cast:
       resolve: note
       default_mode: verbatim
-      companions: false
 `;
 
 /** A Foundry that contributes nothing beyond the two files every cast writes. */
 const SPEC: CastCommandSpec = {
   usage: 'test-foundry-build',
   defaultTarget: 'test',
+  kindLayouts: {
+    mold: { shape: 'directory', companions: [] },
+  },
   hooks: {
     renderers: {},
     bundleFiles: [],

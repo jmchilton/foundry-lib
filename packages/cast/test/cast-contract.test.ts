@@ -26,7 +26,7 @@ const CASTABLE = {
   label: 'Pattern',
   description: 'A domain pattern page.',
   ref_shape: 'wiki-link',
-  cast: { resolve: 'note', default_mode: 'verbatim', companions: true },
+  cast: { resolve: 'note', default_mode: 'verbatim' },
 };
 
 /** Write an instance contract and return its path. `kinds` is the whole `kinds:` block. */
@@ -49,7 +49,6 @@ describe('reading the cast half of a kind', () => {
         resolve: 'note',
         default_mode: 'verbatim',
         note_types: ['pattern'],
-        companions: true,
       },
     });
   });
@@ -109,11 +108,14 @@ describe('a cast declaration that cannot be honoured is refused at load', () => 
   });
 
   it('refuses a missing default_mode', () => {
-    refuses({ resolve: 'note', companions: true }, /missing required field `default_mode`/);
+    refuses({ resolve: 'note' }, /missing required field `default_mode`/);
   });
 
-  it('refuses companions left unstated, since the answer decides what a bundle carries', () => {
-    refuses({ resolve: 'note', default_mode: 'verbatim' }, /companions must be true or false/);
+  it('refuses the retired companions flag rather than maintaining a second layout declaration', () => {
+    refuses(
+      { resolve: 'note', default_mode: 'verbatim', companions: true },
+      /unknown field\(s\) companions/,
+    );
   });
 
   it('refuses an empty slug_field, which would name no field at all', () => {

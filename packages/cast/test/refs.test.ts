@@ -2,7 +2,7 @@
 // agree or do not. Every case here is a way they can disagree that would otherwise cast
 // something plausible — the wrong file, the wrong name — and report success.
 
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -24,6 +24,11 @@ const target: TargetConfig = {
   document: { path: 'SKILL.md', noun: 'skill' },
   required_outputs: [],
   kinds: {
+    environment: {
+      dst_dir: 'references/environments',
+      dst_extension: '.md',
+      modes: ['verbatim'],
+    },
     prompt: { dst_dir: 'references/prompts', dst_extension: '.md', modes: ['verbatim'] },
     pattern: { dst_dir: 'references/patterns', dst_extension: '.md', modes: ['verbatim'] },
   },
@@ -40,9 +45,10 @@ const bareHooks: CastHooks = {
 };
 
 const castContract: CastContract = {
-  prompt: { resolve: 'payload-companion', default_mode: 'verbatim', companions: false },
-  pattern: { resolve: 'note', default_mode: 'verbatim', companions: true },
-  example: { resolve: 'note', default_mode: 'verbatim', companions: false },
+  environment: { resolve: 'note', default_mode: 'verbatim' },
+  prompt: { resolve: 'payload-companion', default_mode: 'verbatim' },
+  pattern: { resolve: 'note', default_mode: 'verbatim' },
+  example: { resolve: 'note', default_mode: 'verbatim' },
 };
 
 const refKinds = {
@@ -55,16 +61,51 @@ const refKinds = {
 
 const slugMap = new Map([
   ['p', 'content/prompts/p/index.md'],
-  ['double-dipping', 'content/patterns/double-dipping.md'],
+  ['double-dipping', 'content/patterns/double-dipping/index.md'],
 ]);
 
 const metaByPath = new Map<string, Record<string, unknown>>([
+  ['content/environments/score/index.md', { type: 'environment' }],
   ['content/prompts/p/index.md', { type: 'prompt' }],
-  ['content/patterns/double-dipping.md', { type: 'pattern', companions: ['table.csv'] }],
+  ['content/patterns/double-dipping/index.md', { type: 'pattern' }],
 ]);
+
+const kindLayouts = {
+  environment: {
+    shape: 'directory' as const,
+    companions: [
+      {
+        file: 'pixi.toml',
+        requirement: 'required' as const,
+        purpose: 'The runnable environment manifest.',
+        disposition: 'bundled' as const,
+      },
+      {
+        file: 'pixi.lock',
+        requirement: 'recommended' as const,
+        purpose: 'The solved environment.',
+        disposition: 'bundled' as const,
+      },
+    ],
+  },
+  prompt: { shape: 'directory' as const, companions: [] },
+  pattern: {
+    shape: 'directory' as const,
+    companions: [
+      {
+        file: 'table.csv',
+        requirement: 'required' as const,
+        purpose: 'The table the note interprets.',
+        disposition: 'bundled' as const,
+      },
+    ],
+  },
+  example: { shape: 'file' as const, companions: [] },
+};
 
 function ctx(overrides: Partial<RefResolution> = {}): RefResolution {
   return {
+    repoRoot: '/repo',
     slugMap,
     metaByPath,
     targetName: 'claude',
@@ -72,6 +113,7 @@ function ctx(overrides: Partial<RefResolution> = {}): RefResolution {
     castContract,
     refKinds,
     hooks: bareHooks,
+    kindLayouts,
     ...overrides,
   };
 }
@@ -159,7 +201,6 @@ describe('the bundled name comes from the note, not from the file holding it', (
         pattern: {
           resolve: 'note',
           default_mode: 'verbatim',
-          companions: true,
           slug_field: 'tool',
         },
       },
@@ -206,36 +247,169 @@ describe("the payload a companion strategy ships is the instance's answer", () =
   });
 });
 
-describe('companions travel only where a kind says they may', () => {
+describe('companions travel from the note Kind, not a second frontmatter declaration', () => {
   const resolvedPattern = resolveMoldRef(
     { kind: 'pattern', ref: '[[double-dipping]]' },
     0,
     ctx(),
   ).resolved;
+  const resolvedEnvironment: ResolvedRef = {
+    kind: 'environment',
+    mode: 'verbatim',
+    ref: '[[score-environment]]',
+    src: 'content/environments/score/index.md',
+    dst: 'references/environments/score.md',
+    used_at: 'runtime',
+    load: 'upfront',
+  };
 
-  it('carries the files the note declares, marked with the parent they belong to', () => {
+  it('carries a runnable Environment from the fixed Kind declaration alone', () => {
+    const repoRoot = mkdtempSync(path.join(tmpdir(), 'cast-environment-layout-'));
+    try {
+      const source = path.join(repoRoot, 'content/environments/score');
+      mkdirSync(source, { recursive: true });
+      writeFileSync(path.join(source, 'pixi.toml'), '[workspace]\nname = "score"\n');
+      writeFileSync(path.join(source, 'pixi.lock'), 'version: 6\n');
+
+      const out = expandCompanions([resolvedEnvironment], { ...ctx(), repoRoot });
+      expect(out.errors).toEqual([]);
+      expect(out.refs.map((ref) => ref.dst)).toEqual([
+        'references/environments/score.md',
+        'references/environments/pixi.toml',
+        'references/environments/pixi.lock',
+      ]);
+    } finally {
+      rmSync(repoRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('does not expand a payload that already resolved from its companion', () => {
+    const payload = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 0, {
+      ...ctx(),
+      hooks: { ...bareHooks, payloadCompanion: () => 'upstream.prompt' },
+    }).resolved;
+    const out = expandCompanions([payload!], ctx());
+    expect(out).toEqual({ refs: [payload], errors: [] });
+  });
+
+  it('carries a fixed bundled companion without a per-note companions list', () => {
     const out = expandCompanions([resolvedPattern!], ctx());
-    expect(out.map((r) => r.dst)).toEqual([
+    expect(out.errors).toEqual([]);
+    expect(out.refs.map((r) => r.dst)).toEqual([
       'references/patterns/double-dipping.md',
       'references/patterns/table.csv',
     ]);
     // The parent is recorded on the companion, so a provenance reader can tell a file that
     // travelled with a note from one a Mold asked for directly.
-    expect(out[1]?.companion_of).toBe('references/patterns/double-dipping.md');
-    expect(out[1]?.src).toBe('content/patterns/table.csv');
+    expect(out.refs[1]?.companion_of).toBe('references/patterns/double-dipping.md');
+    expect(out.refs[1]?.src).toBe('content/patterns/double-dipping/table.csv');
   });
 
-  it('leaves them behind when the kind declares companions: false', () => {
-    // Membership stays the note's and permission stays the kind's. A file is never packaged
-    // for merely sitting in the directory.
+  it('leaves a foundry-only companion behind', () => {
     const out = expandCompanions([resolvedPattern!], {
       ...ctx(),
-      castContract: {
-        ...castContract,
-        pattern: { resolve: 'note', default_mode: 'verbatim', companions: false },
+      metaByPath: new Map([
+        ...metaByPath,
+        [
+          'content/patterns/double-dipping/index.md',
+          { type: 'pattern', companions: ['table.csv'] },
+        ],
+      ]),
+      kindLayouts: {
+        ...kindLayouts,
+        pattern: {
+          ...kindLayouts.pattern,
+          additionalCompanions: 'allow',
+          companions: kindLayouts.pattern.companions.map((companion) => ({
+            ...companion,
+            disposition: 'foundry-only' as const,
+          })),
+        },
       },
     });
-    expect(out).toHaveLength(1);
+    expect(out.errors).toEqual([]);
+    expect(out.refs).toHaveLength(1);
+  });
+
+  it('keeps open companion membership on the note only when the Kind explicitly allows it', () => {
+    const out = expandCompanions([resolvedPattern!], {
+      ...ctx(),
+      metaByPath: new Map([
+        ...metaByPath,
+        [
+          'content/patterns/double-dipping/index.md',
+          { type: 'pattern', companions: ['tables/observed.csv'] },
+        ],
+      ]),
+      kindLayouts: {
+        ...kindLayouts,
+        pattern: { shape: 'directory', companions: [], additionalCompanions: 'allow' },
+      },
+    });
+    expect(out.refs[1]?.src).toBe('content/patterns/double-dipping/tables/observed.csv');
+    expect(out.refs[1]?.dst).toBe('references/patterns/tables/observed.csv');
+  });
+
+  it('does not invent an absent recommended companion', () => {
+    const out = expandCompanions([resolvedPattern!], {
+      ...ctx(),
+      kindLayouts: {
+        ...kindLayouts,
+        pattern: {
+          ...kindLayouts.pattern,
+          companions: kindLayouts.pattern.companions.map((companion) => ({
+            ...companion,
+            requirement: 'recommended' as const,
+          })),
+        },
+      },
+    });
+    expect(out.refs).toHaveLength(1);
+  });
+
+  it('expands a bundled directory into one provenance-shaped ref per file', () => {
+    const repoRoot = mkdtempSync(path.join(tmpdir(), 'cast-kind-layout-'));
+    try {
+      const assets = path.join(repoRoot, 'content/patterns/double-dipping/assets/nested');
+      mkdirSync(assets, { recursive: true });
+      writeFileSync(path.join(assets, 'observed.csv'), 'value\n1\n');
+
+      const out = expandCompanions([resolvedPattern!], {
+        ...ctx(),
+        repoRoot,
+        kindLayouts: {
+          ...kindLayouts,
+          pattern: {
+            ...kindLayouts.pattern,
+            companions: [
+              {
+                file: 'assets/',
+                requirement: 'required',
+                purpose: 'Structured evidence carried with the note.',
+                disposition: 'bundled',
+              },
+            ],
+          },
+        },
+      });
+
+      expect(out.errors).toEqual([]);
+      expect(out.refs[1]).toMatchObject({
+        src: 'content/patterns/double-dipping/assets/nested/observed.csv',
+        dst: 'references/patterns/assets/nested/observed.csv',
+        companion_of: 'references/patterns/double-dipping.md',
+      });
+    } finally {
+      rmSync(repoRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('reports a note type whose Kind layout was not supplied', () => {
+    const out = expandCompanions([resolvedPattern!], { ...ctx(), kindLayouts: {} });
+    expect(out.refs).toEqual([resolvedPattern]);
+    expect(out.errors).toEqual([
+      '[[double-dipping]] resolves to type=pattern, but the caster received no Kind layout for it',
+    ]);
   });
 });
 
