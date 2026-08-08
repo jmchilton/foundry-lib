@@ -80,6 +80,28 @@ describe('collection-backed content reader', () => {
     ]);
   });
 
+  it('exposes routed source records and their primary addresses from one index', () => {
+    const index = contentReader.contentIndex();
+    expect(index.notes).toEqual([
+      {
+        collection: 'packages',
+        id: 'alpha',
+        file: 'packages/alpha.md',
+        meta: undefined,
+        target: { path: 'packages/alpha' },
+      },
+      {
+        collection: 'papers',
+        id: 'nested',
+        file: 'papers/nested/index.md',
+        meta: undefined,
+        target: { path: 'papers/nested' },
+      },
+    ]);
+    expect(index.notesByAddress.get('alpha')).toBe(index.notes[0]);
+    expect(index.notesByAddress.get('nested')).toBe(index.notes[1]);
+  });
+
   it('keeps the broader markdown inventory separate from typed notes', () => {
     expect(contentReader.markdownFiles()).toEqual([
       'glossary.md',
@@ -98,6 +120,7 @@ describe('collection-backed content reader', () => {
     const readFile = vi.spyOn(fs, 'readFileSync');
     try {
       contentReader.noteTargets();
+      contentReader.contentIndex();
       contentReader.wikiLinkMap();
       expect(readFile).not.toHaveBeenCalled();
     } finally {
@@ -126,24 +149,53 @@ describe('collection-backed content reader', () => {
     });
 
     const readFile = vi.spyOn(fs, 'readFileSync');
-    const targets = reader.noteTargets();
+    const index = reader.contentIndex();
     expect(readFile).toHaveBeenCalledTimes(2);
     readFile.mockRestore();
-    expect(targets).toEqual([
+    expect(index.notes).toEqual([
       {
         collection: 'packages',
         id: 'alpha',
+        file: 'packages/alpha.md',
+        meta: {
+          type: 'cli-command',
+          tool: 'gxwf',
+          command: 'validate',
+          summary: 'Validate a Galaxy workflow.',
+        },
         target: { path: 'packages/alpha', title: 'Validate a Galaxy workflow.' },
       },
       {
         collection: 'papers',
         id: 'nested',
+        file: 'papers/nested/index.md',
+        meta: {
+          type: 'mold',
+          name: 'Summarize Nextflow',
+          summary: 'Turn a Nextflow pipeline into a structured summary.',
+        },
         target: {
           path: 'papers/nested',
           title: 'Turn a Nextflow pipeline into a structured summary.',
         },
       },
     ]);
+    expect(index.notesByAddress.get('gxwf-validate')).toBe(index.notes[0]);
+    expect(index.notesByAddress.get('summarize-nextflow')).toBe(index.notes[1]);
+
+    // A caster projects its two maps from these records without another filesystem walk or a
+    // second implementation of alias precedence.
+    const sourcePath = (file: string) => `content/${file}`;
+    const slugMap = new Map(
+      [...index.notesByAddress].map(([address, note]) => [address, sourcePath(note.file)]),
+    );
+    const metaByPath = new Map(index.notes.map((note) => [sourcePath(note.file), note.meta ?? {}]));
+    expect(slugMap.get('gxwf-validate')).toBe('content/packages/alpha.md');
+    expect(metaByPath.get('content/packages/alpha.md')).toMatchObject({
+      type: 'cli-command',
+      tool: 'gxwf',
+      command: 'validate',
+    });
 
     const map = reader.wikiLinkMap();
     expect(map.get('gxwf-validate')).toEqual({
@@ -205,6 +257,7 @@ describe('collection-backed content reader', () => {
 
   it('never registers Markdown companions as link targets', () => {
     expect(contentReader.wikiLinkMap().has('ignored')).toBe(false);
+    expect(contentReader.contentIndex().notesByAddress.has('ignored')).toBe(false);
   });
 
   it('accepts extra content targets without putting them in the collection table', () => {
@@ -212,6 +265,7 @@ describe('collection-backed content reader', () => {
       { key: 'Architecture', target: { path: 'design/architecture' } },
     ]);
     expect(map.get('architecture')).toEqual({ path: 'design/architecture' });
+    expect(contentReader.contentIndex().notesByAddress.has('architecture')).toBe(false);
   });
 
   it('resolves prose and preserves code-span syntax through the shared grammar', () => {
@@ -269,6 +323,10 @@ describe('wiki-link address precedence', () => {
 
   it('lets later collections win primary collisions', () => {
     expect(reader.wikiLinkMap().get('same')).toEqual({ path: 'second/same' });
+    const index = reader.contentIndex();
+    expect(index.notesByAddress.get('same')).toBe(
+      index.notes.find((note) => note.collection === 'second' && note.id === 'same'),
+    );
   });
 
   it('keeps every routed target even when wiki-link primary addresses collide', () => {
@@ -280,9 +338,15 @@ describe('wiki-link address precedence', () => {
 
   it('never lets an alias overwrite a primary address', () => {
     expect(reader.wikiLinkMap().get('first-only')).toEqual({ path: 'first/first-only' });
+    expect(reader.contentIndex().notesByAddress.get('first-only')?.target).toEqual({
+      path: 'first/first-only',
+    });
   });
 
   it('lets the first routed note win an alias collision', () => {
     expect(reader.wikiLinkMap().get('shared-address')).toEqual({ path: 'first/first-only' });
+    expect(reader.contentIndex().notesByAddress.get('shared-address')?.target).toEqual({
+      path: 'first/first-only',
+    });
   });
 });

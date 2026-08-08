@@ -89,12 +89,13 @@ The public surface includes:
 - the collection binding: `createContentReader` and `ContentReader`;
 - file and ID enumeration: `markdownFiles`, `noteFiles`, `noteIds`, and
   `noteIdFromPath`;
+- the build-time content projection: `contentIndex`, `ContentIndex`, and `ContentNoteRecord`;
 - link-map and rendering methods: `wikiLinkMap`, `resolveLink`, `remarkWikiLinks`, and
   `resolveMarkdown`;
 - standalone map-bound helpers: `resolveContentLink`, `remarkContentWikiLinks`, and
   `resolveContentMarkdown`;
 - alias/frontmatter seams: `ContentAliases`, `Frontmatter`, and `ContentReaderOptions`; and
-- route target types: `ContentTarget`, `ExtraContentTarget`, and `ContentLink`.
+- route target types: `ContentNoteTarget`, `ContentTarget`, `ExtraContentTarget`, and `ContentLink`.
 
 Start with the [Content-reader boundary](architecture/content-reader-boundary.md).
 

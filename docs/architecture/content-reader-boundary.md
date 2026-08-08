@@ -1,11 +1,11 @@
 # Content-reader boundary
 
-Three structurally different Foundries use the same content-reading mechanics. Galaxy Workflow
-Foundry has a broad corpus whose CLI commands and Molds carry instance-specific second addresses.
-Statistical Genomics Foundry has six routed collections and domain furniture for sources, evidence,
-patterns, and molds. The TDA Bioinformatics Foundry begins with one Package collection and software
-facts. Their content models should differ; their filesystem walk, link-map construction, note
-frame, and tag markup should not.
+Structurally different Foundries use the same content-reading mechanics while keeping their own
+content models. A workflow content tree gives CLI commands and Molds instance-specific second
+addresses; a statistical content tree routes sources, evidence, patterns, and Molds; a TDA catalog
+distinguishes software profiles, runnable environments, papers, and actions. Their schemas and
+presentation should differ. Their filesystem walk, address construction, note frame, and tag markup
+should not.
 
 ## Ownership diagram
 
@@ -34,11 +34,18 @@ The collection table is also the target boundary: companions beside a routed not
 addressable unless their own collection row admits them. Primary collisions follow collection
 property order with later collections winning; aliases cannot overwrite primaries.
 
-The reader exposes two target views for different questions. `noteTargets()` preserves every
+The reader exposes three views for different questions. `noteTargets()` preserves every
 routed note and is the source for route/build coverage. `wikiLinkMap()` is an address map: primary
 collisions may collapse, aliases add addresses, and explicit extra targets may override them.
 Using the address map as a route inventory silently drops a real page whenever two note ids share
 one primary slug.
+
+`contentIndex()` is the build-time source view. It returns the routed notes with their
+content-relative files, optional parsed frontmatter, and route targets, plus `notesByAddress`: the
+same primary and alias policy pointing back to those records. Casting projects its `slugMap` and
+`metaByPath` from this index. It does not re-walk the content tree or reconstruct alias precedence.
+Explicit extra targets do not enter the index because they have no collection-backed source
+record.
 
 ## Why Astro collection exports stay local
 
