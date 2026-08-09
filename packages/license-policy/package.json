@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/license-policy",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "The shared license → redistribution-policy table for Foundry-pattern instances, and its loader.",
   "type": "module",
   "exports": {

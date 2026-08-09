@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/site-kit",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "Reusable reading surfaces for Foundry-pattern instances — shell, note frame, tags, references, and licences. Values, domain furniture, theme, and corpus stay per-instance.",
   "type": "module",
   "exports": {
