@@ -25,9 +25,34 @@ describe('the bundled table', () => {
   });
 
   it('ships the ids both instances actually author against', () => {
-    for (const licenseId of ['MIT', 'CC-BY-4.0', 'CC-BY-NC-4.0', 'GPL-3.0-only', 'Apache-2.0']) {
+    for (const licenseId of [
+      'MIT',
+      'CC-BY-4.0',
+      'CC-BY-NC-4.0',
+      'GPL-3.0-only',
+      'Apache-2.0',
+      // The `-or-later` GPL 3 form and the AGPL are what upstream TDA libraries actually declare
+      // — RIVET, giotto-ph, pyflagser. An id absent from the table resolves to `default`, so an
+      // instance profiling them had to either misstate the licence or reach for a `LicenseRef-`
+      // naming an id SPDX already lists.
+      'GPL-3.0-or-later',
+      'AGPL-3.0-or-later',
+    ]) {
       expect(licenseIds(policy)).toContain(licenseId);
     }
+  });
+
+  // The AGPL differs from the GPL in an obligation on RUNNING the software, never on carrying its
+  // text, so it must not arrive as a stricter row than the GPL 3 one beside it.
+  it('answers the AGPL the way it answers the GPL', () => {
+    const gpl = resolveLicenseRow(policy, 'GPL-3.0-or-later');
+    const agpl = resolveLicenseRow(policy, 'AGPL-3.0-or-later');
+
+    expect(agpl.policy).toBe(gpl.policy);
+    expect(agpl.license_file).toBe(gpl.license_file);
+    expect(agpl.copyleft).toBe(gpl.copyleft);
+    expect(agpl.defect).toBeUndefined();
+    expect(agpl.obligations).toMatch(/network/);
   });
 
   it('resolves an unknown or missing id to the default row', () => {

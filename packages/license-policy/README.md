@@ -168,7 +168,7 @@ distinction at runtime — both are strings off a filesystem — so `findLicense
 
 ## The table
 
-`version: 1`, 23 curated SPDX rows plus a deny-by-default `default` row, and five
+`version: 1`, 25 curated SPDX rows plus a deny-by-default `default` row, and five
 `global_rules` that apply across every row. Each row declares:
 
 | Field          | Meaning                                                      |

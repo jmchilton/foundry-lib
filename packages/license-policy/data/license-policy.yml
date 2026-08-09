@@ -173,12 +173,37 @@ licenses:
       notice + same-license + source availability; isolate in its own file, do
       not blend into permissively-licensed prose
 
+  GPL-3.0-or-later:
+    name: GPL 3.0 or later
+    policy: verbatim-ok
+    license_file: true
+    copyleft: true
+    obligations: >-
+      notice + same-license + source availability; isolate in its own file, do
+      not blend into permissively-licensed prose
+
   LGPL-3.0-or-later:
     name: LGPL 3.0 or later
     policy: verbatim-ok
     license_file: true
     copyleft: true
     obligations: notice + LGPL terms; isolate in its own file
+
+  # AGPL adds one term to GPL 3.0: a user served a modified version over a
+  # network must be offered its source. That is an obligation on RUNNING the
+  # software, not on carrying its text, so the redistribution answer this table
+  # exists to give is GPL's — verbatim-ok, isolate, notice. The extra term is
+  # still spelled out below, because an instance that packages or hosts AGPL
+  # software has to honour it whether or not this table governs that act.
+  AGPL-3.0-or-later:
+    name: AGPL 3.0 or later
+    policy: verbatim-ok
+    license_file: true
+    copyleft: true
+    obligations: >-
+      notice + same-license + source availability, extending to users served a
+      modified version over a network; isolate in its own file, do not blend
+      into permissively-licensed prose
 
   CC-BY-NC-SA-2.0:
     name: CC BY-NC-SA 2.0
