@@ -1,5 +1,12 @@
 # @galaxy-foundry/cast
 
+## 0.11.2
+
+### Patch Changes
+
+- Updated dependencies [[`f54b266`](https://github.com/jmchilton/foundry-lib/commit/f54b266fe5a795f442e9072ebd5314fa412b7ab6)]:
+  - @galaxy-foundry/license-policy@0.5.0
+
 ## 0.11.1
 
 ### Patch Changes
