@@ -1,0 +1,56 @@
+{
+  "name": "@galaxy-foundry/source-note",
+  "version": "0.0.0",
+  "description": "The shared frontmatter contract for a Foundry source note — bibliographic identity, licence posture, and read coverage, kept as separate answerable fields.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmchilton/foundry-lib.git",
+    "directory": "packages/source-note"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "foundry",
+    "frontmatter",
+    "citation",
+    "attribution",
+    "license",
+    "zod"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
+  "dependencies": {
+    "@galaxy-foundry/license-policy": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.10",
+    "zod": "^4.4.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

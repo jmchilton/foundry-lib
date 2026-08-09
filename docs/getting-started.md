@@ -32,6 +32,7 @@ omit it when a Foundry has another reading surface.
 | Resolve redistribution posture                  | `license-policy`               | note-level license coherence                              |
 | Bind collections into reader and cast inputs    | `content-reader`               | schemas, collection table, routes, and domain rendering   |
 | Compose typed-reference vocabularies            | `reference-contract`           | reference kinds and cross-field validation                |
+| Describe a summarized external work             | `source-note`                  | citation, attribution, licence posture, and read coverage |
 | Render shared Astro reading surfaces            | `site-kit`                     | site identity, styles, corpus, and domain furniture       |
 | Parse and query a tag catalog                   | `tag-registry`                 | facets, values, and corpus drift checks                   |
 | Parse and rewrite `[[Target]]` links            | `wiki-links`                   | link map and unresolved-link policy                       |
@@ -60,6 +61,7 @@ pnpm add @galaxy-foundry/kind-schema zod@^4
 pnpm add @galaxy-foundry/license-policy
 pnpm add @galaxy-foundry/content-reader
 pnpm add @galaxy-foundry/reference-contract
+pnpm add @galaxy-foundry/source-note
 pnpm add @galaxy-foundry/site-kit
 pnpm add @galaxy-foundry/tag-registry
 pnpm add @galaxy-foundry/wiki-links

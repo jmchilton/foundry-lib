@@ -9,6 +9,7 @@
     "packages/content-reader",
     "packages/reference-contract",
     "packages/site-kit",
+    "packages/source-note",
     "packages/tag-registry",
     "packages/wiki-links"
   ],
