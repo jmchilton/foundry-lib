@@ -101,18 +101,19 @@ extraction.
 
 ## Packages
 
-| Package                                                                                                  | Use it when you need to…                                          |
-| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| [`@galaxy-foundry/audit-citations`](https://www.npmjs.com/package/@galaxy-foundry/audit-citations)       | verify scholarly citation identity with replayable evidence       |
-| [`@galaxy-foundry/cast`](https://www.npmjs.com/package/@galaxy-foundry/cast)                             | place and reconcile reproducible cast bundles                     |
-| [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds |
-| [`@galaxy-foundry/kind-schema`](https://www.npmjs.com/package/@galaxy-foundry/kind-schema)               | assemble kind schemas and route collections without sharing kinds |
-| [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy)         | interpret a note's license as an allowed redistribution posture   |
-| [`@galaxy-foundry/content-reader`](https://www.npmjs.com/package/@galaxy-foundry/content-reader)         | bind collection files into shared reader and cast projections     |
-| [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them  |
-| [`@galaxy-foundry/site-kit`](https://www.npmjs.com/package/@galaxy-foundry/site-kit)                     | render shared reading surfaces instead of hand-rolling them       |
-| [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet |
-| [`@galaxy-foundry/wiki-links`](https://www.npmjs.com/package/@galaxy-foundry/wiki-links)                 | resolve `[[Target]]` links in prose and frontmatter, exactly      |
+| Package                                                                                                  | Use it when you need to…                                            |
+| -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [`@galaxy-foundry/audit-citations`](https://www.npmjs.com/package/@galaxy-foundry/audit-citations)       | verify scholarly citation identity with replayable evidence         |
+| [`@galaxy-foundry/cast`](https://www.npmjs.com/package/@galaxy-foundry/cast)                             | place and reconcile reproducible cast bundles                       |
+| [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds   |
+| [`@galaxy-foundry/kind-schema`](https://www.npmjs.com/package/@galaxy-foundry/kind-schema)               | assemble kind schemas and route collections without sharing kinds   |
+| [`@galaxy-foundry/license-policy`](https://www.npmjs.com/package/@galaxy-foundry/license-policy)         | interpret a note's license as an allowed redistribution posture     |
+| [`@galaxy-foundry/content-reader`](https://www.npmjs.com/package/@galaxy-foundry/content-reader)         | bind collection files into shared reader and cast projections       |
+| [`@galaxy-foundry/reference-contract`](https://www.npmjs.com/package/@galaxy-foundry/reference-contract) | inherit the typed-reference vocabularies instead of copying them    |
+| [`@galaxy-foundry/source-note`](https://www.npmjs.com/package/@galaxy-foundry/source-note)               | describe a summarized work without fusing citation into attribution |
+| [`@galaxy-foundry/site-kit`](https://www.npmjs.com/package/@galaxy-foundry/site-kit)                     | render shared reading surfaces instead of hand-rolling them         |
+| [`@galaxy-foundry/tag-registry`](https://www.npmjs.com/package/@galaxy-foundry/tag-registry)             | parse a `meta_tags.yml` and resolve tags to their declaring facet   |
+| [`@galaxy-foundry/wiki-links`](https://www.npmjs.com/package/@galaxy-foundry/wiki-links)                 | resolve `[[Target]]` links in prose and frontmatter, exactly        |
 
 Every package is an ES module, supports Node.js 20 and later, and publishes from CI with npm
 provenance. `site-kit` additionally ships unbuilt `.astro` source, which its consumer's Astro build

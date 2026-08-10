@@ -82,6 +82,21 @@ The public surface includes:
 
 Start with [Compose a reference contract](guides/composing-reference-contracts.md).
 
+## `@galaxy-foundry/source-note`
+
+The public surface includes:
+
+- the field set: `sourceNoteFields` and `SourceNoteFields`;
+- the cross-field rules: `sourceNoteCoherence` and `CoherentSourceNote`;
+- read coverage: `SOURCE_READ_LEVELS` and `SourceReadLevel`;
+- the posture vocabulary, re-exported from `license-policy`: `SUMMARY_POSTURES` and
+  `SummaryPosture`; and
+- the shared option type: `SourceNoteOptions`.
+
+The identifier grammars and the licence table are deliberately not exports; the first are enforced
+by the field set, the second belongs to
+[`license-policy`](https://github.com/jmchilton/foundry-lib/tree/main/packages/license-policy).
+
 ## `@galaxy-foundry/content-reader`
 
 The public surface includes:

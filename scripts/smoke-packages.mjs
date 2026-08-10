@@ -157,6 +157,36 @@ const SMOKE = {
       throw new Error(`packed vocabulary carried modes: ${modes}`);
     }
   },
+  '@galaxy-foundry/source-note': async (mod, peer) => {
+    // zod is a peer, resolved from beside the unpacked package the way a consumer's install
+    // does — resolving it from this script would test the workspace instead of the tarball, and
+    // a bundled copy would put two zod instances in the same tree.
+    //
+    // No licence table is passed, so the packed module must reach its own runtime dependency for
+    // both the id vocabulary and the policy rows. Nothing but an install proves that: the source
+    // tree resolves `license-policy` through the workspace.
+    const { z } = await peer('zod');
+    const schema = z.object(mod.sourceNoteFields()).strict().superRefine(mod.sourceNoteCoherence());
+    const note = {
+      source_url: 'https://example.org/paper',
+      source_ids: { status: 'declared', doi: '10.1093/nar/gkaa550' },
+      access_date: '2026-07-03',
+      source_read: 'full-text',
+      citation: 'Turakhia Y, Chen HI. A fully-automated method. Nucleic Acids Research, 2020.',
+      source_license: { status: 'missing' },
+      derived: 'own-words-summary',
+    };
+    if (!schema.safeParse(note).success) {
+      throw new Error('composed schema rejected a valid source note across zod instances');
+    }
+    // The coherence rule has to survive packing, not just the field types.
+    if (schema.safeParse({ ...note, derived: 'verbatim-quotes-summary' }).success) {
+      throw new Error('packed coherence rule permitted verbatim carry under no licence');
+    }
+    if (schema.safeParse({ ...note, source_ids: { status: 'declared' } }).success) {
+      throw new Error('packed schema accepted declared identifiers with none given');
+    }
+  },
   '@galaxy-foundry/tag-registry': (mod) => {
     // No bundled data here — the facet vocabulary is per-instance — so what this proves is
     // that the format rules survive packing, not that an asset shipped.

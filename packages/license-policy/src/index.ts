@@ -209,7 +209,41 @@ export function resolveLicenseRow(
  */
 export function declaresVerbatimCarry(derived: string | undefined | null): boolean {
   if (typeof derived !== 'string') return true;
+  if (isSummaryPosture(derived)) return postureCarriesVerbatim(derived);
   return /license-aware|with-quotes|verbatim/i.test(derived) && !/own-words/i.test(derived);
+}
+
+/**
+ * The closed set of postures an authored source note may declare.
+ *
+ * Instances used to spell these themselves, and spelled them differently — `license-aware-summary`,
+ * `license-aware-with-quotes`, and `faithful-summary-with-quotes` were three names for one posture,
+ * and {@link declaresVerbatimCarry} became a pattern match to span them. Enumerating them makes the
+ * disagreement unspellable, which is what the pattern was standing in for.
+ *
+ * The axis is what the note does with protected expression, which is why neither name says
+ * "license-aware": every posture is license-aware, and labelling only one of them so is what let
+ * the vocabulary sprawl. A posture also says nothing about how much of the source was read — an
+ * `abstract-only-own-words-summary` was the corpus fusing two answers into one field.
+ */
+export const SUMMARY_POSTURES = ['own-words-summary', 'verbatim-quotes-summary'] as const;
+
+export type SummaryPosture = (typeof SUMMARY_POSTURES)[number];
+
+/** Whether `value` is one of the {@link SUMMARY_POSTURES}. */
+export function isSummaryPosture(value: unknown): value is SummaryPosture {
+  return typeof value === 'string' && (SUMMARY_POSTURES as readonly string[]).includes(value);
+}
+
+/**
+ * Whether a canonical posture reproduces upstream expression.
+ *
+ * Prefer this to {@link declaresVerbatimCarry} for an authored note, whose posture a schema has
+ * already constrained. The looser function stays correct for a Cast ref, whose `derived` may be
+ * absent or free prose and can only be read by pattern.
+ */
+export function postureCarriesVerbatim(posture: SummaryPosture): boolean {
+  return posture === 'verbatim-quotes-summary';
 }
 
 export {

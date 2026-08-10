@@ -3,14 +3,17 @@ import { describe, it, expect } from 'vitest';
 import {
   LICENSE_POLICY_FILE,
   LICENSE_REF_RE,
+  SUMMARY_POSTURES,
   bundledPolicy,
   bundledPolicyPath,
   bundledPolicyText,
   declaresVerbatimCarry,
+  isSummaryPosture,
   isValidLicenseId,
   licenseIds,
   loadLicensePolicy,
   parseLicensePolicy,
+  postureCarriesVerbatim,
   resolveLicenseRow,
   type LicensePolicy,
 } from '../src/index.js';
@@ -274,5 +277,40 @@ describe('declaresVerbatimCarry', () => {
   it('treats an absent posture as pass-through', () => {
     expect(declaresVerbatimCarry(undefined)).toBe(true);
     expect(declaresVerbatimCarry(null)).toBe(true);
+  });
+
+  // The canonical postures must not depend on the free-text fallback to be read correctly.
+  it('agrees with the closed vocabulary on every canonical posture', () => {
+    for (const posture of SUMMARY_POSTURES) {
+      expect(declaresVerbatimCarry(posture)).toBe(postureCarriesVerbatim(posture));
+    }
+  });
+});
+
+describe('SUMMARY_POSTURES', () => {
+  it('names the two postures a source note may declare', () => {
+    expect([...SUMMARY_POSTURES]).toEqual(['own-words-summary', 'verbatim-quotes-summary']);
+  });
+
+  it('reads each posture exactly, without pattern matching', () => {
+    expect(postureCarriesVerbatim('own-words-summary')).toBe(false);
+    expect(postureCarriesVerbatim('verbatim-quotes-summary')).toBe(true);
+  });
+
+  // The spellings this replaces. Each was a real `derived` value in some instance or doc, and the
+  // free-text predicate still reads them so a Cast ref keeps working; none is a posture a note may
+  // now declare.
+  it.each([
+    'license-aware-summary',
+    'license-aware-with-quotes',
+    'faithful-summary-with-quotes',
+    'abstract-only-own-words-summary',
+  ])('does not admit the superseded spelling %s', (legacy) => {
+    expect(isSummaryPosture(legacy)).toBe(false);
+  });
+
+  it('rejects a non-string', () => {
+    expect(isSummaryPosture(undefined)).toBe(false);
+    expect(isSummaryPosture(7)).toBe(false);
   });
 });

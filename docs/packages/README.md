@@ -25,6 +25,7 @@ the status column distinguishes converged substrate from the two explicitly docu
 | `license-policy`     | admitted           | What redistribution posture applies to this license?          | the complete policy table                    | `js-yaml`                          |
 | `content-reader`     | admitted           | Which local notes and addresses feed readers and casters?     | collection-backed content mechanics          | `kind-schema` and `wiki-links`     |
 | `reference-contract` | admitted           | What may a Mold's `references[]` entry say?                   | four of five reference vocabularies          | `js-yaml`                          |
+| `source-note`        | admitted           | What does a note say about the work it summarizes?            | field set and licence-coherence rules        | peer `zod@^4`, `license-policy`    |
 | `site-kit`           | admitted           | How does a Foundry render common reading surfaces?            | Astro components and navigation rules        | peers `astro` and `astro-pagefind` |
 | `tag-registry`       | admitted           | What may a note's `tags:` say?                                | registry format and accessors, no vocabulary | `js-yaml`                          |
 | `wiki-links`         | admitted           | Where does this `[[Target]]` point?                           | grammar and transforms, no link map          | none                               |
@@ -134,6 +135,23 @@ license. Those live in the instance's validator.
 
 [Follow the composition guide](guides/composing-reference-contracts.md) or inspect the
 [generated API](api/typedoc/index.html ':ignore').
+
+## `@galaxy-foundry/source-note`
+
+Choose this package for:
+
+- describing an external work a note summarizes, without fusing its citation into its licence
+  notice;
+- declaring bibliographic identifiers a resolver can read by name rather than by scraping prose;
+- recording how much of a source was actually read, so an abstract-only summary is findable; or
+- enforcing licence coherence — that a note carrying upstream expression has a licence permitting
+  it, the notice that licence obliges, and the licence file it requires.
+
+The package does not decide which of your kinds are source notes, and does not own `title`,
+`summary`, or `tags`, which describe the note rather than its source. Whether a declared identifier
+actually resolves is [`audit-citations`](architecture/audit-citations.md), not this package.
+
+Inspect the [generated API](api/typedoc/index.html ':ignore').
 
 ## `@galaxy-foundry/site-kit`
 
