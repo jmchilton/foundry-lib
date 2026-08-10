@@ -88,7 +88,17 @@ const kindLayouts = {
       },
     ],
   },
-  prompt: { shape: 'directory' as const, companions: [] },
+  prompt: {
+    shape: 'directory' as const,
+    companions: [
+      {
+        file: 'upstream.prompt',
+        requirement: 'required' as const,
+        purpose: 'The prompt text the note frames.',
+        disposition: 'bundled' as const,
+      },
+    ],
+  },
   pattern: {
     shape: 'directory' as const,
     companions: [
@@ -210,40 +220,71 @@ describe('the bundled name comes from the note, not from the file holding it', (
   });
 });
 
-describe("the payload a companion strategy ships is the instance's answer", () => {
-  it('refuses a strategy nothing implements, rather than casting the wrapper', () => {
+describe("the payload a companion strategy ships is the Kind's bundled companion", () => {
+  it('ships the file the Kind declares bundled, and names it for the note', () => {
     const out = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 0, ctx());
-    // Falling back to the note would package the file that FRAMES the payload and report
-    // success, which is the one outcome worse than an error.
-    expect(out.resolved).toBeUndefined();
-    expect(out.error).toContain('references[0]');
-    expect(out.error).toContain('payloadCompanion');
-  });
-
-  it('ships the file the hook names, and derives the bundled name from the note', () => {
-    const out = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 0, {
-      ...ctx(),
-      hooks: { ...bareHooks, payloadCompanion: () => 'not-a-name-the-caster-knows.md' },
-    });
     expect(out.error).toBeUndefined();
-    expect(out.resolved?.src).toBe('content/prompts/p/not-a-name-the-caster-knows.md');
+    expect(out.resolved?.src).toBe('content/prompts/p/upstream.prompt');
     // The bundle is named for the note that frames the payload, never for the payload's file.
     expect(out.resolved?.dst).toBe('references/prompts/p.md');
   });
 
-  it('reports a broken kind declaration against the ref that tripped over it', () => {
-    // Thrown, this would arrive as a stack trace with no ref index — losing the only thing
-    // that says WHICH reference was being resolved.
+  it('refuses a note type it was handed no layout for, rather than casting the wrapper', () => {
+    const out = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 0, {
+      ...ctx(),
+      kindLayouts: {},
+    });
+    // Falling back to the note would package the file that FRAMES the payload and report
+    // success, which is the one outcome worse than an error.
+    expect(out.resolved).toBeUndefined();
+    expect(out.error).toContain('references[0]');
+    expect(out.error).toContain('no Kind layout');
+  });
+
+  it('refuses a Kind that declares no payload, against the ref that asked', () => {
     const out = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 7, {
       ...ctx(),
-      hooks: {
-        ...bareHooks,
-        payloadCompanion: () => {
-          throw new Error('kind=prompt declares no single bundled companion');
+      kindLayouts: { ...kindLayouts, prompt: { shape: 'directory', companions: [] } },
+    });
+    expect(out.resolved).toBeUndefined();
+    expect(out.error).toContain('references[7]');
+    expect(out.error).toContain('declares 0 bundled companions');
+  });
+
+  it('refuses a Kind that declares two, because the strategy names one payload', () => {
+    const second = {
+      file: 'second.prompt',
+      requirement: 'required' as const,
+      purpose: 'A rival payload.',
+      disposition: 'bundled' as const,
+    };
+    const out = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 0, {
+      ...ctx(),
+      kindLayouts: {
+        ...kindLayouts,
+        prompt: {
+          shape: 'directory',
+          companions: [...kindLayouts.prompt.companions, second],
         },
       },
     });
-    expect(out.error).toBe('references[7]: kind=prompt declares no single bundled companion');
+    expect(out.resolved).toBeUndefined();
+    expect(out.error).toContain('declares 2 bundled companions');
+  });
+
+  it('refuses a directory as a payload, which is not one file', () => {
+    const out = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 0, {
+      ...ctx(),
+      kindLayouts: {
+        ...kindLayouts,
+        prompt: {
+          shape: 'directory',
+          companions: [{ ...kindLayouts.prompt.companions[0]!, file: 'fragments/' }],
+        },
+      },
+    });
+    expect(out.resolved).toBeUndefined();
+    expect(out.error).toContain('fragments/');
   });
 });
 
@@ -284,10 +325,7 @@ describe('companions travel from the note Kind, not a second frontmatter declara
   });
 
   it('does not expand a payload that already resolved from its companion', () => {
-    const payload = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 0, {
-      ...ctx(),
-      hooks: { ...bareHooks, payloadCompanion: () => 'upstream.prompt' },
-    }).resolved;
+    const payload = resolveMoldRef({ kind: 'prompt', ref: '[[p]]' }, 0, ctx()).resolved;
     const out = expandCompanions([payload!], ctx());
     expect(out).toEqual({ refs: [payload], errors: [] });
   });

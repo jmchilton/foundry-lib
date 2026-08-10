@@ -91,7 +91,6 @@ export {
   type CastContext,
   type CastHooks,
   type PackageLoader,
-  type PayloadCompanion,
   type RefRenderInput,
   type RefRenderer,
   type RefRenderers,
