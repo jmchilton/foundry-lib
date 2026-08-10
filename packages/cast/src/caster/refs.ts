@@ -331,15 +331,32 @@ export function expandCompanions(resolved: ResolvedRef[], ctx: RefResolution): C
     for (const companion of [...declared, ...additional]) {
       const c = companion.file;
       const src = path.posix.join(srcDir, c);
-      if (companion.requirement !== 'required' && !existsSync(path.join(repoRoot, src))) continue;
+      const present = existsSync(path.join(repoRoot, src));
+      if (companion.requirement !== 'required' && !present) continue;
 
       // A directory is a companion declaration, while provenance remains one entry per file.
       // Expand its files here so hashing, collision detection and orphan sweeping keep operating
       // on the same identity: one destination path, one record.
-      const sources =
-        c.endsWith('/') && existsSync(path.join(repoRoot, src))
+      const isDirectory = c.endsWith('/');
+      const sources = isDirectory
+        ? present
           ? listFilesUnder(path.join(repoRoot, src), repoRoot)
-          : [src];
+          : []
+        : [src];
+      // A missing FILE still travels, and `castOneRef` reports its absence against the
+      // destination it would have taken. A directory has no such ref to report against: the
+      // path is not a file, so carrying it would claim a bundle destination nothing can occupy
+      // — a claim the duplicate check and the orphan sweep both read as real.
+      if (isDirectory && sources.length === 0) {
+        if (companion.requirement === 'required') {
+          errors.push(
+            present
+              ? `${r.ref} declares ${c} required, and ${src} holds no file to carry`
+              : `${r.ref} declares ${c} required, and there is no ${src}`,
+          );
+        }
+        continue;
+      }
       for (const companionSrc of sources) {
         const rel = path.posix.relative(srcDir, companionSrc);
         out.push({

@@ -404,6 +404,88 @@ describe('companions travel from the note Kind, not a second frontmatter declara
     }
   });
 
+  // A directory contributes refs per file, so a directory contributing none leaves nothing
+  // downstream to carry the failure. Both shapes of that are reported here or nowhere.
+  describe('a required directory companion that carries no file', () => {
+    function expandAgainst(build: (noteDir: string) => void) {
+      const repoRoot = mkdtempSync(path.join(tmpdir(), 'cast-required-dir-'));
+      try {
+        const noteDir = path.join(repoRoot, 'content/patterns/double-dipping');
+        mkdirSync(noteDir, { recursive: true });
+        build(noteDir);
+        return expandCompanions([resolvedPattern!], {
+          ...ctx(),
+          repoRoot,
+          kindLayouts: {
+            ...kindLayouts,
+            pattern: {
+              ...kindLayouts.pattern,
+              companions: [
+                {
+                  file: 'assets/',
+                  requirement: 'required' as const,
+                  purpose: 'Structured evidence carried with the note.',
+                  disposition: 'bundled' as const,
+                },
+              ],
+            },
+          },
+        });
+      } finally {
+        rmSync(repoRoot, { recursive: true, force: true });
+      }
+    }
+
+    it('says so when the directory is absent, rather than claiming a path for it', () => {
+      const out = expandAgainst(() => {});
+      // The directory path itself must not become a ref: it would claim a bundle destination
+      // no file can occupy, and the orphan sweep and duplicate check both read that claim.
+      expect(out.refs).toEqual([resolvedPattern]);
+      expect(out.errors).toEqual([
+        '[[double-dipping]] declares assets/ required, and there is no content/patterns/double-dipping/assets/',
+      ]);
+    });
+
+    it('says so when the directory is there and empty', () => {
+      const out = expandAgainst((noteDir) => mkdirSync(path.join(noteDir, 'assets')));
+      expect(out.refs).toEqual([resolvedPattern]);
+      expect(out.errors).toEqual([
+        '[[double-dipping]] declares assets/ required, and content/patterns/double-dipping/assets/ holds no file to carry',
+      ]);
+    });
+
+    it('stays quiet for a recommended one, which is allowed to be absent', () => {
+      const repoRoot = mkdtempSync(path.join(tmpdir(), 'cast-recommended-dir-'));
+      try {
+        mkdirSync(path.join(repoRoot, 'content/patterns/double-dipping/assets'), {
+          recursive: true,
+        });
+        const out = expandCompanions([resolvedPattern!], {
+          ...ctx(),
+          repoRoot,
+          kindLayouts: {
+            ...kindLayouts,
+            pattern: {
+              ...kindLayouts.pattern,
+              companions: [
+                {
+                  file: 'assets/',
+                  requirement: 'recommended' as const,
+                  purpose: 'Structured evidence carried with the note.',
+                  disposition: 'bundled' as const,
+                },
+              ],
+            },
+          },
+        });
+        expect(out.errors).toEqual([]);
+        expect(out.refs).toEqual([resolvedPattern]);
+      } finally {
+        rmSync(repoRoot, { recursive: true, force: true });
+      }
+    });
+  });
+
   it('reports a note type whose Kind layout was not supplied', () => {
     const out = expandCompanions([resolvedPattern!], { ...ctx(), kindLayouts: {} });
     expect(out.refs).toEqual([resolvedPattern]);
