@@ -142,20 +142,6 @@ export interface BundleCheckContext extends CastContext {
 export type BundleCheck = (context: BundleCheckContext) => readonly string[];
 
 /**
- * The one file beside a note that a cast packages in the note's place.
- *
- * Answers the `payload-companion` resolve strategy for whichever kinds declare it. Which file
- * that is comes from the kind layer, and every kind layer is an instance's own — so a Foundry
- * whose kinds all cast the note itself registers nothing, and never has to write a function
- * whose only job is to throw.
- *
- * Throwing is how a kind that cannot answer says so. The message is reported against the ref
- * that asked, so a broken declaration names the reference that tripped over it instead of
- * ending the run with a stack trace.
- */
-export type PayloadCompanion = (kind: string) => string;
-
-/**
  * Load an npm module a note names, from the instance's own dependency graph.
  *
  * The `package-export` strategy cannot import a specifier itself. A bare `import(spec)` resolves
@@ -191,21 +177,11 @@ export interface CastHooks {
   /** Everything below that paragraph. */
   readonly skillSections: SkillSectionContributor;
   /**
-   * The file a `payload-companion` kind ships in its note's place.
-   *
-   * Optional, because a contract with no such kind never asks. A contract that DOES declare the
-   * strategy and finds nothing registered is an error rather than a fallback to the note: the
-   * declaration's whole content is "the note is the wrapper, not the payload", so casting the
-   * wrapper would package the wrong file and look like it worked.
-   */
-  readonly payloadCompanion?: PayloadCompanion;
-  /**
    * How a `package-export` kind's module is loaded. See {@link PackageLoader}.
    *
-   * Optional on the same terms as `payloadCompanion`: a contract with no such kind never asks,
-   * and one that declares the strategy with nothing registered is an error rather than a
-   * fallback. There is nothing to fall back TO — the bytes exist only inside a package this
-   * package cannot reach.
+   * Optional, because a contract with no such kind never asks. One that declares the strategy
+   * with nothing registered is an error rather than a fallback: there is nothing to fall back
+   * TO — the bytes exist only inside a package this package cannot reach.
    */
   readonly packageLoader?: PackageLoader;
   /**

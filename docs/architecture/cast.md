@@ -49,10 +49,14 @@ kind manifest consume. It does not accept a second `companions` permission in
 disposition is the cast decision: `bundled` copies it; `cast-input` and `foundry-only` stay out of
 the bundle.
 
+`payload-companion` reads that same table: the file a note ships in its own place is the one
+companion its Kind declares `bundled`, so the strategy resolves from the layout rather than from
+an instance hook.
+
 The test of a hook being in the right place is that one Foundry supplies it and a second supplies
 nothing: a Foundry whose corpus is research notes has no artifacts, no tools and no commands, and
-should still cast. Two hooks are optional for that reason — `payloadCompanion` and
-`packageLoader` answer resolve strategies a contract need never declare.
+should still cast. `packageLoader` is optional for that reason — it answers a resolve strategy a
+contract need never declare.
 
 ## Composition flow
 

@@ -61,12 +61,15 @@ a question about the staged bundle rather than about presentation.
 the cast document contains; `bundleFiles` contributes files beyond the document and
 `_provenance.json`; `bundleChecks` runs an instance's own checks over the finished bundle.
 
-Two are optional, and that is the test of the boundary: a Foundry whose corpus is research notes
-has no artifacts, no tools and no commands, and should still cast. `payloadCompanion` answers
-the `payload-companion` strategy, `packageLoader` the `package-export` one — and a contract that
-declares either strategy while registering nothing gets an error naming the reference that asked.
-Falling back to the note would package the file that _frames_ a payload and report success,
-which is the one outcome worse than a failure.
+One is optional, and that is the test of the boundary: a Foundry whose corpus is research notes
+has no artifacts, no tools and no commands, and should still cast. `packageLoader` answers the
+`package-export` strategy, and a contract that declares it while registering nothing gets an
+error naming the reference that asked rather than a fallback.
+
+`payload-companion` needs no hook. Which file a note ships in its own place is the note's Kind
+saying `disposition: bundled` on exactly one companion — the same layout that expands companions
+for every other kind. An instance answering separately would be answering from that declaration
+anyway, with the freedom to disagree with it.
 
 `packageLoader` exists because a bare `import(spec)` resolves relative to the file running it.
 Written inside this package, it would look for your dependencies beside its own installed copy.

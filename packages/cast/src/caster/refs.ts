@@ -12,7 +12,6 @@ import { fileSlug, resolveWikiLink, WIKI_LINK_RE } from '@galaxy-foundry/wiki-li
 
 import { copyVerbatim, listFilesUnder } from '../bundle.js';
 import type { CastContract } from '../cast-contract.js';
-import { errorMessage } from '../errors.js';
 import { readMarkdown, type Frontmatter } from '../frontmatter.js';
 import type { ProvenanceRefEntry } from '../provenance.js';
 import { reconcile, reconcileText, sha256File } from '../reconcile.js';
@@ -202,28 +201,34 @@ export function resolveMoldRef(
       break;
     }
     case 'payload-companion': {
-      // What casting packages is the payload beside the note, never the wrapper. Which file
-      // that is comes from the kind's own companion declaration, so there is nothing here to
-      // resolve and nothing that can point at a file that is not there.
+      // What casting packages is the payload beside the note, never the wrapper. Which file that
+      // is, the note's own Kind already declares: the strategy means "one companion IS the
+      // bundled material", and `disposition: bundled` is how a layout spells exactly that.
       //
-      // Which file that is, this instance's kind layer answers. Nothing registered means the
-      // contract declares a strategy the instance does not implement, and that is worth saying
-      // out loud: falling back to the note would package the wrapper and look like it worked.
-      // Same shape as an unregistered renderer, and for the same reason.
-      if (!ctx.hooks.payloadCompanion) {
+      // Read from the layout rather than asked of the instance, because the layout is already
+      // here — it is what expands companions on every other kind — and an instance answering
+      // separately would be answering from the same declaration, with the freedom to disagree.
+      const layout = ctx.kindLayouts[noteMeta.type];
+      if (!layout) {
         return {
-          error: `references[${index}]: kind=${kind} resolves via payload-companion, but nothing registers a payloadCompanion hook — the contract declares this strategy and this Foundry does not implement it`,
+          error: `references[${index}]: ${kind} ref ${refStr} resolves to type=${noteMeta.type}, but the caster received no Kind layout for it`,
         };
       }
-      // Caught rather than thrown: a kind declaring no single `bundled` companion is a broken
-      // declaration, and every other failure in this function arrives as a collected
-      // `references[i]: ...` line. Letting this one escape as a stack trace would lose the
-      // ref index — the only thing that says WHICH reference was being resolved.
-      let payload: string;
-      try {
-        payload = ctx.hooks.payloadCompanion(kind);
-      } catch (e) {
-        return { error: `references[${index}]: ${errorMessage(e)}` };
+      const bundled = layout.companions.filter((companion) => companion.disposition === 'bundled');
+      // Not a fallback to the note: the declaration's whole content is "the note is the wrapper,
+      // not the payload", so casting the wrapper would package the wrong file and look like it
+      // worked. Reported against the ref that asked, because a broken declaration otherwise
+      // names no reference.
+      if (bundled.length !== 1) {
+        return {
+          error: `references[${index}]: ${kind} resolves via payload-companion, and type=${noteMeta.type} declares ${bundled.length} bundled companions — the strategy packages exactly one`,
+        };
+      }
+      const payload = bundled[0]!.file;
+      if (payload.endsWith('/')) {
+        return {
+          error: `references[${index}]: ${kind} resolves via payload-companion, and type=${noteMeta.type} declares its bundled companion as the directory ${payload} — a payload is one file`,
+        };
       }
       src = path.posix.join(path.posix.dirname(tp), payload);
       dstOverride = namedDst;
