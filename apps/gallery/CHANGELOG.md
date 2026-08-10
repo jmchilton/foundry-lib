@@ -1,5 +1,13 @@
 # @galaxy-foundry/gallery
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`8abd703`](https://github.com/jmchilton/foundry-lib/commit/8abd703a03af0909fa62984e3db347dba6238cfc)]:
+  - @galaxy-foundry/license-policy@0.6.0
+  - @galaxy-foundry/site-kit@0.9.4
+
 ## 0.0.4
 
 ### Patch Changes
