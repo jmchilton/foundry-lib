@@ -35,9 +35,14 @@ export { SUMMARY_POSTURES, type SummaryPosture };
  * posture — `abstract-only-own-words-summary` — which put the answer somewhere no schema could
  * read and left it unstated on every note whose author did not think to mention it.
  *
+ * `not-read` is a real answer rather than a gap: a citation-accuracy note checks a work's record
+ * without reading the work, and a note assembled from open surrogates may never reach a paywalled
+ * primary. Both are source notes about a source nobody read, and folding them into `abstract-only`
+ * would assert a read that never happened.
+ *
  * Required, so that silence is not read as `full-text`.
  */
-export const SOURCE_READ_LEVELS = ['full-text', 'partial', 'abstract-only'] as const;
+export const SOURCE_READ_LEVELS = ['full-text', 'partial', 'abstract-only', 'not-read'] as const;
 
 export type SourceReadLevel = (typeof SOURCE_READ_LEVELS)[number];
 

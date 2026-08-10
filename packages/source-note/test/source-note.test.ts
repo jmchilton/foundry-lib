@@ -117,6 +117,14 @@ describe('sourceNoteFields', () => {
       expect(parse({ source_read: level }).success).toBe(true);
   });
 
+  // A citation-accuracy note checks a work's record without reading it, and a note built from
+  // open surrogates may never reach a paywalled primary. Both are source notes; neither read the
+  // source. Without a level for it the honest answer is unspellable and the nearest one —
+  // `abstract-only` — asserts a read nobody performed.
+  it('admits a source that was never read', () => {
+    expect(parse({ source_read: 'not-read' }).success).toBe(true);
+  });
+
   it('admits only the canonical postures', () => {
     for (const posture of SUMMARY_POSTURES)
       expect(parse({ derived: posture, attribution: valid.attribution }).success).toBe(true);
