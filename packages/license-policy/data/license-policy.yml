@@ -139,6 +139,23 @@ licenses:
     copyleft: false
     obligations: attribution (title/author/source/license/changes)
 
+  # Share-alike with no field-of-use restriction, which is the GPL's shape rather than the NC
+  # family's. The table already decided that copyleft is not a reason to refuse carry — the GPL
+  # rows are verbatim-ok and answer the obligation by isolating the carried text in its own file,
+  # so only that file inherits the licence. Share-alike is answerable the same way. What isolation
+  # cannot answer is NC, which restricts USE rather than licensing and therefore travels into
+  # whatever embeds it no matter where the text sits; that, not copyleft, is why the NC rows below
+  # are own-words-only. Reading CC BY-SA as own-words-only would make it stricter than the GPL.
+  CC-BY-SA-4.0:
+    name: CC BY-SA 4.0
+    policy: verbatim-ok
+    license_file: true
+    copyleft: true
+    obligations: >-
+      attribution (title/author/source/license/changes) + same-license on any
+      adaptation; isolate in its own file, do not blend into permissively-licensed
+      prose
+
   Artistic-2.0:
     name: Artistic License 2.0
     policy: verbatim-ok
@@ -211,8 +228,9 @@ licenses:
     license_file: false
     copyleft: false
     obligations: >-
-      attribution + citation; verbatim carry avoided so NC + share-alike do not
-      propagate into the KB
+      attribution + citation; verbatim carry avoided because the NC condition
+      travels with the text. Share-alike alone would not be the reason — see
+      CC-BY-SA-4.0, which isolation answers
 
   # CC BY-NC* family (any version): the license PERMITS non-commercial verbatim
   # reproduction, but the NC condition travels with the text — a cast that embeds

@@ -40,9 +40,33 @@ describe('the bundled table', () => {
       // naming an id SPDX already lists.
       'GPL-3.0-or-later',
       'AGPL-3.0-or-later',
+      // What a CC BY-SA article declares. Nothing else in the table places it: the CC BY rows stop
+      // at attribution, and CC-BY-NC-SA-2.0 is reachable only by also asserting a non-commercial
+      // term the work does not carry.
+      'CC-BY-SA-4.0',
     ]) {
       expect(licenseIds(policy)).toContain(licenseId);
     }
+  });
+
+  // Share-alike and non-commercial are different kinds of obligation and the table must not
+  // collapse them. Isolation answers copyleft — only the file holding the carried text inherits
+  // the licence — which is why the GPL rows carry. NC restricts use rather than licensing, so no
+  // file boundary contains it. CC BY-SA therefore belongs beside the GPL and not beside the NC rows.
+  it('answers share-alike by isolation, the way it answers the GPL', () => {
+    const gpl = resolveLicenseRow(policy, 'GPL-3.0-or-later');
+    const shareAlike = resolveLicenseRow(policy, 'CC-BY-SA-4.0');
+    const nonCommercial = resolveLicenseRow(policy, 'CC-BY-NC-SA-2.0');
+
+    expect(shareAlike.policy).toBe(gpl.policy);
+    expect(shareAlike.copyleft).toBe(true);
+    expect(shareAlike.license_file).toBe(true);
+    expect(shareAlike.defect).toBeUndefined();
+    expect(shareAlike.obligations).toMatch(/isolate/);
+
+    // The NC row carries the share-alike term too, and still refuses carry — for the other reason.
+    expect(nonCommercial.policy).toBe('own-words-only');
+    expect(shareAlike.policy).not.toBe(nonCommercial.policy);
   });
 
   // The AGPL differs from the GPL in an obligation on RUNNING the software, never on carrying its
