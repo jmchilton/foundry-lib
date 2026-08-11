@@ -46,6 +46,11 @@ by inventing a compound posture, `abstract-only-own-words-summary` — and both 
 most notes. A summary built from an abstract cannot support a claim about methods or results detail,
 and that is worth being able to find.
 
+Its levels are `full-text`, `partial`, `abstract-only`, and `not-read`. The last is a real answer,
+not a gap: a citation-accuracy note checks a work's record without reading the work, and a note
+assembled from open surrogates may never reach a paywalled primary. Both are source notes about a
+source nobody read.
+
 ## Absence is a value, not a gap
 
 Two fields are discriminated unions rather than optional fields, because "nobody looked" and "we
