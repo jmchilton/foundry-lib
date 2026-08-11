@@ -10,6 +10,7 @@ import KindCatalog from '../src/components/KindCatalog.astro';
 import KindReference from '../src/components/KindReference.astro';
 import ReferenceContract from '../src/components/ReferenceContract.astro';
 import ContentNote from '../src/components/ContentNote.astro';
+import NoteHeader from '../src/components/NoteHeader.astro';
 import SiteFooter from '../src/components/SiteFooter.astro';
 import SiteHeader from '../src/components/SiteHeader.astro';
 import SiteShell from '../src/components/SiteShell.astro';
@@ -40,6 +41,7 @@ const COMPONENTS: Record<string, AstroComponentFactory> = {
   LicenseFileBody,
   ReferenceContract,
   ContentNote,
+  NoteHeader,
   SiteHeader,
   SiteFooter,
   SiteShell,

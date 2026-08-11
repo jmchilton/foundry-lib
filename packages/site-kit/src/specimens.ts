@@ -13,6 +13,7 @@ import type {
   LicenseFileBodyProps,
   ReferenceContractProps,
   ContentNoteProps,
+  NoteHeaderProps,
   ResolvedReference,
   SiteFooterProps,
   SiteHeaderProps,
@@ -629,9 +630,11 @@ export const CONTENT_NOTE_SPECIMENS: SpecimenGroup<ContentNoteProps> = {
       why: 'Most corpus notes already begin with H1; the frame supplies navigation, summary, tags, and the article boundary without duplicating it.',
       props: {
         title: 'Package A',
+        eyebrow: 'Package',
         summary: 'A package profile whose Markdown body owns its title.',
         tags: ['method/persistent-laplacian'],
         back: { href: '#', label: 'Packages' },
+        showHeading: false,
       },
     },
     {
@@ -640,8 +643,8 @@ export const CONTENT_NOTE_SPECIMENS: SpecimenGroup<ContentNoteProps> = {
       why: 'A design record whose body starts directly in prose asks the shared frame to render its title and summary.',
       props: {
         title: 'Content-reader architecture',
+        eyebrow: 'Design Record',
         summary: 'Why content mechanics are shared and the content model is local.',
-        showHeading: true,
       },
     },
   ],
@@ -796,9 +799,57 @@ export const KIND_REFERENCE_SPECIMENS: SpecimenGroup<KindReferenceProps> = {
  * can be. A page rendering a group imports that group's own export and keeps its props typed; this
  * list is for the things that do not care — an index, a route manifest, a count.
  */
+export const NOTE_HEADER_SPECIMENS: SpecimenGroup<NoteHeaderProps> = {
+  id: 'note-header',
+  component: 'NoteHeader',
+  importPath: '@galaxy-foundry/site-kit/NoteHeader.astro',
+  summary: 'What sits above a note: where you are, what kind of thing this is, and what it says.',
+  surface: 'inline',
+  specimens: [
+    {
+      id: 'full',
+      name: 'Everything a note can carry',
+      why: 'The flagship shape — kind, status, tags, and a published source — so the vertical rhythm between five stacked rows is visible in one place.',
+      props: {
+        title: 'Persistent homology of expression manifolds',
+        eyebrow: 'Design Record',
+        summary:
+          'Why the filtration is built on correlation distance rather than Euclidean distance.',
+        status: 'reviewed',
+        tags: ['method/persistent-laplacian', 'scale/single-cell'],
+        tagBase: '#',
+        back: { href: '#', label: 'Design records' },
+        rawHref: '#',
+      },
+    },
+    {
+      id: 'minimal',
+      name: 'A kind that carries neither status nor tags',
+      why: 'Two of six kinds in the adopting instance declare a status, and a kind off the tag surface renders no chips — so the sparse header is the common case, not the degenerate one.',
+      props: {
+        title: 'Reading a Mold',
+        eyebrow: 'Mold',
+      },
+    },
+    {
+      id: 'unstyled-status',
+      name: 'A status the instance has no rule for',
+      why: 'Status is `data-status`, so the vocabulary is the instance’s. A value it has not styled has to stay legible rather than disappear — which is what makes adding one cost no release here.',
+      props: {
+        title: 'Superseded approach to filtration',
+        eyebrow: 'Design Record',
+        status: 'retracted',
+        tags: ['method/persistent-laplacian'],
+        tagBase: '#',
+      },
+    },
+  ],
+};
+
 export const SPECIMENS: readonly SpecimenGroup[] = [
   KIND_CATALOG_SPECIMENS,
   KIND_REFERENCE_SPECIMENS,
+  NOTE_HEADER_SPECIMENS,
   CONTENT_NOTE_SPECIMENS,
   TAG_CHIPS_SPECIMENS,
   REFERENCE_SPECIMENS,

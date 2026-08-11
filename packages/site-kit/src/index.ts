@@ -125,17 +125,55 @@ export interface TagChipsProps {
   tagBase?: string;
 }
 
-/** The invariant frame around a typed note; domain-specific furniture enters through slots. */
-export interface ContentNoteProps {
+/**
+ * The invariant frame around a typed note: a {@link NoteHeaderProps} header, then the instance's
+ * own furniture, then the body.
+ *
+ * Everything above the article is the header's, and this adds only what a page needs around it —
+ * the `metadata` and `reference` slots and the article boundary. The two were separate components
+ * for a while, one carrying an eyebrow, a status and raw actions and one not, sharing a back link,
+ * a summary, a tags row and the Pagefind attributes between them. Two renderings of one thing is a
+ * thing that drifts, and scoped styles mean an instance cannot correct whichever one it was given.
+ */
+export interface ContentNoteProps extends NoteHeaderProps {
+  /** The instance owns prose typography; the reader owns the article boundary. */
+  articleClass?: string;
+}
+
+/**
+ * What sits above a note's body: where you are, what kind of thing this is, and what it says.
+ *
+ * Every field is resolved by the instance. `eyebrow` in particular is a STRING rather than a kind
+ * the frame looks up — the label table belongs where the kinds are declared, typed against them, so
+ * that adding a kind is a compile error there instead of an eyebrow printing a raw type string
+ * here. The same reasoning keeps `status` a plain string: which values exist, and whether a kind
+ * carries one at all, differs per instance.
+ */
+export interface NoteHeaderProps {
   title: string;
+  /** The note's kind, as the instance words it — `Design Record`, `Mold`, `pipeline · nf → gxy`. */
+  eyebrow: string;
   summary?: string;
+  /** Rendered as `data-status`; see {@link NOTE_HEADER_TOKENS} on why not as a class. */
+  status?: string;
   tags?: string[];
   tagBase?: string;
   back?: { href: string; label: string };
-  /** Bodies that already open with their own H1 leave this false. */
+  /**
+   * The note's own source, if the instance publishes it.
+   *
+   * Presence is the switch. A separate `showActions` flag can be true while this is missing, and
+   * the two disagreeing is a Raw link pointing at nothing.
+   */
+  rawHref?: string;
+  /**
+   * Whether the frame renders the `<h1>`. Default true.
+   *
+   * A Markdown body that already opens with its own heading passes false: the frame still carries
+   * the eyebrow, the summary and the tags, and the body's H1 is what search reads as the title.
+   * Rendering both is how a page gets two.
+   */
   showHeading?: boolean;
-  /** The instance owns prose typography; the reader owns the article boundary. */
-  articleClass?: string;
 }
 
 /** A kind contract resolved into the route space and live corpus of one Foundry. */
@@ -352,6 +390,32 @@ export const KIND_CATALOG_TOKENS = [
 /** What the shared kind reference surfaces name that a built stylesheet does not supply. */
 export function kindCatalogStyleGaps(css: string): string[] {
   return styleGaps(css, KIND_CATALOG_TOKENS);
+}
+
+/**
+ * Theme roles used by the note frame, supplied by the instance.
+ *
+ * Status is deliberately absent from this list. It renders as `data-status`, not as a
+ * `badge-${status}` class, so the vocabulary stays the instance's: a status it adds is styled by a
+ * rule in its own sheet and costs no release here — the seam {@link LICENSE_BADGE_TOKENS}
+ * describes for `data-policy`, applied to the one other per-value palette in the kit. That also
+ * means a status the instance has no rule for renders as bare text rather than as nothing.
+ */
+export const NOTE_HEADER_TOKENS = [
+  '--color-accent',
+  '--color-border',
+  '--color-border-subtle',
+  '--color-link',
+  '--color-surface-hover',
+  '--color-text-muted',
+  '--color-text-primary',
+  '--color-text-secondary',
+  '--font-mono',
+] as const;
+
+/** What {@link NOTE_HEADER_TOKENS} names that a built stylesheet does not supply. */
+export function noteHeaderStyleGaps(css: string): string[] {
+  return styleGaps(css, NOTE_HEADER_TOKENS);
 }
 
 /**
