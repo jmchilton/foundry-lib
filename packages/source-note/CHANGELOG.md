@@ -1,5 +1,12 @@
 # @galaxy-foundry/source-note
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [[`c80ef27`](https://github.com/jmchilton/foundry-lib/commit/c80ef2725d03d300eb4d3b18398f06442f2f617d)]:
+  - @galaxy-foundry/license-policy@0.7.0
+
 ## 0.2.0
 
 ### Minor Changes
