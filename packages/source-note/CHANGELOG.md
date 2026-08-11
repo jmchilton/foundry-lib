@@ -1,5 +1,16 @@
 # @galaxy-foundry/source-note
 
+## 0.2.0
+
+### Minor Changes
+
+- [#110](https://github.com/jmchilton/foundry-lib/pull/110) [`eaa40e0`](https://github.com/jmchilton/foundry-lib/commit/eaa40e04b9d2a74086635f1fb32384c9893b1772) Thanks [@jmchilton](https://github.com/jmchilton)! - Add `not-read` to `SOURCE_READ_LEVELS`.
+
+  The first corpus migrated onto the contract has two notes whose source was never read: a
+  citation-accuracy note built from CrossRef and PubMed metadata, and a note assembled from open
+  surrogates because the primary is paywalled. Both are source notes; neither read the source, and
+  the nearest existing level, `abstract-only`, would assert a read that never happened.
+
 ## 0.1.0
 
 ### Minor Changes

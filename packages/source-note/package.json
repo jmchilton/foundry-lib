@@ -1,6 +1,6 @@
 {
   "name": "@galaxy-foundry/source-note",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "The shared frontmatter contract for a Foundry source note — bibliographic identity, licence posture, and read coverage, kept as separate answerable fields.",
   "type": "module",
   "exports": {
