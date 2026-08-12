@@ -167,7 +167,7 @@ expect(findings).toEqual([]);
 
 Declarations go in rather than content being crawled, because where they live is instance-specific.
 One instance carries `license_file` in note frontmatter and nowhere else. The other also authors it
-once per book in a `book.yml` and *copies* it into every chapter with a generator — so both the
+once per book in a `book.yml` and _copies_ it into every chapter with a generator — so both the
 record and its copies are declarations, and a crawler that found only the notes would leave the
 record it was generated from unchecked. Findings come back rather than throwing, so the instance
 decides what fails its build.
