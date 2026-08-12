@@ -244,9 +244,15 @@ or `used_at`, it has become a dependency contract, and the answer to that is a n
 entry instead.
 
 `additionalCompanions: 'allow'` is for a kind whose set is genuinely open — vendored research
-sidecars, the acquisition files beside a book. It is not "unmodelled": a kind may declare what it
-knows _and_ permit the rest. There is no absent-versus-empty distinction to learn, because
+sidecars, whatever an investigation happened to produce. It is not "unmodelled": a kind may declare
+what it knows _and_ permit the rest. There is no absent-versus-empty distinction to learn, because
 `companions: []` is required and means none.
+
+What it is not for is a file that lives somewhere else. Where a container holds several notes plus
+files belonging to the container itself — a book's `book.yml` and `manifest.tsv` beside its chapters
+— those are companions of nothing, and `allow` on the chapter would claim the chapter's set is open
+when the truth is that they sit one directory up. An open set and a set held elsewhere are different
+shapes, and only the first is this flag.
 
 ## Install
 
