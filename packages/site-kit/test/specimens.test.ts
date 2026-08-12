@@ -19,6 +19,7 @@ import {
   REFERENCE_SPECIMENS,
   SHELL_SPECIMENS,
   SPECIMENS,
+  sharesPage,
   specimenPath,
   type SpecimenGroup,
 } from '../src/specimens.js';
@@ -69,6 +70,26 @@ describe('every specimen renders', () => {
       it(`${specimenPath(group, specimen)}`, async () => {
         const html = await render(group, specimen.props, slotsFor(group));
         expect(typeof html).toBe('string');
+      });
+    }
+  }
+});
+
+// A specimen that shares a page renders INSIDE a consumer's own document, so every href it emits
+// lands in that consumer's route space. An absolute one either points at a route the instance does
+// not have — a live 404 in its gallery — or, worse, collides with one it does and sends a reader
+// somewhere the specimen never meant. Neither is visible from here, which is why it is asserted
+// here: the kit cannot see the site it is rendered in.
+//
+// Framed groups are exempt. They render as whole documents at their own routes, so their nav and
+// footer paths are that demo page's chrome rather than a claim on the host's.
+describe('an inline specimen claims no destination', () => {
+  for (const group of SPECIMENS.filter(sharesPage)) {
+    for (const specimen of group.specimens) {
+      it(`${specimenPath(group, specimen)}`, async () => {
+        const html = await render(group, specimen.props, slotsFor(group));
+        const absolute = [...html.matchAll(/href="(\/[^"]*)"/g)].map((m) => m[1]);
+        expect(absolute).toEqual([]);
       });
     }
   }
