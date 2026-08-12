@@ -200,6 +200,12 @@ export const citationFindingSchema = z
     verdict: z.enum(citationVerdicts),
     effectiveVerdict: z.enum(citationVerdicts),
     mismatches: z.array(citationMismatchSchema),
+    /**
+     * Whether the candidate described a work that the resolved metadata could have contradicted.
+     * A `resolved` verdict on an unverifiable candidate reports that the identifier exists, and
+     * nothing further — no title was compared, because none was written down.
+     */
+    verifiable: z.boolean(),
     excludedFromDenominator: z.boolean(),
   })
   .strict()
@@ -255,6 +261,12 @@ const verdictCountsSchema = z
     'resolved-mismatched': z.number().int().nonnegative(),
     unresolved: z.number().int().nonnegative(),
     unavailable: z.number().int().nonnegative(),
+    /**
+     * The share of `resolved` that resolved an identifier without checking it names the right
+     * work. Reported beside `resolved` rather than subtracted from it, so that the two questions
+     * — did it resolve, and was it verified — stay separately answerable.
+     */
+    resolvedUnverified: z.number().int().nonnegative(),
     extractorFalsePositives: z.number().int().nonnegative(),
   })
   .strict();
@@ -387,6 +399,12 @@ export function parseCitationAuditRun(value: unknown): CitationAuditRun {
   }
   if (run.summary.extractorFalsePositives !== run.findings.length - included.length) {
     throw new Error('audit summary extractor false-positive count does not match findings');
+  }
+  const expectedUnverified = included.filter(
+    (finding) => finding.effectiveVerdict === 'resolved' && !finding.verifiable,
+  ).length;
+  if (run.summary.resolvedUnverified !== expectedUnverified) {
+    throw new Error('audit summary resolved-unverified count does not match findings');
   }
   if (run.corpus.digest !== candidateCorpusDigest(run.candidates)) {
     throw new Error('audit corpus digest does not match candidates');

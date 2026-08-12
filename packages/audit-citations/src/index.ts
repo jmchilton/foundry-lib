@@ -49,7 +49,11 @@ export type {
 } from './schema.js';
 
 export { extractCitations, extractIdentifiers } from './extract.js';
-export type { CitationExtractionOptions, SourceDocument } from './extract.js';
+export type {
+  CitationExtractionOptions,
+  NoteFrontmatterFields,
+  SourceDocument,
+} from './extract.js';
 
 export {
   collectEvidence,

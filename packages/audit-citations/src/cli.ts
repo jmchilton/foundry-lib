@@ -51,6 +51,7 @@ export async function runCitationCli(arguments_: readonly string[]): Promise<voi
     : extractCitations(await loadConfiguredDocuments(root, config), {
         ...(headingPattern ? { referenceHeadingPattern: headingPattern } : {}),
         scholarlyPageHosts: config.scholarlyPageHosts ?? [],
+        ...(config.noteFrontmatter ? { noteFrontmatter: config.noteFrontmatter } : {}),
       });
 
   if (argumentsParsed.command === 'scan') {

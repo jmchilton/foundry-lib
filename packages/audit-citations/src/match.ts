@@ -53,6 +53,10 @@ export function evaluateCitation(
     verdict,
     effectiveVerdict: verdict,
     mismatches,
+    // A described title is what every identity comparison below is made against, so without one
+    // there is nothing a provider's answer could contradict. Such a finding resolves and reports
+    // no mismatch for the same reason a blank exam sheet has no wrong answers on it.
+    verifiable: candidate.described?.title !== undefined,
     excludedFromDenominator: false,
   };
 }

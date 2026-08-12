@@ -81,6 +81,9 @@ export function buildCitationAuditRun(
       'resolved-mismatched': count('resolved-mismatched'),
       unresolved: count('unresolved'),
       unavailable: count('unavailable'),
+      resolvedUnverified: included.filter(
+        (finding) => finding.effectiveVerdict === 'resolved' && !finding.verifiable,
+      ).length,
       extractorFalsePositives: findings.length - included.length,
     },
     candidates: scan.candidates,

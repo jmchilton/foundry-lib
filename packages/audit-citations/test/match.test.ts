@@ -146,6 +146,36 @@ describe('citation evaluation', () => {
     ]);
     expect(finding.verdict).toBe('resolved');
   });
+
+  /**
+   * `mismatchesForEvidence` returns nothing when a candidate describes no work, so an undescribed
+   * candidate reports `resolved` whatever the identifier points at. That is not a verification, and
+   * a finding that counts as one inflates coverage with a check that cannot fail.
+   */
+  it('marks a candidate with nothing to compare against as unverifiable', () => {
+    const { described: _described, ...undescribed } = candidate;
+    const finding = evaluateCitation(undescribed, [
+      evidence(
+        'doi-provider',
+        { type: 'identifier', identifier: candidate.identifiers[0]! },
+        'A completely unrelated paper',
+      ),
+    ]);
+    expect(finding.verdict).toBe('resolved');
+    expect(finding.mismatches).toEqual([]);
+    expect(finding.verifiable).toBe(false);
+  });
+
+  it('marks a described candidate as verifiable', () => {
+    const finding = evaluateCitation(candidate, [
+      evidence(
+        'doi-provider',
+        { type: 'identifier', identifier: candidate.identifiers[0]! },
+        'The described paper',
+      ),
+    ]);
+    expect(finding.verifiable).toBe(true);
+  });
 });
 
 function withAuthors(authors: string[]): CitationCandidate {
