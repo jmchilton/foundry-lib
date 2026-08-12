@@ -86,6 +86,14 @@ or as URLs elsewhere in the block are collected too, and every identifier in the
 attributed to the one work the block describes — which is what lets the cross-evidence comparison
 check that a note's DOI and its arXiv id name the same paper.
 
+A block carrying no identifier at all produces no candidate, even when it describes a work. A note
+whose typed frontmatter says the source has no identifier — a web chapter, a package reference
+manual, an unpublished draft — has made an assertion, and resolving its description by title would
+ask a provider to guess at a record the note already said does not exist. The guess arrives as an
+unresolved or mismatched citation in a note that is correct, which is the expensive direction. A
+numbered bibliography entry keeps the title fallback: there a missing DOI is an absence, not a
+declaration.
+
 The option is opt-in. Without it, frontmatter is ordinary text and is extracted exactly as before.
 
 ### Resolved is not verified

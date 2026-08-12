@@ -254,6 +254,12 @@ function frontmatterBlock(
     ...typed,
     ...extractIdentifiers(sourceText, scholarlyPageHosts),
   ]);
+  // A block that names no identifier is a source the note has declared unidentified — a web
+  // chapter, a package manual, an unpublished draft. Falling back to a title query would ask a
+  // provider to guess at a work the note already said has no record, and the guess is reported as
+  // an unresolved or mismatched citation in a note that is correct. A bibliography entry keeps
+  // that fallback: there, a title with no DOI is a citation whose identifier is merely absent.
+  if (identifiers.length === 0) return undefined;
   const described = description ? extractDescription(description, true) : undefined;
   return {
     startLine: 2,
