@@ -1,5 +1,12 @@
 # @galaxy-foundry/site-kit
 
+## 0.9.6
+
+### Patch Changes
+
+- Updated dependencies [[`9f10fb6`](https://github.com/jmchilton/foundry-lib/commit/9f10fb641e0de6c69d120ab2c5588b8c62305269)]:
+  - @galaxy-foundry/license-policy@0.8.0
+
 ## 0.9.5
 
 ### Patch Changes

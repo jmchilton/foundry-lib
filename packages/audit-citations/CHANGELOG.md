@@ -1,5 +1,24 @@
 # @galaxy-foundry/audit-citations
 
+## 0.2.0
+
+### Minor Changes
+
+- [#115](https://github.com/jmchilton/foundry-lib/pull/115) [`5844c00`](https://github.com/jmchilton/foundry-lib/commit/5844c009915e781a3246381f36d79e64935c00fd) Thanks [@jmchilton](https://github.com/jmchilton)! - Read a note's typed frontmatter as one citation, and stop counting resolution as verification.
+
+  A source note keeps the two halves of a citation in adjacent fields: `citation` describes the work,
+  typed fields name it. Line-oriented extraction never joined them, so the description resolved
+  nothing and the identifiers described nothing — and a candidate that describes nothing cannot
+  mismatch, so a wrong DOI four lines below its own title came back `resolved`.
+
+  `noteFrontmatter` declares where those fields are, turning one frontmatter block into one
+  checkable citation and reaching bare `arxiv`/`pmid`/`pmcid` values that no prose grammar can see.
+  It is opt-in; unset, frontmatter is extracted exactly as before.
+
+  Findings now carry `verifiable`, the summary counts `resolvedUnverified`, and the report separates
+  citations verified against a described work from identifiers that merely resolved. Both are
+  additive schema fields: a committed run regenerates rather than migrates.
+
 ## 0.1.2
 
 ### Patch Changes
