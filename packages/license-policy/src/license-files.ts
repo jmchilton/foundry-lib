@@ -72,3 +72,142 @@ export function findLicenseFileById(
 ): LicenseFile | undefined {
   return loadLicenseFiles(licenseDirectory).find((licenseFile) => licenseFile.id === licenseFileId);
 }
+
+/**
+ * One note's (or one book's) `license_file`, as the thing that declared it.
+ *
+ * `licenseFile` is the value exactly as authored, including its directory — the audit checks that
+ * directory, so normalizing it to an id before calling here would discard what it came to look at.
+ * Absent, null, and empty all mean the same thing and are skipped: a note that redistributes no
+ * text vendors no copy and is not a finding.
+ */
+export interface LicenseFileDeclaration {
+  /** Where the declaration lives, quoted back in the finding. A note path, a `book.yml`, an id. */
+  source: string;
+  /** The `license_file` value as authored, e.g. `LICENSES/CC-BY-4.0.LICENSE`. */
+  licenseFile?: string | null;
+}
+
+/**
+ * What an audit can find wrong.
+ *
+ * - `missing-copy` — a declaration names a copy the directory does not hold. The obligation the
+ *   field exists to record is unmet, and nothing else notices: the field is a string, so a typo
+ *   satisfies every schema.
+ * - `unexpected-path` — the copy exists, but the declared path does not point into the licence
+ *   directory. `LICENSE/x.LICENSE` and a bare `x.LICENSE` both resolve by basename and both send a
+ *   reader somewhere there is no file.
+ * - `unused-copy` — a vendored copy nothing declares. Checked because the reverse direction is
+ *   where a licence directory rots: text stays behind after the note that carried it was rewritten
+ *   to own words, and the directory slowly stops describing what is redistributed.
+ * - `empty-copy` — a copy present but blank. An empty file satisfies existence and grants nothing.
+ */
+export type LicenseFileFindingCode =
+  'missing-copy' | 'unexpected-path' | 'unused-copy' | 'empty-copy';
+
+export interface LicenseFileFinding {
+  code: LicenseFileFindingCode;
+  /** See {@link LicenseFileId} — the copy at issue, by file stem. */
+  licenseFileId: LicenseFileId;
+  /** The declaration that produced it, absent on findings about a file nothing declared. */
+  source?: string;
+  message: string;
+}
+
+export interface LicenseFileAuditOptions {
+  /** The directory holding the vendored copies. Missing is audited, not thrown — see below. */
+  licenseDirectory: string;
+  declarations: readonly LicenseFileDeclaration[];
+  /**
+   * The directory name a declared path must sit in, matched against its last path segment so that
+   * `LICENSES/x.LICENSE` and `content/LICENSES/x.LICENSE` both pass.
+   *
+   * Defaults to the licence directory's own name, which is what both instances want and spares
+   * them from opting in to a check they would rather not have had to remember. Pass `null` to skip
+   * it — appropriate when declarations carry a bare id rather than a path.
+   */
+  directoryName?: string | null;
+}
+
+/**
+ * Both directions of the vendored-licence contract, as findings.
+ *
+ * The forward direction is the obligation: a note claiming verbatim carry names a licence copy, and
+ * that copy has to be there. A schema can require the field and cannot open the file, so until
+ * something walks the directory the strongest statement available is that a string was present.
+ *
+ * The reverse direction is the one that keeps the directory honest, and it is the same argument the
+ * tag registries already make: a vocabulary checked in one direction accumulates. Returns findings
+ * rather than throwing, so an instance decides whether an unused copy fails its build or merely
+ * reports.
+ */
+export function auditLicenseFiles(options: LicenseFileAuditOptions): LicenseFileFinding[] {
+  const { licenseDirectory, declarations } = options;
+  const directoryName =
+    options.directoryName === undefined ? path.basename(licenseDirectory) : options.directoryName;
+
+  // A missing directory is the state an instance is in the moment before it vendors its first
+  // copy, and reporting every declaration as unmet says more than ENOENT does. Anything else —
+  // a permission error, a file where the directory should be — still throws.
+  let licenseFiles: LicenseFile[];
+  try {
+    licenseFiles = loadLicenseFiles(licenseDirectory);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code !== 'ENOENT') throw error;
+    licenseFiles = [];
+  }
+
+  const present = new Set(licenseFiles.map((licenseFile) => licenseFile.id));
+  const declared = new Set<LicenseFileId>();
+  const findings: LicenseFileFinding[] = [];
+
+  for (const declaration of declarations) {
+    const declaredPath = declaration.licenseFile;
+    if (typeof declaredPath !== 'string' || declaredPath.length === 0) continue;
+
+    const licenseFileId = licenseFileIdFromPath(declaredPath);
+    declared.add(licenseFileId);
+
+    if (!present.has(licenseFileId)) {
+      findings.push({
+        code: 'missing-copy',
+        licenseFileId,
+        source: declaration.source,
+        message: `${declaration.source} declares license_file ${declaredPath}, which ${licenseDirectory} does not hold`,
+      });
+      continue;
+    }
+
+    if (directoryName !== null && path.basename(path.dirname(declaredPath)) !== directoryName) {
+      findings.push({
+        code: 'unexpected-path',
+        licenseFileId,
+        source: declaration.source,
+        message: `${declaration.source} declares license_file ${declaredPath}, which does not point into ${directoryName}/`,
+      });
+    }
+  }
+
+  for (const licenseFile of licenseFiles) {
+    if (!declared.has(licenseFile.id))
+      findings.push({
+        code: 'unused-copy',
+        licenseFileId: licenseFile.id,
+        message: `${licenseFile.filename} is vendored but no declaration carries under it`,
+      });
+
+    if (licenseFile.text.trim().length === 0)
+      findings.push({
+        code: 'empty-copy',
+        licenseFileId: licenseFile.id,
+        message: `${licenseFile.filename} is empty, so it grants nothing`,
+      });
+  }
+
+  return findings.sort(
+    (a, b) =>
+      a.code.localeCompare(b.code) ||
+      a.licenseFileId.localeCompare(b.licenseFileId) ||
+      (a.source ?? '').localeCompare(b.source ?? ''),
+  );
+}

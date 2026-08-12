@@ -248,10 +248,15 @@ export function postureCarriesVerbatim(posture: SummaryPosture): boolean {
 
 export {
   LICENSE_FILE_EXTENSION,
+  auditLicenseFiles,
   findLicenseFileById,
   licenseFileIdFromPath,
   loadLicenseFiles,
   redistributesUnder,
   type LicenseFile,
+  type LicenseFileAuditOptions,
+  type LicenseFileDeclaration,
+  type LicenseFileFinding,
+  type LicenseFileFindingCode,
   type LicenseFileId,
 } from './license-files.js';

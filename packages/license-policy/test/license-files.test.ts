@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 
 import {
+  auditLicenseFiles,
   findLicenseFileById,
   licenseFileIdFromPath,
   loadLicenseFiles,
@@ -98,5 +99,160 @@ describe('redistributesUnder', () => {
     expect(redistributesUnder(undefined, 'msmb')).toBe(false);
     expect(redistributesUnder(null, 'msmb')).toBe(false);
     expect(redistributesUnder('', 'msmb')).toBe(false);
+  });
+});
+
+describe('auditLicenseFiles', () => {
+  // Named `LICENSES` rather than left as a mkdtemp stem, because the directory's own name is what
+  // the path check defaults to and the instances both call it that.
+  const auditRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'license-audit-'));
+  const auditDirectory = path.join(auditRoot, 'LICENSES');
+  fs.mkdirSync(auditDirectory);
+  fs.writeFileSync(path.join(auditDirectory, 'CC-BY-4.0.LICENSE'), 'CC BY 4.0 text\n');
+  fs.writeFileSync(path.join(auditDirectory, 'msmb.LICENSE'), 'CC BY-NC-SA text\n');
+
+  afterAll(() => fs.rmSync(auditRoot, { recursive: true, force: true }));
+
+  const carriers = [
+    { source: 'content/papers/a.md', licenseFile: 'LICENSES/CC-BY-4.0.LICENSE' },
+    { source: 'content/books/msmb/book.yml', licenseFile: 'LICENSES/msmb.LICENSE' },
+  ];
+
+  it('finds nothing when every copy is declared and every declaration resolves', () => {
+    expect(auditLicenseFiles({ licenseDirectory: auditDirectory, declarations: carriers })).toEqual(
+      [],
+    );
+  });
+
+  it('ignores a declaration that carries no copy', () => {
+    // The common case: own-words notes outnumber verbatim ones, and none of them is a finding.
+    expect(
+      auditLicenseFiles({
+        licenseDirectory: auditDirectory,
+        declarations: [
+          ...carriers,
+          { source: 'content/papers/own-words.md' },
+          { source: 'content/papers/explicitly-none.md', licenseFile: null },
+          { source: 'content/papers/blank.md', licenseFile: '' },
+        ],
+      }),
+    ).toEqual([]);
+  });
+
+  it('reports a declaration whose copy was never vendored', () => {
+    const findings = auditLicenseFiles({
+      licenseDirectory: auditDirectory,
+      declarations: [
+        ...carriers,
+        { source: 'content/papers/b.md', licenseFile: 'LICENSES/MIT.LICENSE' },
+      ],
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.code).toBe('missing-copy');
+    expect(findings[0]?.licenseFileId).toBe('MIT');
+    expect(findings[0]?.source).toBe('content/papers/b.md');
+  });
+
+  it('reports a copy that resolves by basename from outside the directory', () => {
+    // The failure this exists for: `licenseFileIdFromPath` reads the stem, so a singular `LICENSE/`
+    // typo and a bare filename both find the right text while sending a reader nowhere.
+    const findings = auditLicenseFiles({
+      licenseDirectory: auditDirectory,
+      declarations: [
+        { source: 'content/papers/typo.md', licenseFile: 'LICENSE/CC-BY-4.0.LICENSE' },
+        { source: 'content/books/msmb/book.yml', licenseFile: 'msmb.LICENSE' },
+      ],
+    });
+    expect(findings.map((finding) => finding.code)).toEqual(['unexpected-path', 'unexpected-path']);
+    expect(findings.map((finding) => finding.source)).toEqual([
+      'content/papers/typo.md',
+      'content/books/msmb/book.yml',
+    ]);
+  });
+
+  it('accepts a licence directory nested under another path', () => {
+    expect(
+      auditLicenseFiles({
+        licenseDirectory: auditDirectory,
+        declarations: [
+          { source: 'content/papers/a.md', licenseFile: 'content/LICENSES/CC-BY-4.0.LICENSE' },
+          { source: 'content/books/msmb/book.yml', licenseFile: 'LICENSES/msmb.LICENSE' },
+        ],
+      }),
+    ).toEqual([]);
+  });
+
+  it('skips the path check when declarations carry a bare id', () => {
+    expect(
+      auditLicenseFiles({
+        licenseDirectory: auditDirectory,
+        declarations: [
+          { source: 'a', licenseFile: 'CC-BY-4.0' },
+          { source: 'b', licenseFile: 'msmb' },
+        ],
+        directoryName: null,
+      }),
+    ).toEqual([]);
+  });
+
+  it('reports a vendored copy nothing declares', () => {
+    // The reverse direction, and the one a forward-only check leaves to rot: the note that carried
+    // msmb was rewritten to own words and its licence text stayed behind.
+    const findings = auditLicenseFiles({
+      licenseDirectory: auditDirectory,
+      declarations: [carriers[0]!],
+    });
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.code).toBe('unused-copy');
+    expect(findings[0]?.licenseFileId).toBe('msmb');
+    expect(findings[0]?.source).toBeUndefined();
+  });
+
+  it('reports a copy that is present but blank', () => {
+    const blankRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'license-blank-'));
+    const blankDirectory = path.join(blankRoot, 'LICENSES');
+    fs.mkdirSync(blankDirectory);
+    fs.writeFileSync(path.join(blankDirectory, 'MIT.LICENSE'), '   \n\n');
+
+    const findings = auditLicenseFiles({
+      licenseDirectory: blankDirectory,
+      declarations: [{ source: 'content/packages/x.md', licenseFile: 'LICENSES/MIT.LICENSE' }],
+    });
+    expect(findings.map((finding) => finding.code)).toEqual(['empty-copy']);
+
+    fs.rmSync(blankRoot, { recursive: true, force: true });
+  });
+
+  it('audits a missing directory instead of throwing', () => {
+    // The state an instance is in the moment before it vendors its first copy. `loadLicenseFiles`
+    // throws here by design; an audit that did the same would say ENOENT where it could say which
+    // declarations are unmet.
+    const findings = auditLicenseFiles({
+      licenseDirectory: path.join(auditRoot, 'nope'),
+      declarations: carriers,
+    });
+    expect(findings.map((finding) => finding.code)).toEqual(['missing-copy', 'missing-copy']);
+  });
+
+  it('finds nothing for an instance that vendors nothing and declares nothing', () => {
+    expect(
+      auditLicenseFiles({ licenseDirectory: path.join(auditRoot, 'nope'), declarations: [] }),
+    ).toEqual([]);
+  });
+
+  it('orders findings deterministically', () => {
+    const findings = auditLicenseFiles({
+      licenseDirectory: auditDirectory,
+      declarations: [
+        { source: 'z.md', licenseFile: 'LICENSES/ZZZ.LICENSE' },
+        { source: 'a.md', licenseFile: 'LICENSES/AAA.LICENSE' },
+      ],
+    });
+    expect(findings.map((finding) => `${finding.code}:${finding.licenseFileId}`)).toEqual([
+      'missing-copy:AAA',
+      'missing-copy:ZZZ',
+      'unused-copy:CC-BY-4.0',
+      'unused-copy:msmb',
+    ]);
   });
 });

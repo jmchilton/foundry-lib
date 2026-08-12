@@ -150,6 +150,50 @@ does not survive being shared.
 
 Types: `LicenseFile`, `LicenseFileId`.
 
+### Checking that the directory and the notes agree
+
+`license_file` is a string. A schema can require it and cannot open it, so a typo satisfies every
+check an instance has until something walks the directory.
+
+```ts
+import { auditLicenseFiles } from '@galaxy-foundry/license-policy';
+
+const findings = auditLicenseFiles({
+  licenseDirectory: 'LICENSES',
+  declarations: notes.map((note) => ({ source: note.id, licenseFile: note.data.license_file })),
+});
+expect(findings).toEqual([]);
+```
+
+Declarations go in rather than content being crawled, because their shape is instance-specific —
+one instance carries `license_file` per note, another also declares it once per book in a
+`book.yml` that merges into every chapter. Findings come back rather than throwing, so the instance
+decides what fails its build.
+
+| Finding           | Is                                                                      |
+| ----------------- | ----------------------------------------------------------------------- |
+| `missing-copy`    | A declaration names a copy the directory does not hold.                 |
+| `unexpected-path` | The copy exists; the declared path does not point into the directory.   |
+| `unused-copy`     | A vendored copy no declaration carries under.                           |
+| `empty-copy`      | A copy present but blank, which satisfies existence and grants nothing. |
+
+`unexpected-path` exists because `licenseFileIdFromPath` reads the basename: a singular `LICENSE/`
+typo and a bare `x.LICENSE` both resolve to the right text while sending a reader somewhere there
+is no file. The check is on by default, matching the licence directory's own name against the last
+segment of the declared path — `LICENSES/x.LICENSE` and `content/LICENSES/x.LICENSE` both pass.
+`directoryName: null` turns it off for declarations that carry a bare id.
+
+`unused-copy` is the reverse direction, and it is there for the reason the tag registries are
+checked both ways: a vocabulary policed in one direction only accumulates. Licence text outlives
+the note that was rewritten from quotes to own words, and nothing else would ever say so.
+
+A missing licence directory is audited rather than thrown — that is where an instance stands the
+moment before it vendors its first copy, and listing the unmet declarations says more than `ENOENT`
+does. `loadLicenseFiles` still throws there.
+
+Types: `LicenseFileDeclaration`, `LicenseFileFinding`, `LicenseFileFindingCode`,
+`LicenseFileAuditOptions`.
+
 ### Two ids, and they are not interchangeable
 
 | Type            | Is                                | Looks like          | Comes from               |
