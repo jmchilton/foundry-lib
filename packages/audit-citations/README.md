@@ -55,6 +55,47 @@ Old-style arXiv identifiers, shorter historical PMIDs, bullet-list or wrapped bi
 entries, and arbitrary scholarly URLs are not currently extracted. Author–year prose such as
 `Smith et al. (2024)` is counted as a diagnostic only; it never becomes a citation candidate.
 
+### Typed note frontmatter
+
+A source note records the work it summarizes in _fields_, not sentences: one prose field carries
+the bibliographic record while separate typed fields carry the identifiers. Read line by line the
+two halves never meet. The identifier lines describe nothing, so they can report only that the
+identifier exists; the description line names no identifier in a form the prose grammar finds. A
+wrong DOI four lines below the title that would expose it comes back `resolved`.
+
+Declaring the fields makes one frontmatter block one citation:
+
+```json
+{
+  "noteFrontmatter": {
+    "descriptionField": "citation",
+    "identifierFields": ["doi", "arxiv", "pmid", "pmcid"]
+  }
+}
+```
+
+A field's **name is the identifier's kind**. That is not a shortcut — a bare `1912.04135` has no
+prefix for a grammar to recognize, and an arXiv id and a PMID are both just digits, so a kind
+inferred from shape is a kind guessed wrong eventually. `identifierFields` is a closed set for the
+same reason: an unrecognized name would be read as ordinary text and its identifier silently never
+seen.
+
+Names are matched as leaf keys at any depth, so a nested `source_ids: { doi: ... }` needs no path
+and no YAML parser. Values are read as plain scalars, quoted or not. Identifiers written as prose
+or as URLs elsewhere in the block are collected too, and every identifier in the block is
+attributed to the one work the block describes — which is what lets the cross-evidence comparison
+check that a note's DOI and its arXiv id name the same paper.
+
+The option is opt-in. Without it, frontmatter is ordinary text and is extracted exactly as before.
+
+### Resolved is not verified
+
+Identity comparison runs against a described title, so a candidate that names an identifier but
+describes no work resolves and can produce no mismatch. It is unfalsifiable, not correct. Those
+findings carry `verifiable: false`, the run summary counts them as `resolvedUnverified`, and the
+report states the split rather than folding them into one headline that reads as a fully verified
+corpus.
+
 ## Data flow
 
 ![Citation audit pipeline from repository configuration through extraction, normalized evidence, evaluation, and JSON and Markdown reports.](https://raw.githubusercontent.com/jmchilton/foundry-lib/main/docs/assets/diagrams/audit-citations-flow.svg)

@@ -42,6 +42,7 @@ export function renderCitationAuditMarkdown(
     ...citationVerdicts.map((verdict) => `| ${verdict} | ${run.summary[verdict]} |`),
     `| total | ${run.summary.total} |`,
     '',
+    ...verificationSection(run),
     ...coverageSection(run),
   ];
 
@@ -142,6 +143,47 @@ function reviewSummary(finding: CitationFinding, review: CitationAdjudication | 
  * A resolution rate means nothing without the number of references the extractor could not read,
  * so the denominator is reported next to the verdict counts rather than left in the diagnostics.
  */
+/**
+ * `resolved` answers a weaker question than it looks like it answers.
+ *
+ * A candidate that names an identifier but describes no work resolves and can report no mismatch,
+ * because there is nothing to compare a provider's answer against. Folding those into one headline
+ * makes a corpus look fully verified while some share of it was only dereferenced, so the split is
+ * stated here rather than left to be derived by a reader who already trusts the number.
+ */
+function verificationSection(run: CitationAuditRun): string[] {
+  const unverified = run.summary.resolvedUnverified;
+  const verified = run.summary.resolved - unverified;
+  const lines = [
+    '## Verification',
+    '',
+    `Verified against a described work: **${verified} of ${run.summary.resolved}** resolved citations.`,
+    '',
+  ];
+  if (unverified === 0) return lines;
+  lines.push(
+    `The remaining **${unverified}** resolved an identifier that no nearby text describes, so the ` +
+      'only thing checked was that the identifier exists. Give the citation a title, or record the ' +
+      'identifier in a note field the extraction config declares, and it becomes checkable.',
+    '',
+    '| Source | Identifier |',
+    '|---|---|',
+  );
+  const candidates = new Map(run.candidates.map((candidate) => [candidate.id, candidate]));
+  for (const finding of run.findings) {
+    if (finding.excludedFromDenominator) continue;
+    if (finding.effectiveVerdict !== 'resolved' || finding.verifiable) continue;
+    const candidate = candidates.get(finding.candidateId);
+    if (!candidate) throw new Error(`finding references unknown candidate ${finding.candidateId}`);
+    lines.push(
+      `| \`${candidate.span.artifactPath}:${candidate.span.startLine}\` | ` +
+        `${escapeCell(describedIdentity(candidate.identifiers))} |`,
+    );
+  }
+  lines.push('');
+  return lines;
+}
+
 function coverageSection(run: CitationAuditRun): string[] {
   const extracted = run.candidates.length;
   const unextracted = run.diagnostics.unextractedReferenceLines;

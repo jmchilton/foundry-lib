@@ -30,30 +30,58 @@ export interface SourceDocument {
   artifactKind: string;
 }
 
+/**
+ * Where a note's typed frontmatter keeps the two halves of a citation.
+ *
+ * A source note records the work it summarizes in fields, not sentences: one prose field carries
+ * the bibliographic record and separate typed fields carry the identifiers. Read line by line the
+ * halves never meet — the identifier lines describe nothing, so they resolve and can report only
+ * that the identifier exists, while the description line names no identifier the grammar can find
+ * in it. Declaring the fields is what lets one frontmatter block become one checkable citation.
+ *
+ * A field's NAME is the identifier's kind. That is deliberate: a bare `1912.04135` has no prefix
+ * for a prose grammar to recognize, and guessing from shape is how an arXiv id becomes a PMID.
+ */
+export interface NoteFrontmatterFields {
+  /** The field holding the bibliographic record, parsed with the bibliography-entry grammar. */
+  descriptionField: string;
+  /** Field names that carry a bare identifier, each named for the kind it holds. */
+  identifierFields: readonly string[];
+}
+
 export interface CitationExtractionOptions {
   referenceHeadingPattern?: RegExp;
   scholarlyPageHosts?: readonly string[];
+  /** Opt-in. Unset, frontmatter is just text and the line grammar reads it as it always has. */
+  noteFrontmatter?: NoteFrontmatterFields;
+}
+
+interface ResolvedOptions {
+  referenceHeadingPattern: RegExp;
+  scholarlyPageHosts: readonly string[];
+  noteFrontmatter?: NoteFrontmatterFields;
 }
 
 interface ExtractionContext {
   diagnostics: ExtractionDiagnostics;
   occurrenceCounts: Map<string, number>;
-  options: Required<CitationExtractionOptions>;
+  options: ResolvedOptions;
 }
 
-const DEFAULT_OPTIONS: Required<CitationExtractionOptions> = {
+const DEFAULT_OPTIONS = {
   referenceHeadingPattern: /reference|source note/iu,
-  scholarlyPageHosts: [],
+  scholarlyPageHosts: [] as readonly string[],
 };
 
 export function extractCitations(
   documents: readonly SourceDocument[],
   options: CitationExtractionOptions = {},
 ): CitationScan {
-  const resolvedOptions: Required<CitationExtractionOptions> = {
-    ...DEFAULT_OPTIONS,
-    ...options,
+  const resolvedOptions: ResolvedOptions = {
+    referenceHeadingPattern:
+      options.referenceHeadingPattern ?? DEFAULT_OPTIONS.referenceHeadingPattern,
     scholarlyPageHosts: options.scholarlyPageHosts ?? DEFAULT_OPTIONS.scholarlyPageHosts,
+    ...(options.noteFrontmatter ? { noteFrontmatter: options.noteFrontmatter } : {}),
   };
   const diagnostics: ExtractionDiagnostics = {
     excludedUrls: [],
@@ -77,8 +105,20 @@ function extractDocument(
   const candidates: CitationCandidate[] = [];
   let referenceHeadingLevel: number | undefined;
 
-  for (const [index, sourceText] of document.text.split(/\r?\n/u).entries()) {
+  const lines = document.text.split(/\r?\n/u);
+  const frontmatter = context.options.noteFrontmatter
+    ? frontmatterBlock(lines, context.options.noteFrontmatter, context.options.scholarlyPageHosts)
+    : undefined;
+  if (frontmatter) {
+    const candidate = buildCandidate(frontmatter, document, artifactPath, context);
+    if (candidate) candidates.push(candidate);
+  }
+
+  for (const [index, sourceText] of lines.entries()) {
     const line = index + 1;
+    // The block is one citation, already emitted. Reading its lines again would add an undescribed
+    // duplicate of an identifier the block just had a description for.
+    if (frontmatter && line >= frontmatter.startLine && line <= frontmatter.endLine) continue;
     const authorYearMatches = sourceText.match(AUTHOR_YEAR_RE)?.length ?? 0;
     context.diagnostics.authorYearPatternCount += authorYearMatches;
 
@@ -104,24 +144,19 @@ function extractDocument(
       (bibliographyEntry && described?.title !== undefined && described.year !== undefined);
 
     if (shouldInclude) {
-      const sourceDigest = sourceTextDigest(sourceText);
-      const occurrenceKey = `${artifactPath}\0${sourceDigest}`;
-      const occurrence = context.occurrenceCounts.get(occurrenceKey) ?? 0;
-      context.occurrenceCounts.set(occurrenceKey, occurrence + 1);
-      const id = sha256(`${occurrenceKey}\0${occurrence}`).slice(0, 16);
-      candidates.push({
-        id,
-        span: {
-          artifactKind: document.artifactKind,
-          artifactPath,
+      const candidate = buildCandidate(
+        {
           startLine: line,
           endLine: line,
           sourceText,
-          sourceDigest,
+          identifiers,
+          ...(described && Object.keys(described).length > 0 ? { described } : {}),
         },
-        identifiers,
-        ...(described && Object.keys(described).length > 0 ? { described } : {}),
-      });
+        document,
+        artifactPath,
+        context,
+      );
+      if (candidate) candidates.push(candidate);
     } else if (referenceHeadingLevel !== undefined && sourceText.trim() !== '') {
       context.diagnostics.unextractedReferenceLines.push({ artifactPath, line });
     }
@@ -134,6 +169,106 @@ function extractDocument(
     }
   }
   return candidates;
+}
+
+interface CandidateDraft {
+  startLine: number;
+  endLine: number;
+  sourceText: string;
+  identifiers: CitationIdentifier[];
+  described?: DescribedCitation;
+}
+
+/**
+ * Mints the candidate's identity from its text rather than its position, so that moving a citation
+ * within a file keeps its ID and its adjudication. The occurrence counter is what keeps two
+ * byte-identical lines in one file from collapsing into one ID.
+ */
+function buildCandidate(
+  draft: CandidateDraft,
+  document: SourceDocument,
+  artifactPath: string,
+  context: ExtractionContext,
+): CitationCandidate | undefined {
+  if (draft.identifiers.length === 0 && draft.described?.title === undefined) return undefined;
+  const sourceDigest = sourceTextDigest(draft.sourceText);
+  const occurrenceKey = `${artifactPath}\0${sourceDigest}`;
+  const occurrence = context.occurrenceCounts.get(occurrenceKey) ?? 0;
+  context.occurrenceCounts.set(occurrenceKey, occurrence + 1);
+  return {
+    id: sha256(`${occurrenceKey}\0${occurrence}`).slice(0, 16),
+    span: {
+      artifactKind: document.artifactKind,
+      artifactPath,
+      startLine: draft.startLine,
+      endLine: draft.endLine,
+      sourceText: draft.sourceText,
+      sourceDigest,
+    },
+    identifiers: draft.identifiers,
+    ...(draft.described ? { described: draft.described } : {}),
+  };
+}
+
+const FRONTMATTER_FENCE = /^---\s*$/u;
+/**
+ * A typed scalar field, unwrapped from the quoting YAML needs and the schema tolerates. The values
+ * these fields hold are validated identifiers upstream — bare, with no spaces and no comments — so
+ * reading them does not need a YAML parser, and taking on one to read four keys would be a
+ * dependency the rest of this package never uses.
+ */
+const SCALAR_FIELD_RE = /^\s*([A-Za-z_][\w-]*)\s*:\s*(?:"([^"]*)"|'([^']*)'|([^#\s][^#]*?))\s*$/u;
+
+/** The frontmatter block as one citation: the description field describes, the typed fields name. */
+function frontmatterBlock(
+  lines: readonly string[],
+  fields: NoteFrontmatterFields,
+  scholarlyPageHosts: readonly string[],
+): CandidateDraft | undefined {
+  if (lines[0] === undefined || !FRONTMATTER_FENCE.test(lines[0])) return undefined;
+  const closing = lines.findIndex((line, index) => index > 0 && FRONTMATTER_FENCE.test(line));
+  if (closing < 1) return undefined;
+
+  const body = lines.slice(1, closing);
+  const kinds = new Set(fields.identifierFields);
+  const typed: CitationIdentifier[] = [];
+  let description: string | undefined;
+
+  for (const line of body) {
+    const match = SCALAR_FIELD_RE.exec(line);
+    if (!match) continue;
+    const key = match[1] ?? '';
+    const value = match[2] ?? match[3] ?? match[4] ?? '';
+    if (value === '') continue;
+    if (key === fields.descriptionField) description ??= value;
+    // The field name IS the kind, so `normalizeIdentifier` only has to canonicalize the value —
+    // it never has to decide what sort of identifier it is looking at.
+    else if (kinds.has(key)) typed.push(normalizeIdentifier(key, value));
+  }
+
+  // Identifiers written as prose or as URLs anywhere in the block count too: an `oa_url` pointing
+  // at a PMC record names the same work, and every identifier for one work resolving to one work
+  // is a check the cross-evidence comparison already knows how to make.
+  const sourceText = body.join('\n');
+  const identifiers = uniqueIdentifiers([
+    ...typed,
+    ...extractIdentifiers(sourceText, scholarlyPageHosts),
+  ]);
+  const described = description ? extractDescription(description, true) : undefined;
+  return {
+    startLine: 2,
+    endLine: closing,
+    sourceText,
+    identifiers,
+    ...(described && Object.keys(described).length > 0 ? { described } : {}),
+  };
+}
+
+function normalizeIdentifier(kind: string, value: string): CitationIdentifier {
+  if (kind === 'doi') return { kind, value: cleanDoi(value) };
+  if (kind === 'arxiv') return { kind, value: stripArxivVersion(value) };
+  if (kind === 'pmcid') return { kind, value: value.toUpperCase() };
+  return { kind, value };
 }
 
 export function extractIdentifiers(

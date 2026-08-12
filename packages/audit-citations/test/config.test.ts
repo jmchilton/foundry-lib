@@ -7,6 +7,7 @@ import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 
 import {
+  citationAuditConfigSchema,
   loadCitationAuditConfig,
   loadConfiguredDocuments,
   referenceHeadingPattern,
@@ -110,5 +111,26 @@ describe('citation audit configuration', () => {
       'utf8',
     );
     await expect(loadCitationAuditConfig(configPath)).rejects.toThrow();
+  });
+
+  it('accepts a declared note-frontmatter field set', () => {
+    const parsed = citationAuditConfigSchema.parse({
+      ...config(),
+      noteFrontmatter: { descriptionField: 'citation', identifierFields: ['doi', 'arxiv'] },
+    });
+    expect(parsed.noteFrontmatter?.identifierFields).toEqual(['doi', 'arxiv']);
+  });
+
+  /**
+   * A field name IS an identifier kind here, so an unknown one is a typo that would otherwise fail
+   * silently — the field would be read as ordinary text and its identifier never seen.
+   */
+  it('rejects an identifier field that is not an identifier kind', () => {
+    expect(() =>
+      citationAuditConfigSchema.parse({
+        ...config(),
+        noteFrontmatter: { descriptionField: 'citation', identifierFields: ['source_url'] },
+      }),
+    ).toThrow();
   });
 });

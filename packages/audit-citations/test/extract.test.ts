@@ -159,3 +159,119 @@ describe('citation extraction', () => {
     expect(scan.candidates[0]?.described?.authors).toEqual(['Smith, J.', 'Doe, A']);
   });
 });
+
+/**
+ * A note whose frontmatter is a typed source-note record carries the two halves of a citation in
+ * adjacent fields: `citation` describes the work, and typed identifier fields name it. Read line by
+ * line they never meet — the description resolves nothing and the identifiers describe nothing, so
+ * a wrong DOI four lines below its own title reports `resolved` and nothing is checked.
+ */
+describe('typed note frontmatter', () => {
+  const NOTE_FRONTMATTER = {
+    descriptionField: 'citation',
+    identifierFields: ['doi', 'arxiv', 'pmid', 'pmcid'],
+  };
+
+  const note = (frontmatter: string, body = '') => [
+    {
+      path: 'content/papers/example.md',
+      artifactKind: 'paper-note',
+      text: `---\n${frontmatter}---\n${body}`,
+    },
+  ];
+
+  it('joins typed identifiers to the citation that describes them', () => {
+    const scan = extractCitations(
+      note(
+        'type: paper\n' +
+          'title: Persistent Spectral Graph\n' +
+          'citation: Rui Wang, Duc Duy Nguyen, and Guo-Wei Wei, "Persistent spectral graph,"' +
+          ' International Journal for Numerical Methods in Biomedical Engineering 36(9) (2020).\n' +
+          'source_ids:\n' +
+          '  status: declared\n' +
+          '  doi: 10.1002/cnm.3376\n' +
+          '  arxiv: "1912.04135"\n',
+      ),
+      { noteFrontmatter: NOTE_FRONTMATTER },
+    );
+
+    expect(scan.candidates).toHaveLength(1);
+    const candidate = scan.candidates[0];
+    expect(candidate?.described?.title).toBe('Persistent spectral graph');
+    expect(candidate?.identifiers).toEqual([
+      { kind: 'doi', value: '10.1002/cnm.3376' },
+      { kind: 'arxiv', value: '1912.04135' },
+    ]);
+  });
+
+  it('spans the whole frontmatter block rather than one line of it', () => {
+    const scan = extractCitations(
+      note(
+        'title: A Note\ncitation: Example A. "A described work." Journal (2024).\ndoi: 10.1000/x\n',
+      ),
+      { noteFrontmatter: NOTE_FRONTMATTER },
+    );
+    expect(scan.candidates[0]?.span.startLine).toBe(2);
+    expect(scan.candidates[0]?.span.endLine).toBe(4);
+  });
+
+  /** A bare identifier has no prefix for the prose grammar to find, so nothing used to see it. */
+  it('reads identifier kinds from the field name rather than a prose prefix', () => {
+    const scan = extractCitations(
+      note(
+        'citation: Example A. "A described work." Journal (2024).\narxiv: "2507.19504"\npmid: "20838408"\npmcid: PMC3880143\n',
+      ),
+      { noteFrontmatter: NOTE_FRONTMATTER },
+    );
+    expect(scan.candidates[0]?.identifiers).toEqual([
+      { kind: 'arxiv', value: '2507.19504' },
+      { kind: 'pmid', value: '20838408' },
+      { kind: 'pmcid', value: 'PMC3880143' },
+    ]);
+  });
+
+  it('does not emit a second candidate for a line inside the block', () => {
+    const scan = extractCitations(
+      note(
+        'citation: Example A. "A described work." Journal (2024).\n' +
+          'source_url: https://doi.org/10.1000/x\n' +
+          'doi: 10.1000/x\n',
+      ),
+      { noteFrontmatter: NOTE_FRONTMATTER },
+    );
+    expect(scan.candidates).toHaveLength(1);
+  });
+
+  it('still extracts the body, which owns its own bibliography', () => {
+    const scan = extractCitations(
+      note(
+        'citation: Example A. "A described work." Journal (2024).\ndoi: 10.1000/x\n',
+        '## References\n1. Other B. "A different work." Journal (2023). https://doi.org/10.1000/y\n',
+      ),
+      { noteFrontmatter: NOTE_FRONTMATTER },
+    );
+    expect(scan.candidates).toHaveLength(2);
+    expect(scan.candidates[1]?.described?.title).toBe('A different work');
+  });
+
+  /**
+   * Opt-in: a corpus that has not declared its fields is extracted exactly as before — which is
+   * to say the bare `doi:` line becomes a candidate that describes nothing, and the `citation:`
+   * line that describes the same work becomes no candidate at all.
+   */
+  it('leaves frontmatter to the line grammar when unconfigured', () => {
+    const scan = extractCitations(
+      note('citation: Example A. "A described work." Journal (2024).\ndoi: 10.1000/x\n'),
+    );
+    expect(scan.candidates).toHaveLength(1);
+    expect(scan.candidates[0]?.identifiers).toEqual([{ kind: 'doi', value: '10.1000/x' }]);
+    expect(scan.candidates[0]?.described).toBeUndefined();
+  });
+
+  it('emits nothing for frontmatter that names no work', () => {
+    const scan = extractCitations(note('type: mold\ntitle: A Mold\n'), {
+      noteFrontmatter: NOTE_FRONTMATTER,
+    });
+    expect(scan.candidates).toEqual([]);
+  });
+});

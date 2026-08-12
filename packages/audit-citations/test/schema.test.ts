@@ -96,6 +96,7 @@ describe('persisted schemas', () => {
           'resolved-mismatched': 0,
           unresolved: 0,
           unavailable: 0,
+          resolvedUnverified: 0,
           extractorFalsePositives: 0,
         },
         candidates: [candidate],
@@ -106,6 +107,7 @@ describe('persisted schemas', () => {
             verdict: 'resolved',
             effectiveVerdict: 'resolved',
             mismatches: [],
+            verifiable: true,
             excludedFromDenominator: false,
           },
         ],
@@ -124,6 +126,7 @@ describe('persisted schemas', () => {
       candidateId: 'candidate',
       evidenceIds: ['evidence'],
       effectiveVerdict: 'resolved' as const,
+      verifiable: true,
       excludedFromDenominator: false,
     };
     expect(() =>

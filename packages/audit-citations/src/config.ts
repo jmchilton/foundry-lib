@@ -29,6 +29,20 @@ export const citationAuditConfigSchema = z
       .min(1),
     trackedOnly: z.boolean().optional(),
     referenceHeadingTerms: z.array(z.string().min(1)).optional(),
+    /**
+     * Where a note's typed frontmatter keeps the two halves of a citation. Declaring it turns one
+     * frontmatter block into one checkable citation instead of a description that resolves nothing
+     * and identifiers that describe nothing. Omit it and frontmatter stays ordinary text.
+     */
+    noteFrontmatter: z
+      .object({
+        descriptionField: z.string().min(1),
+        // Each name is the identifier kind it holds — the extractor never guesses a kind from the
+        // shape of a bare value, because an arXiv id and a PMID are both just digits.
+        identifierFields: z.array(z.enum(['doi', 'arxiv', 'pmid', 'pmcid'])).min(1),
+      })
+      .strict()
+      .optional(),
     scholarlyPageHosts: z.array(z.string().min(1)).optional(),
     userAgent: z.string().min(1).optional(),
     requestTimeoutMs: z.number().int().positive().optional(),
