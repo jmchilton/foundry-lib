@@ -404,8 +404,8 @@ export const FOOTER_SPECIMENS: SpecimenGroup<SiteFooterProps> = {
         fullName: 'Galaxy Workflow Foundry',
         repoUrl: 'https://github.com/galaxyproject/foundry',
         footerLinks: [
-          { path: '/about/', label: 'About' },
-          { path: '/licenses/', label: 'Licenses' },
+          { path: '#about', label: 'About' },
+          { path: '#licenses', label: 'Licenses' },
         ],
       },
     },
@@ -599,7 +599,10 @@ export const TAG_CHIPS_SPECIMENS: SpecimenGroup<TagChipsProps> = {
       id: 'linked',
       name: 'Browsable tags',
       why: 'An established content site links each chip through the one route prefix the instance supplies.',
-      props: { tags: ['method/persistent-laplacian'], tagBase: '/foundry/tags' },
+      // A fragment, not a route prefix: what this case shows is that a chip becomes an anchor, and
+      // any real prefix would be some instance's — this one was `/foundry/tags`, which is the
+      // Galaxy Workflow Foundry's, so its gallery shipped a live 404 to a tag it does not declare.
+      props: { tags: ['method/persistent-laplacian'], tagBase: '#' },
     },
     {
       id: 'unlinked',
@@ -625,7 +628,7 @@ export const CONTENT_NOTE_SPECIMENS: SpecimenGroup<ContentNoteProps> = {
         title: 'Package A',
         summary: 'A package profile whose Markdown body owns its title.',
         tags: ['method/persistent-laplacian'],
-        back: { href: '/packages/', label: 'Packages' },
+        back: { href: '#', label: 'Packages' },
       },
     },
     {
