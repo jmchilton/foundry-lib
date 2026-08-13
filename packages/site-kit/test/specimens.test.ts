@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest';
 
 import LicenseBadge from '../src/components/LicenseBadge.astro';
 import LicenseFileBody from '../src/components/LicenseFileBody.astro';
+import KindCatalog from '../src/components/KindCatalog.astro';
+import KindReference from '../src/components/KindReference.astro';
 import ReferenceContract from '../src/components/ReferenceContract.astro';
 import ContentNote from '../src/components/ContentNote.astro';
 import SiteFooter from '../src/components/SiteFooter.astro';
@@ -32,6 +34,8 @@ import {
 // So every specimen is rendered here, through the same Astro transform a build gives it.
 
 const COMPONENTS: Record<string, AstroComponentFactory> = {
+  KindCatalog,
+  KindReference,
   LicenseBadge,
   LicenseFileBody,
   ReferenceContract,
@@ -60,6 +64,9 @@ const render = async (
 // but a poor specimen. Every other group ignores this.
 const slotsFor = (group: SpecimenGroup): Record<string, string> | undefined => {
   if (group.surface === 'document') return { default: '<p>Specimen body.</p>' };
+  if (group.component === 'KindReference') {
+    return { documentation: '<h2>Why this kind exists</h2><p>Instance-rendered rationale.</p>' };
+  }
   if (group.component === 'ContentNote') return { default: '<h1>Note body</h1><p>Evidence.</p>' };
   return undefined;
 };

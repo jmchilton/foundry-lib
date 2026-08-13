@@ -1,0 +1,541 @@
+---
+import type { KindReferenceProps as Props } from '../index.js';
+
+const { item, catalogHref, source } = Astro.props;
+const kind = item.definition;
+const required = kind.fields.filter((field) => field.required);
+const optional = kind.fields.filter((field) => !field.required);
+const locations = kind.locations ?? [];
+const open = kind.additionalCompanions === 'allow';
+const hasDocumentation = Astro.slots.has('documentation');
+
+const countLabel = item.browse?.count === undefined
+  ? item.browse?.label
+  : `${item.browse.count} ${item.browse.label}`;
+---
+
+<article class="kind-reference" data-kind={kind.kind}>
+  {catalogHref && <a class="kind-reference-back" href={catalogHref}>← Kind catalog</a>}
+
+  <header class="kind-reference-hero">
+    <div class="kind-reference-title">
+      <p class="kind-reference-eyebrow">Kind reference · <code>{kind.kind}</code></p>
+      <h1 data-pagefind-meta="title">{kind.title}</h1>
+      <p data-pagefind-meta="summary">{kind.summary}</p>
+    </div>
+    <dl class="kind-reference-ledger" aria-label="Kind contract summary">
+      <div>
+        <dt>Layer</dt>
+        <dd>{kind.layer}</dd>
+      </div>
+      <div>
+        <dt>Shape</dt>
+        <dd>{kind.shape}</dd>
+      </div>
+      <div>
+        <dt>Fields</dt>
+        <dd>{required.length} required · {optional.length} optional</dd>
+      </div>
+      <div>
+        <dt>Companions</dt>
+        <dd>{kind.companions.length}{open ? ' + open set' : ''}</dd>
+      </div>
+    </dl>
+  </header>
+
+  {(locations.length > 0 || item.browse || source) && (
+    <div class="kind-reference-links">
+      {locations.length > 0 && (
+        <p>
+          <span>Declared location</span>
+          {locations.map((location) => <code>{location}</code>)}
+        </p>
+      )}
+      {item.browse && (
+        <a href={item.browse.href}>
+          Browse {countLabel}
+        </a>
+      )}
+      {source && <a href={source.href}>{source.label}</a>}
+    </div>
+  )}
+
+  <section class="kind-reference-section" aria-labelledby="kind-fields">
+    <div class="kind-section-heading">
+      <p>01</p>
+      <div>
+        <h2 id="kind-fields">Metadata contract</h2>
+        <p>The generated field table derived from the schema that validates this kind.</p>
+      </div>
+    </div>
+    <div class="kind-field-table-wrap">
+      <table class="kind-field-table">
+        <thead>
+          <tr>
+            <th scope="col">Field</th>
+            <th scope="col">Requirement</th>
+            <th scope="col">Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...required, ...optional].map((field) => (
+            <tr>
+              <th scope="row"><code>{field.name}</code></th>
+              <td><span data-required={String(field.required)}>{field.required ? 'required' : 'optional'}</span></td>
+              <td><code>{field.type}</code></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="kind-reference-section" aria-labelledby="kind-layout">
+    <div class="kind-section-heading">
+      <p>02</p>
+      <div>
+        <h2 id="kind-layout">File layout</h2>
+        <p>
+          {kind.shape === 'file'
+            ? 'Each note is one Markdown file.'
+            : 'Each note is a directory. The entries below are its declared companion contract.'}
+        </p>
+      </div>
+    </div>
+
+    <div class="kind-layout" data-shape={kind.shape}>
+      <div class="kind-layout-tree" aria-label={`${kind.title} file layout`}>
+        {kind.shape === 'file' ? (
+          <code>{kind.kind}.md</code>
+        ) : (
+          <>
+            <code>{kind.kind}/</code>
+            <ul>
+              <li><code>index.md</code><span>the note</span></li>
+              {kind.companions.map((companion) => (
+                <li>
+                  <code>{companion.file}</code>
+                  <span>{companion.requirement} · {companion.disposition}</span>
+                </li>
+              ))}
+              {open && <li><code>…</code><span>additional companions allowed</span></li>}
+            </ul>
+          </>
+        )}
+      </div>
+
+      {kind.shape === 'directory' && (
+        <div class="kind-companion-notes">
+          {kind.companions.length === 0 && !open ? (
+            <p>No companions are declared. Only <code>index.md</code> belongs in the note directory.</p>
+          ) : (
+            kind.companions.map((companion) => (
+              <div>
+                <code>{companion.file}</code>
+                <p>{companion.purpose}</p>
+              </div>
+            ))
+          )}
+          {open && (
+            <p class="kind-open-set">
+              This is an open companion set: declared entries retain their rules, and additional entries are permitted.
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="kind-reference-section" aria-labelledby="kind-example" data-pagefind-ignore>
+    <div class="kind-section-heading">
+      <p>03</p>
+      <div>
+        <h2 id="kind-example">Validated example</h2>
+        <p>Source form, shown as reference data rather than published as a note in this corpus.</p>
+      </div>
+    </div>
+    {kind.example ? (
+      <pre class="kind-example"><code>{kind.example}</code></pre>
+    ) : (
+      <p class="kind-example-empty">This manifest does not publish a worked example for this kind.</p>
+    )}
+  </section>
+
+  {hasDocumentation && (
+    <section class="kind-reference-section kind-documentation" aria-labelledby="kind-rationale">
+      <div class="kind-section-heading">
+        <p>04</p>
+        <div>
+          <h2 id="kind-rationale">Rationale</h2>
+          <p>The kind’s own documentation, rendered by this Foundry’s Markdown pipeline.</p>
+        </div>
+      </div>
+      <div class="kind-documentation-body">
+        <slot name="documentation" />
+      </div>
+    </section>
+  )}
+</article>
+
+<style>
+  .kind-reference {
+    --kind-accent: var(--color-kind-accent, var(--color-brand));
+    color: var(--color-text-primary);
+  }
+
+  .kind-reference-back {
+    display: inline-block;
+    margin-bottom: 2rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    text-decoration: none;
+  }
+
+  .kind-reference-back:hover,
+  .kind-reference-links a:hover {
+    color: var(--color-link-hover);
+    text-decoration: underline;
+    text-underline-offset: 0.2rem;
+  }
+
+  .kind-reference-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.65fr);
+    gap: clamp(2rem, 7vw, 6rem);
+    align-items: end;
+    padding: 1rem 0 3rem;
+  }
+
+  .kind-reference-title {
+    position: relative;
+    padding-left: clamp(1rem, 3vw, 2rem);
+  }
+
+  .kind-reference-title::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background: var(--kind-accent);
+    content: '';
+  }
+
+  .kind-reference-eyebrow,
+  .kind-reference-ledger dt,
+  .kind-reference-links span,
+  .kind-section-heading > p,
+  .kind-field-table thead {
+    font-family: var(--font-mono);
+    font-size: 0.67rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+
+  .kind-reference-eyebrow {
+    margin: 0 0 0.8rem;
+    color: var(--color-text-muted);
+  }
+
+  .kind-reference-eyebrow code {
+    color: var(--kind-accent);
+    font-size: inherit;
+  }
+
+  .kind-reference-title h1 {
+    margin: 0;
+    font-size: clamp(2.4rem, 6vw, 4.8rem);
+    letter-spacing: -0.055em;
+    line-height: 0.95;
+    text-wrap: balance;
+  }
+
+  .kind-reference-title > p:last-child {
+    max-width: 62ch;
+    margin: 1rem 0 0;
+    color: var(--color-text-secondary);
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .kind-reference-ledger {
+    margin: 0;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .kind-reference-ledger > div {
+    display: grid;
+    grid-template-columns: 6rem 1fr;
+    gap: 1rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding: 0.7rem 0;
+  }
+
+  .kind-reference-ledger dt,
+  .kind-section-heading > p,
+  .kind-field-table thead {
+    color: var(--color-text-muted);
+  }
+
+  .kind-reference-ledger dd {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+
+  .kind-reference-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem 1.5rem;
+    align-items: baseline;
+    border-top: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding: 1rem 0;
+  }
+
+  .kind-reference-links p {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: baseline;
+    margin: 0 auto 0 0;
+  }
+
+  .kind-reference-links code {
+    color: var(--color-text-secondary);
+    font-size: 0.78rem;
+  }
+
+  .kind-reference-links a {
+    color: var(--color-link);
+    font-size: 0.84rem;
+    text-decoration: none;
+  }
+
+  .kind-reference-section {
+    padding-top: clamp(4rem, 9vw, 7rem);
+  }
+
+  .kind-section-heading {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .kind-section-heading > p {
+    margin: 0.35rem 0 0;
+    color: var(--kind-accent);
+  }
+
+  .kind-section-heading h2 {
+    margin: 0;
+    font-size: clamp(1.45rem, 3vw, 2.1rem);
+    letter-spacing: -0.035em;
+  }
+
+  .kind-section-heading div > p {
+    max-width: 62ch;
+    margin: 0.45rem 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .kind-field-table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid var(--color-border-subtle);
+  }
+
+  .kind-field-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+
+  .kind-field-table th,
+  .kind-field-table td {
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding: 0.8rem 1rem 0.8rem 0;
+    vertical-align: top;
+  }
+
+  .kind-field-table thead th {
+    font-weight: 500;
+  }
+
+  .kind-field-table tbody th {
+    width: 28%;
+    font-weight: 500;
+  }
+
+  .kind-field-table tbody td:nth-child(2) {
+    width: 9rem;
+  }
+
+  .kind-field-table code {
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    overflow-wrap: anywhere;
+  }
+
+  .kind-field-table span {
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.25rem;
+    padding: 0.16rem 0.4rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .kind-field-table span[data-required='true'] {
+    border-color: color-mix(in srgb, var(--kind-accent) 40%, var(--color-border-subtle));
+    color: var(--kind-accent);
+  }
+
+  .kind-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 0.8fr) minmax(18rem, 1.2fr);
+    gap: clamp(1.5rem, 5vw, 4rem);
+    border-top: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding: 1.5rem 0;
+  }
+
+  .kind-layout[data-shape='file'] {
+    grid-template-columns: 1fr;
+  }
+
+  .kind-layout-tree {
+    border-left: 2px solid var(--kind-accent);
+    background: var(--color-surface-raised);
+    padding: 1.1rem 1.25rem;
+  }
+
+  .kind-layout-tree code,
+  .kind-companion-notes code {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+  }
+
+  .kind-layout-tree > code {
+    color: var(--color-text-primary);
+    font-weight: 700;
+  }
+
+  .kind-layout-tree ul {
+    margin: 0.75rem 0 0;
+    padding: 0 0 0 1rem;
+    list-style: none;
+  }
+
+  .kind-layout-tree li {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(7rem, auto) 1fr;
+    gap: 0.75rem;
+    padding: 0.35rem 0 0.35rem 0.8rem;
+  }
+
+  .kind-layout-tree li::before {
+    position: absolute;
+    top: 0.82rem;
+    left: -0.85rem;
+    width: 0.8rem;
+    height: 1px;
+    background: var(--color-border-subtle);
+    content: '';
+  }
+
+  .kind-layout-tree li span {
+    color: var(--color-text-muted);
+    font-size: 0.74rem;
+  }
+
+  .kind-companion-notes > div {
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding: 0.2rem 0 0.8rem;
+  }
+
+  .kind-companion-notes > div + div {
+    padding-top: 0.8rem;
+  }
+
+  .kind-companion-notes p {
+    margin: 0.25rem 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.83rem;
+    line-height: 1.5;
+  }
+
+  .kind-open-set {
+    border-left: 2px solid var(--color-accent);
+    padding: 0.1rem 0 0.1rem 0.75rem;
+  }
+
+  .kind-example,
+  .kind-example-empty {
+    margin: 0;
+    border: 1px solid var(--color-border-subtle);
+    border-radius: 0.45rem;
+    background: var(--color-chrome);
+    color: var(--color-text-on-dark);
+    padding: 1.25rem;
+  }
+
+  .kind-example {
+    max-height: 34rem;
+    overflow: auto;
+    white-space: pre;
+  }
+
+  .kind-example code {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    line-height: 1.65;
+  }
+
+  .kind-example-empty {
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .kind-documentation-body {
+    max-width: 72ch;
+    margin-left: 3.5rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 48rem) {
+    .kind-reference-hero,
+    .kind-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .kind-reference-hero {
+      gap: 2rem;
+    }
+
+    .kind-reference-title h1 {
+      font-size: clamp(2.25rem, 13vw, 3.5rem);
+    }
+
+    .kind-reference-links {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .kind-reference-links p {
+      margin-right: 0;
+    }
+
+    .kind-documentation-body {
+      margin-left: 0;
+    }
+  }
+</style>

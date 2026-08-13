@@ -154,6 +154,43 @@ It names the roles in `CONTENT_READER_TOKENS`; consumers can check them with `co
 See the [content-reader boundary](../../docs/architecture/content-reader-boundary.md) for how this
 presentation layer composes with `@galaxy-foundry/content-reader` and explicit Astro collections.
 
+## The kind catalog and reference page
+
+`KindCatalog.astro` renders one Foundry's compact inventory; `KindReference.astro` renders the
+complete generated contract for one kind. Both consume `ManifestKind` through a resolved
+`KindCatalogItem`: the generated data stays authoritative while the instance supplies the hrefs
+and live-corpus facts only it can know.
+
+```astro
+---
+import KindCatalog from '@galaxy-foundry/site-kit/KindCatalog.astro';
+import manifest from '../types/kinds.generated.json';
+
+const items = manifest.kinds.map((definition) => ({
+  definition,
+  href: `${base}/kinds/${definition.kind}/`,
+  // Optional: derive this from the content reader, never put the count in the manifest.
+  browse: browseFor(definition.kind),
+}));
+---
+<KindCatalog {items} />
+```
+
+The detail route passes one item to `KindReference`. Its `documentation` slot is deliberate:
+`kind.md` may contain an instance's wiki-link grammar and must go through that instance's Markdown
+pipeline. The shared component does not parse it. `example.md` is displayed as escaped source,
+because a schema fixture can contain synthetic references and must not claim live corpus routes.
+
+```astro
+<KindReference item={item} catalogHref={`${base}/kinds/`}>
+  <KindDocumentation slot="documentation" />
+</KindReference>
+```
+
+The two components read `KIND_CATALOG_TOKENS`; assert them against the emitted stylesheet with
+`kindCatalogStyleGaps(css)`. An instance may set `--color-kind-accent` through `[data-kind]`, with
+`--color-brand` as the built-in fallback.
+
 ## The reference card
 
 `ReferenceContract.astro` renders a note's typed `references:` manifest against the contract it was

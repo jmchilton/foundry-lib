@@ -1,0 +1,375 @@
+---
+import type { KindCatalogProps as Props, KindCatalogItem } from '../index.js';
+
+const { items } = Astro.props;
+
+const layers = [
+  {
+    id: 'substrate',
+    label: 'Shared substrate',
+    description: 'Kinds this Foundry declares as part of the transferable Foundry structure.',
+  },
+  {
+    id: 'instance',
+    label: 'Instance vocabulary',
+    description: 'Kinds introduced for this Foundry’s own domain and operating model.',
+  },
+] as const;
+
+const inLayer = (layer: 'substrate' | 'instance'): readonly KindCatalogItem[] =>
+  items.filter((item) => item.definition.layer === layer);
+
+const requiredCount = (item: KindCatalogItem): number =>
+  item.definition.fields.filter((field) => field.required).length;
+const optionalCount = (item: KindCatalogItem): number =>
+  item.definition.fields.length - requiredCount(item);
+---
+
+<div class="kind-catalog">
+  {items.length === 0 ? (
+    <p class="kind-catalog-empty">This Foundry declares no kinds.</p>
+  ) : (
+    <>
+      <dl class="kind-catalog-ledger" aria-label="Kind catalog summary">
+        <div>
+          <dt>Declared</dt>
+          <dd>{items.length}</dd>
+        </div>
+        <div>
+          <dt>Substrate</dt>
+          <dd>{inLayer('substrate').length}</dd>
+        </div>
+        <div>
+          <dt>Instance</dt>
+          <dd>{inLayer('instance').length}</dd>
+        </div>
+      </dl>
+
+      {layers.map((layer) => {
+        const members = inLayer(layer.id);
+        if (members.length === 0) return null;
+        return (
+          <section class="kind-layer" aria-label={layer.label}>
+            <header class="kind-layer-heading">
+              <div>
+                <span>{String(members.length).padStart(2, '0')}</span>
+                <h2>{layer.label}</h2>
+              </div>
+              <p>{layer.description}</p>
+            </header>
+
+            <ol class="kind-list">
+              {members.map((item, index) => {
+                const kind = item.definition;
+                const locations = kind.locations ?? [];
+                const open = kind.additionalCompanions === 'allow';
+                return (
+                  <li class="kind-row" data-kind={kind.kind}>
+                    <span class="kind-row-index" aria-hidden="true">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    <div class="kind-row-main">
+                      <div class="kind-row-title">
+                        <a href={item.href}>{kind.title}</a>
+                        <code>{kind.kind}</code>
+                      </div>
+                      <p>{kind.summary}</p>
+                      {locations.length > 0 && (
+                        <p class="kind-row-locations">
+                          <span>Lives in</span>{' '}
+                          {locations.map((location) => <code>{location}</code>)}
+                        </p>
+                      )}
+                    </div>
+                    <dl class="kind-row-facts">
+                      <div>
+                        <dt>Shape</dt>
+                        <dd>{kind.shape}</dd>
+                      </div>
+                      <div>
+                        <dt>Fields</dt>
+                        <dd>{requiredCount(item)} req · {optionalCount(item)} opt</dd>
+                      </div>
+                      <div>
+                        <dt>Companions</dt>
+                        <dd>
+                          {kind.companions.length}
+                          {open ? ' + open set' : ''}
+                        </dd>
+                      </div>
+                      {item.browse && (
+                        <div>
+                          <dt>Corpus</dt>
+                          <dd>
+                            <a href={item.browse.href}>
+                              {item.browse.count === undefined
+                                ? item.browse.label
+                                : `${item.browse.count} ${item.browse.label}`}
+                            </a>
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        );
+      })}
+    </>
+  )}
+</div>
+
+<style>
+  .kind-catalog {
+    color: var(--color-text-primary);
+  }
+
+  .kind-catalog-empty {
+    border-top: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border-subtle);
+    margin: 0;
+    padding: 2rem 0;
+    color: var(--color-text-secondary);
+  }
+
+  .kind-catalog-ledger {
+    display: grid;
+    grid-template-columns: minmax(8rem, 1.5fr) repeat(2, minmax(7rem, 1fr));
+    margin: 2rem 0 4rem;
+    border-top: 1px solid var(--color-border-subtle);
+    border-bottom: 1px solid var(--color-border-subtle);
+  }
+
+  .kind-catalog-ledger > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+  }
+
+  .kind-catalog-ledger > div:first-child {
+    padding-left: 0;
+  }
+
+  .kind-catalog-ledger > div + div {
+    border-left: 1px solid var(--color-border-subtle);
+  }
+
+  .kind-catalog-ledger dt,
+  .kind-row-facts dt,
+  .kind-row-locations span {
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .kind-catalog-ledger dd {
+    margin: 0;
+    color: var(--color-kind-accent, var(--color-brand));
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+  }
+
+  .kind-layer + .kind-layer {
+    margin-top: 5rem;
+  }
+
+  .kind-layer-heading {
+    display: grid;
+    grid-template-columns: minmax(15rem, 0.8fr) minmax(18rem, 1.2fr);
+    gap: 2rem;
+    align-items: end;
+    margin-bottom: 1.4rem;
+  }
+
+  .kind-layer-heading > div {
+    display: flex;
+    gap: 0.8rem;
+    align-items: baseline;
+  }
+
+  .kind-layer-heading span {
+    color: var(--color-accent);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+  }
+
+  .kind-layer-heading h2 {
+    margin: 0;
+    font-size: clamp(1.45rem, 3vw, 2.2rem);
+    letter-spacing: -0.035em;
+    line-height: 1;
+  }
+
+  .kind-layer-heading p {
+    max-width: 58ch;
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .kind-list {
+    margin: 0;
+    border-top: 1px solid var(--color-border-subtle);
+    padding: 0;
+    list-style: none;
+  }
+
+  .kind-row {
+    --row-accent: var(--color-kind-accent, var(--color-brand));
+    display: grid;
+    grid-template-columns: 2.5rem minmax(15rem, 1.35fr) minmax(17rem, 0.85fr);
+    gap: clamp(1rem, 3vw, 2.5rem);
+    align-items: start;
+    border-bottom: 1px solid var(--color-border-subtle);
+    padding: 1.4rem 0;
+    transition: background-color 160ms ease;
+  }
+
+  .kind-row:hover {
+    background: color-mix(in srgb, var(--row-accent) 3%, transparent);
+  }
+
+  .kind-row-index {
+    padding-top: 0.2rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+  }
+
+  .kind-row-main {
+    position: relative;
+    padding-left: 1rem;
+  }
+
+  .kind-row-main::before {
+    position: absolute;
+    top: 0.15rem;
+    bottom: 0.15rem;
+    left: 0;
+    width: 2px;
+    background: var(--row-accent);
+    content: '';
+    opacity: 0.55;
+  }
+
+  .kind-row-title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    align-items: baseline;
+  }
+
+  .kind-row-title a {
+    color: var(--color-text-primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    text-decoration: none;
+  }
+
+  .kind-row-title a:hover,
+  .kind-row-facts a:hover {
+    color: var(--color-link-hover);
+    text-decoration: underline;
+    text-underline-offset: 0.18rem;
+  }
+
+  .kind-row-title code,
+  .kind-row-locations code {
+    font-family: var(--font-mono);
+  }
+
+  .kind-row-title code {
+    color: var(--color-text-muted);
+    font-size: 0.72rem;
+  }
+
+  .kind-row-main > p {
+    max-width: 62ch;
+    margin: 0.45rem 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .kind-row-locations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: baseline;
+  }
+
+  .kind-row-locations code {
+    color: var(--color-text-muted);
+    font-size: 0.72rem;
+  }
+
+  .kind-row-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem 1.25rem;
+    margin: 0;
+  }
+
+  .kind-row-facts dd {
+    margin: 0.2rem 0 0;
+    color: var(--color-text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    overflow-wrap: anywhere;
+  }
+
+  .kind-row-facts a {
+    color: var(--color-link);
+    text-decoration: none;
+  }
+
+  @media (max-width: 48rem) {
+    .kind-catalog-ledger {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-bottom: 3rem;
+    }
+
+    .kind-catalog-ledger > div {
+      display: block;
+      padding: 0.85rem;
+    }
+
+    .kind-catalog-ledger > div:first-child {
+      padding-left: 0;
+    }
+
+    .kind-catalog-ledger dd {
+      margin-top: 0.25rem;
+    }
+
+    .kind-layer-heading,
+    .kind-row {
+      grid-template-columns: 1fr;
+    }
+
+    .kind-layer-heading {
+      gap: 0.75rem;
+    }
+
+    .kind-row {
+      gap: 0.8rem;
+      padding: 1.25rem 0;
+    }
+
+    .kind-row-index {
+      display: none;
+    }
+
+    .kind-row-facts {
+      padding-left: 1rem;
+    }
+  }
+</style>

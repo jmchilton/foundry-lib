@@ -148,9 +148,13 @@ collections resolving to one kind yield two locations.
 `docs` is the prose beside each kind's schema, which `@galaxy-foundry/kind-schema/docs` will read:
 
 ```ts
-import { loadKindDocs } from '@galaxy-foundry/kind-schema/docs';
+import { loadKindDocs, loadKindExamples } from '@galaxy-foundry/kind-schema/docs';
 
-manifestKinds(KINDS, ctx, { docs: loadKindDocs(KINDS, 'src/types'), collections: COLLECTIONS });
+manifestKinds(KINDS, ctx, {
+  docs: loadKindDocs(KINDS, 'src/types'),
+  examples: loadKindExamples(KINDS, 'src/types'),
+  collections: COLLECTIONS,
+});
 ```
 
 It reads `<typesDir>/<kind>/kind.md` for every kind in the list and trims each body — trimmed

@@ -15,6 +15,7 @@ import path from 'node:path';
 
 import {
   contentReaderStyleGaps,
+  kindCatalogStyleGaps,
   licenseBadgeStyleGaps,
   licenseFileStyleGaps,
   referenceStyleGaps,
@@ -24,6 +25,7 @@ import {
   REFERENCE_TOKENS,
   LICENSE_BADGE_TOKENS,
   CONTENT_READER_TOKENS,
+  KIND_CATALOG_TOKENS,
   LICENSE_FILE_TOKENS,
 } from '@galaxy-foundry/site-kit';
 import { SPECIMENS, specimenPath } from '@galaxy-foundry/site-kit/specimens';
@@ -67,6 +69,7 @@ describe('the minimum theme', () => {
     ...new Set([
       ...SHELL_TOKENS,
       ...CONTENT_READER_TOKENS,
+      ...KIND_CATALOG_TOKENS,
       ...REFERENCE_TOKENS,
       ...LICENSE_BADGE_TOKENS,
       ...LICENSE_FILE_TOKENS,
@@ -104,6 +107,7 @@ describe('the minimum theme', () => {
 
     expect(shellStyleGaps(css), '\nshell').toEqual([]);
     expect(contentReaderStyleGaps(css), '\ncontent reader').toEqual([]);
+    expect(kindCatalogStyleGaps(css), '\nkind catalog').toEqual([]);
     expect(referenceStyleGaps(css), '\nreference card').toEqual([]);
     expect(licenseBadgeStyleGaps(css), '\nlicence badge').toEqual([]);
     expect(licenseFileStyleGaps(css), '\nlicence file body').toEqual([]);
