@@ -274,4 +274,36 @@ describe('typed note frontmatter', () => {
     });
     expect(scan.candidates).toEqual([]);
   });
+
+  /**
+   * A note may describe a source that has no identifier at all — a web chapter, a package manual,
+   * an unpublished draft. Resolving its description by title would ask a provider to guess, and
+   * the guess arrives as a finding against a note that is correct.
+   */
+  it('emits nothing for a described source that declares no identifier', () => {
+    const scan = extractCitations(
+      note(
+        'type: book\n' +
+          'citation: "Harmon LJ. Phylogenetic Comparative Methods: Learning from Trees. 2019."\n' +
+          'source_ids:\n' +
+          '  status: none\n' +
+          '  reason: web chapter of an online textbook; no per-chapter identifier assigned\n',
+      ),
+      { noteFrontmatter: NOTE_FRONTMATTER },
+    );
+    expect(scan.candidates).toEqual([]);
+  });
+
+  it('still resolves a bibliography entry by title when it carries no identifier', () => {
+    const scan = extractCitations(
+      note(
+        'type: paper\ncitation: Example A. "A described work." Journal (2024).\ndoi: 10.1000/x\n',
+        '## References\n1. Other B. "A different work." Journal (2023).\n',
+      ),
+      { noteFrontmatter: NOTE_FRONTMATTER },
+    );
+    expect(scan.candidates).toHaveLength(2);
+    expect(scan.candidates[1]?.identifiers).toEqual([]);
+    expect(scan.candidates[1]?.described?.title).toBe('A different work');
+  });
 });
