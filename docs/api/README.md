@@ -122,13 +122,14 @@ The public surface includes:
 - navigation helpers: `resolveNav`, `shellBase`, and `shellHref`;
 - the fixed reading measure: `CONTAINER`;
 - the style contract: `SHELL_TOKENS`, `SHELL_CLASSES`, `shellStyleGaps`, and the per-component
-  `CONTENT_READER_TOKENS`, `REFERENCE_TOKENS`, `LICENSE_BADGE_TOKENS`, `LICENSE_FILE_TOKENS` lists
-  with their `contentReaderStyleGaps`, `referenceStyleGaps`, `licenseBadgeStyleGaps`,
-  `licenseFileStyleGaps` checks — all `styleGaps` with a different list;
+  `CONTENT_READER_TOKENS`, `NOTE_HEADER_TOKENS`, `REFERENCE_TOKENS`, `LICENSE_BADGE_TOKENS`,
+  `LICENSE_FILE_TOKENS` lists with their `contentReaderStyleGaps`, `noteHeaderStyleGaps`,
+  `referenceStyleGaps`, `licenseBadgeStyleGaps`, `licenseFileStyleGaps` checks — all `styleGaps`
+  with a different list;
 - the vendored-licence route: `LICENSE_FILE_ROUTE`, `licenseFileHref`, `licensesUnderFile`, and
   the `LicenseFileUse` type;
 - the search-index check: `PAGEFIND_BODY_ATTR` and `searchIndexGaps`; and
-- the shipped `./SiteShell.astro`, `./ContentNote.astro`, `./TagChips.astro`,
+- the shipped `./SiteShell.astro`, `./NoteHeader.astro`, `./ContentNote.astro`, `./TagChips.astro`,
   `./ReferenceContract.astro`, `./LicenseBadge.astro`, and `./LicenseFileBody.astro` component
   entry points.
 

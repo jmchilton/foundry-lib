@@ -62,13 +62,16 @@ the package consumes the resulting collection table mechanically.
 
 ## Presentation boundary
 
-`ContentNote` owns the order and semantics common to a note page. Slots admit local furniture:
+`NoteHeader` owns the order and semantics common to everything above a note's body — back link,
+eyebrow, heading, summary, and the row carrying status, badges and tags. `ContentNote` composes it
+and adds what a page needs around a header. Slots admit local furniture:
 
-![ContentNote owns the shared vertical frame while instance-specific content enters through metadata, badges, reference, and article slots.](../assets/diagrams/content-note-slots.svg)
+![NoteHeader owns the shared vertical frame; ContentNote adds the metadata slot, reference slot and article boundary beneath it, and instance-specific content enters through those slots.](../assets/diagrams/content-note-slots.svg)
 
 A new domain field should normally become slot content in the instance. A new structural region
-that two content sites need is evidence for extending `ContentNote`. The component never imports
-an instance schema or switches on a domain kind.
+that two content sites need is evidence for extending the frame. Neither component imports an
+instance schema or switches on a domain kind: a kind reaches the eyebrow as a resolved string and a
+status as a `data-status` value, so the vocabulary and its colours stay with the instance.
 
 ## Release and adoption order
 
