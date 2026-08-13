@@ -5,7 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { loadKindDocs } from '../src/docs.js';
+import { loadKindDocs, loadKindExamples } from '../src/docs.js';
 import { kindDefiner } from '../src/index.js';
 
 const defineKind = kindDefiner<{ base: { title: z.ZodString } }>();
@@ -37,6 +37,11 @@ afterEach(() => {
 function writeKindDoc(kind: string, body: string): void {
   mkdirSync(path.join(typesDirectory, kind), { recursive: true });
   writeFileSync(path.join(typesDirectory, kind, 'kind.md'), body);
+}
+
+function writeKindExample(kind: string, body: string): void {
+  mkdirSync(path.join(typesDirectory, kind), { recursive: true });
+  writeFileSync(path.join(typesDirectory, kind, 'example.md'), body);
 }
 
 describe('loadKindDocs', () => {
@@ -73,5 +78,24 @@ describe('loadKindDocs', () => {
       thrownError = error;
     }
     expect(thrownError).toBeInstanceOf(Error);
+  });
+});
+
+describe('loadKindExamples', () => {
+  it('reads and trims each kind’s example.md, keyed by kind name', () => {
+    writeKindExample('mold', '\n---\ntype: mold\n---\n');
+    writeKindExample('pattern', '---\ntype: pattern\n---\n');
+
+    expect(loadKindExamples([mold, pattern], typesDirectory)).toEqual({
+      mold: '---\ntype: mold\n---',
+      pattern: '---\ntype: pattern\n---',
+    });
+  });
+
+  it('refuses a kind with no example.md, naming which one and the expected file', () => {
+    writeKindExample('mold', '---\ntype: mold\n---\n');
+    expect(() => loadKindExamples([mold, pattern], typesDirectory)).toThrow(
+      /^pattern: cannot read .*pattern\/example\.md$/,
+    );
   });
 });

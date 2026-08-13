@@ -1,6 +1,7 @@
 ---
 import SiteHeader from '@galaxy-foundry/site-kit/SiteHeader.astro';
 import SiteShell from '@galaxy-foundry/site-kit/SiteShell.astro';
+import KindReference from '@galaxy-foundry/site-kit/KindReference.astro';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 
 import { base, framedGroups, THEME, type ThemeId } from '../lib/gallery';
@@ -20,7 +21,7 @@ interface Props {
 
 const { theme, groupId, id } = Astro.props;
 
-const RENDERERS: Record<string, AstroComponentFactory> = { SiteHeader, SiteShell };
+const RENDERERS: Record<string, AstroComponentFactory> = { KindReference, SiteHeader, SiteShell };
 
 const group = framedGroups.find((candidate) => candidate.id === groupId);
 const specimen = group?.specimens.find((candidate) => candidate.id === id);
@@ -66,7 +67,14 @@ document.documentElement.dataset.pfTheme = dark ? 'dark' : 'light';`}
         </script>
       </head>
       <body style="background: var(--color-surface)">
-        <Component {...props} />
+        <Component {...props}>
+          {group.component === 'KindReference' && (
+            <Fragment slot="documentation">
+              <h2>Why this kind exists</h2>
+              <p>This rationale is rendered by the instance and enters the shared frame through a named slot.</p>
+            </Fragment>
+          )}
+        </Component>
       </body>
     </html>
   )

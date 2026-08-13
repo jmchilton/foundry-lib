@@ -7,6 +7,7 @@ import {
   type LicensePolicy,
   type LicenseRow,
 } from '@galaxy-foundry/license-policy';
+import type { ManifestKind } from '@galaxy-foundry/kind-manifest';
 import type { Reference, ReferenceContract } from '@galaxy-foundry/reference-contract';
 
 /**
@@ -135,6 +136,35 @@ export interface ContentNoteProps {
   showHeading?: boolean;
   /** The instance owns prose typography; the reader owns the article boundary. */
   articleClass?: string;
+}
+
+/** A kind contract resolved into the route space and live corpus of one Foundry. */
+export interface KindCatalogItem {
+  /** The generated contract. Nothing in this record is restated by the view. */
+  definition: ManifestKind;
+  /** Canonical detail page for this kind, with the deployment base already applied. */
+  href: string;
+  /** Optional live collection reached from the reference page. */
+  browse?: {
+    href: string;
+    label: string;
+    /** Derived from the corpus at build time; it is not part of the kind manifest. */
+    count?: number;
+  };
+}
+
+/** The compact, single-Foundry inventory. The page around it owns its title and introduction. */
+export interface KindCatalogProps {
+  items: readonly KindCatalogItem[];
+}
+
+/** The shared reference body for one kind. Routes and rendered Markdown stay with the instance. */
+export interface KindReferenceProps {
+  item: KindCatalogItem;
+  /** Back-link to the instance's kind inventory. */
+  catalogHref?: string;
+  /** Human-readable link to the generated manifest or its repository source. */
+  source?: { href: string; label: string };
 }
 
 /**
@@ -299,6 +329,29 @@ export const CONTENT_READER_TOKENS = [
 
 export function contentReaderStyleGaps(css: string): string[] {
   return styleGaps(css, CONTENT_READER_TOKENS);
+}
+
+/** Theme roles read by the kind inventory and reference components. */
+export const KIND_CATALOG_TOKENS = [
+  '--color-brand',
+  '--color-chrome',
+  '--color-accent',
+  '--color-surface',
+  '--color-surface-raised',
+  '--color-surface-hover',
+  '--color-border-subtle',
+  '--color-link',
+  '--color-link-hover',
+  '--color-text-primary',
+  '--color-text-on-dark',
+  '--color-text-secondary',
+  '--color-text-muted',
+  '--font-mono',
+] as const;
+
+/** What the shared kind reference surfaces name that a built stylesheet does not supply. */
+export function kindCatalogStyleGaps(css: string): string[] {
+  return styleGaps(css, KIND_CATALOG_TOKENS);
 }
 
 /**

@@ -62,7 +62,7 @@ The public surface includes:
   related types;
 - the `./collections` subpath: `matchesCollection`, `collectionOf`, `collectionsClaiming`,
   `kindOf`, `CollectionRoute`, and `CollectionTable`; and
-- the `./docs` subpath: `loadKindDocs`.
+- the `./docs` subpath: `loadKindDocs` and `loadKindExamples`.
 
 The kinds and collection table are deliberately not exports. Read the
 [`kind-schema` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/kind-schema)

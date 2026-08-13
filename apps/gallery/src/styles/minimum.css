@@ -2,8 +2,8 @@
  * The documented contract, and nothing else.
  *
  * Every name below appears in one of the kit's exported token lists — SHELL_TOKENS,
- * CONTENT_READER_TOKENS, REFERENCE_TOKENS, LICENSE_BADGE_TOKENS, LICENSE_FILE_TOKENS — or in
- * SHELL_CLASSES. Nothing else is defined here, which is what makes the pages built from this file
+ * CONTENT_READER_TOKENS, KIND_CATALOG_TOKENS, REFERENCE_TOKENS, LICENSE_BADGE_TOKENS,
+ * LICENSE_FILE_TOKENS — or in SHELL_CLASSES. Nothing else is defined here, which is what makes the pages built from this file
  * EVIDENCE rather than a demo: an instance that supplies exactly the documented list gets exactly
  * this, so anything rendering unstyled here is a name the documentation is short, not a theme
  * that forgot something.

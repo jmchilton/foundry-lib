@@ -1,6 +1,7 @@
 ---
 import LicenseBadge from '@galaxy-foundry/site-kit/LicenseBadge.astro';
 import LicenseFileBody from '@galaxy-foundry/site-kit/LicenseFileBody.astro';
+import KindCatalog from '@galaxy-foundry/site-kit/KindCatalog.astro';
 import ReferenceContract from '@galaxy-foundry/site-kit/ReferenceContract.astro';
 import ContentNote from '@galaxy-foundry/site-kit/ContentNote.astro';
 import SiteFooter from '@galaxy-foundry/site-kit/SiteFooter.astro';
@@ -38,6 +39,7 @@ const { theme } = Astro.props;
  * component that renders nothing.
  */
 const RENDERERS: Record<string, AstroComponentFactory> = {
+  KindCatalog,
   ReferenceContract,
   ContentNote,
   LicenseBadge,

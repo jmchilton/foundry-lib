@@ -6,6 +6,9 @@ import {
 } from '@galaxy-foundry/reference-contract';
 
 import type {
+  KindCatalogItem,
+  KindCatalogProps,
+  KindReferenceProps,
   LicenseBadgeProps,
   LicenseFileBodyProps,
   ReferenceContractProps,
@@ -644,6 +647,148 @@ export const CONTENT_NOTE_SPECIMENS: SpecimenGroup<ContentNoteProps> = {
   ],
 };
 
+const MOLD_KIND: KindCatalogItem['definition'] = {
+  kind: 'mold',
+  title: 'Mold',
+  layer: 'substrate',
+  summary: 'One repeatable action, authored here and cast into a target-specific artifact.',
+  shape: 'directory',
+  locations: ['content/molds'],
+  companions: [
+    {
+      file: 'eval.md',
+      requirement: 'recommended',
+      purpose: 'Evaluation cases that decide whether the cast action deserves trust.',
+      disposition: 'foundry-only',
+    },
+    {
+      file: 'payload.json',
+      requirement: 'optional',
+      purpose: 'A machine-readable payload carried into the generated artifact.',
+      disposition: 'bundled',
+    },
+  ],
+  example: `---
+type: mold
+name: inspect-a-catalog
+summary: Inspect one generated catalog without inventing a second registry.
+tags:
+  - role/audit
+---
+
+# Inspect a catalog`,
+  fields: [
+    { name: 'name', required: true, type: 'string' },
+    { name: 'summary', required: true, type: 'string' },
+    { name: 'tags', required: true, type: 'string[]' },
+    { name: 'references', required: false, type: 'Reference[]' },
+  ],
+};
+
+const PACKAGE_KIND: KindCatalogItem['definition'] = {
+  kind: 'package',
+  title: 'Package',
+  layer: 'instance',
+  summary: 'A profile of external software and the evidence supporting its use here.',
+  shape: 'file',
+  locations: ['content/packages'],
+  companions: [],
+  fields: [
+    { name: 'title', required: true, type: 'string' },
+    { name: 'upstream', required: true, type: 'URL' },
+    { name: 'license', required: true, type: 'SPDX identifier | LicenseRef' },
+    { name: 'release', required: false, type: 'string' },
+  ],
+};
+
+const RESEARCH_KIND: KindCatalogItem['definition'] = {
+  kind: 'research',
+  title: 'Research note',
+  layer: 'instance',
+  summary: 'Background synthesis whose source files are intentionally an open companion set.',
+  shape: 'directory',
+  locations: ['content/research'],
+  companions: [],
+  additionalCompanions: 'allow',
+  fields: [
+    { name: 'title', required: true, type: 'string' },
+    { name: 'source_url', required: true, type: 'string' },
+  ],
+};
+
+const MOLD_ITEM: KindCatalogItem = {
+  definition: MOLD_KIND,
+  href: '#mold',
+  browse: { href: '#molds', label: 'Molds', count: 47 },
+};
+
+const PACKAGE_ITEM: KindCatalogItem = {
+  definition: PACKAGE_KIND,
+  href: '#package',
+  browse: { href: '#packages', label: 'Packages' },
+};
+
+const RESEARCH_ITEM: KindCatalogItem = {
+  definition: RESEARCH_KIND,
+  href: '#research',
+};
+
+export const KIND_CATALOG_SPECIMENS: SpecimenGroup<KindCatalogProps> = {
+  id: 'kind-catalog',
+  component: 'KindCatalog',
+  importPath: '@galaxy-foundry/site-kit/KindCatalog.astro',
+  summary: 'One Foundry’s generated kind inventory, resolved into its own route space and corpus.',
+  surface: 'inline',
+  specimens: [
+    {
+      id: 'mixed-inventory',
+      name: 'Substrate and instance kinds',
+      why: 'The index groups by the layer each kind declares, keeps source order within a layer, and exposes shape, field, companion, location, and corpus facts without turning them into a card wall.',
+      props: { items: [MOLD_ITEM, PACKAGE_ITEM, RESEARCH_ITEM] },
+    },
+    {
+      id: 'empty-inventory',
+      name: 'No kinds declared',
+      why: 'An empty manifest says so directly rather than leaving a blank region that looks like a failed data load.',
+      props: { items: [] },
+    },
+  ],
+};
+
+export const KIND_REFERENCE_SPECIMENS: SpecimenGroup<KindReferenceProps> = {
+  id: 'kind-reference',
+  component: 'KindReference',
+  importPath: '@galaxy-foundry/site-kit/KindReference.astro',
+  summary:
+    'The complete generated contract for one kind, with instance-resolved navigation around it.',
+  // Each reference owns section ids. It is a page body, not a repeatable card.
+  surface: 'isolated',
+  specimens: [
+    {
+      id: 'directory-with-companions',
+      name: 'Directory kind with a worked example',
+      why: 'The full case: required and optional fields, companion dispositions, live corpus count, escaped example source, and generated-source provenance.',
+      props: {
+        item: MOLD_ITEM,
+        catalogHref: '#catalog',
+        source: { href: '#manifest', label: 'Generated manifest' },
+      },
+    },
+    {
+      id: 'flat-without-example',
+      name: 'Flat kind before examples are published',
+      why: 'The manifest format permits an absent example, so the reference says what is missing without hiding the rest of the contract.',
+      props: { item: PACKAGE_ITEM, catalogHref: '#catalog' },
+    },
+    {
+      id: 'open-companion-set',
+      name: 'An open companion set',
+      why: 'Zero declared companions plus `allow` is not rendered as no companions; the open-set fact remains explicit in the ledger and layout.',
+      props: { item: RESEARCH_ITEM, catalogHref: '#catalog' },
+    },
+  ],
+};
+
 /**
  * Every group the kit ships, in reading order.
  *
@@ -652,6 +797,8 @@ export const CONTENT_NOTE_SPECIMENS: SpecimenGroup<ContentNoteProps> = {
  * list is for the things that do not care — an index, a route manifest, a count.
  */
 export const SPECIMENS: readonly SpecimenGroup[] = [
+  KIND_CATALOG_SPECIMENS,
+  KIND_REFERENCE_SPECIMENS,
   CONTENT_NOTE_SPECIMENS,
   TAG_CHIPS_SPECIMENS,
   REFERENCE_SPECIMENS,

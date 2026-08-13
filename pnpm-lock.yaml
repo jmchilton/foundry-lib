@@ -234,6 +234,9 @@ importers:
 
   packages/site-kit:
     dependencies:
+      '@galaxy-foundry/kind-manifest':
+        specifier: workspace:^
+        version: link:../kind-manifest
       '@galaxy-foundry/license-policy':
         specifier: workspace:^
         version: link:../license-policy
