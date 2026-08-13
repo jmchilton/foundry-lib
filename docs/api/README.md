@@ -130,8 +130,8 @@ The public surface includes:
   the `LicenseFileUse` type;
 - the search-index check: `PAGEFIND_BODY_ATTR` and `searchIndexGaps`; and
 - the shipped `./SiteShell.astro`, `./NoteHeader.astro`, `./ContentNote.astro`, `./TagChips.astro`,
-  `./ReferenceContract.astro`, `./LicenseBadge.astro`, and `./LicenseFileBody.astro` component
-  entry points.
+  `./ReferenceContract.astro`, `./LicenseBadge.astro`, `./LicenseFileBody.astro`,
+  `./KindCatalog.astro`, and `./KindReference.astro` component entry points.
 
 Astro compiles the components from shipped source. Read the
 [`site-kit` package documentation](https://github.com/jmchilton/foundry-lib/tree/main/packages/site-kit)
