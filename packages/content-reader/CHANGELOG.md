@@ -1,5 +1,12 @@
 # @galaxy-foundry/content-reader
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [[`4fbd78a`](https://github.com/jmchilton/foundry-lib/commit/4fbd78aa7f224e189112922729137c2e2a096372)]:
+  - @galaxy-foundry/kind-schema@0.6.0
+
 ## 0.3.0
 
 ### Minor Changes

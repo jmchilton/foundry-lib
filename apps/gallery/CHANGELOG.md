@@ -1,5 +1,12 @@
 # @galaxy-foundry/gallery
 
+## 0.0.8
+
+### Patch Changes
+
+- Updated dependencies [[`4fbd78a`](https://github.com/jmchilton/foundry-lib/commit/4fbd78aa7f224e189112922729137c2e2a096372), [`4adacbd`](https://github.com/jmchilton/foundry-lib/commit/4adacbdf19143e5872fd0678362a1501330007d2)]:
+  - @galaxy-foundry/site-kit@0.10.0
+
 ## 0.0.7
 
 ### Patch Changes
