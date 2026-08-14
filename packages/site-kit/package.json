@@ -19,6 +19,7 @@
     "./LicenseBadge.astro": "./src/components/LicenseBadge.astro",
     "./LicenseFileBody.astro": "./src/components/LicenseFileBody.astro",
     "./ContentNote.astro": "./src/components/ContentNote.astro",
+    "./NoteHeader.astro": "./src/components/NoteHeader.astro",
     "./TagChips.astro": "./src/components/TagChips.astro",
     "./KindCatalog.astro": "./src/components/KindCatalog.astro",
     "./KindReference.astro": "./src/components/KindReference.astro"

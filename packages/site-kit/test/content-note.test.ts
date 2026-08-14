@@ -9,13 +9,17 @@ describe('content note frame', () => {
     const html = await container.renderToString(ContentNote, {
       props: {
         title: 'Package A',
+        eyebrow: 'Package',
         summary: 'Package summary.',
         tags: ['method/a'],
         back: { href: '/packages/', label: 'Packages' },
+        showHeading: false,
       },
       slots: { default: '<h1>Package A body heading</h1>' },
     });
-    expect(html).toContain('← Packages');
+    // The arrow is `aria-hidden`, so the link reads as its label alone.
+    expect(html).toMatch(/<span aria-hidden="true"[^>]*>&larr;<\/span> Packages<\/a>/);
+    expect(html).toContain('Package');
     expect(html).toContain('Package summary.');
     expect(html).toContain('<h1>Package A body heading</h1>');
     expect(html).not.toContain('data-pagefind-meta="title">Package A</h1>');
@@ -26,8 +30,8 @@ describe('content note frame', () => {
     const html = await container.renderToString(ContentNote, {
       props: {
         title: 'Design record',
+        eyebrow: 'Design Record',
         summary: 'Why the system has this shape.',
-        showHeading: true,
       },
       slots: { default: '<p>The argument.</p>' },
     });
