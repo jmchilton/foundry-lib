@@ -138,6 +138,8 @@ is a stronger signal than the same number spread across a corpus.
 
 ## Library usage
 
+A caller with no configuration file supplies documents and options directly:
+
 ```ts
 import {
   ScholarlyResolver,
@@ -178,16 +180,51 @@ queries no current candidate references; pass `snapshot`, which holds exactly th
 candidates reference, to `buildCitationAuditRun` and `renderCitationAuditMarkdown` so a run's
 identity does not depend on the cache's history.
 
+### From a configuration file
+
 The main entry point never touches the filesystem. The glob and `git` adapter that turns a config
 file into `SourceDocument[]` lives behind a subpath, so importing the library does not pull in
 `fast-glob` or `node:child_process`:
 
 ```ts
 import {
+  citationExtractionOptions,
   loadCitationAuditConfig,
   loadConfiguredDocuments,
+  scholarlyResolverOptions,
 } from '@galaxy-foundry/audit-citations/config';
+
+// The directory the configured globs are relative to.
+const root = '.';
+
+const config = await loadCitationAuditConfig('audit-citations.config.json');
+const scan = extractCitations(
+  await loadConfiguredDocuments(root, config),
+  citationExtractionOptions(config),
+);
+const resolver = new ScholarlyResolver(scholarlyResolverOptions(config));
 ```
+
+Translate a config into options with those two functions rather than by hand. The mapping has more
+than one caller — the CLI is one, and any consumer that replays its own audit is another — and a
+field one caller forgets is not a missing feature but a report written by reading the corpus one way
+and checked by reading it another, with both runs green. Every configuration field either selects
+the corpus, through `loadConfiguredDocuments`, or governs how a document is read, through these
+two; a test in the package holds that partition, so a new field cannot arrive without reaching the
+callers it belongs to.
+
+### Replaying a committed report
+
+The audit's outputs are meant to be committed, and a committed report is only worth as much as the
+check that it still follows from its evidence. Because evaluation is separate from acquisition, a
+consumer can rebuild the whole run offline — same config, same corpus, same evidence snapshot, no
+network — and assert the result equals what is checked in. That turns the report into a tested
+artifact: an edited citation, a changed heading, a hand-touched JSON file, or a stale evidence
+entry fails the consumer's ordinary test run rather than waiting for the next refresh.
+
+Replay by omitting `refresh` and the resolver, and replay `generatedAt` and Git provenance from the
+committed run rather than restamping them — they record when a run happened, and comparing them as
+content fails on every unrelated commit while hiding nothing.
 
 ## CLI
 

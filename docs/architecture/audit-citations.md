@@ -18,6 +18,7 @@ policy.
 | Citation-page host trust            | enforces allowlist        | declares hosts             |
 | Per-request deadline                | enforces                  | sets the budget            |
 | Adjudication format and stale check | owns                      | performs review            |
+| Configuration-to-options mapping    | owns                      | calls                      |
 | Release or acceptance policy        | does not own              | declares                   |
 
 The library entry point receives `SourceDocument[]`. It never searches a repository, and it does not
@@ -26,6 +27,14 @@ pull the glob or `git` machinery into consumers: the filesystem adapter lives be
 explicit documents, and `trackedOnly` intersects the result with `git ls-files` rather than matching
 through git. Git pathspecs and globs disagree—a pathspec `*` crosses directory separators—so one
 matcher decides membership and `trackedOnly` only ever narrows the corpus.
+
+Translating a configuration into extraction and resolver options is the package's job, not each
+caller's. The mapping has two callers by design: the CLI writes a report, and a consumer that
+verifies that report replays the audit itself. A field that reaches one caller and not the other
+produces a corpus read one way and checked another, and neither run fails.
+`citationExtractionOptions` and `scholarlyResolverOptions` are that mapping, and a test asserts
+every configuration field is claimed by one of them or by corpus selection—so a new field cannot be
+added without deciding where it goes.
 
 ## Component flow
 

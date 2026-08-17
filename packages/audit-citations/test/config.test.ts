@@ -8,9 +8,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   citationAuditConfigSchema,
+  citationExtractionOptions,
   loadCitationAuditConfig,
   loadConfiguredDocuments,
   referenceHeadingPattern,
+  scholarlyResolverOptions,
 } from '../src/config.js';
 import type { CitationAuditConfig } from '../src/config.js';
 
@@ -132,5 +134,110 @@ describe('citation audit configuration', () => {
         noteFrontmatter: { descriptionField: 'citation', identifierFields: ['source_url'] },
       }),
     ).toThrow();
+  });
+});
+
+/**
+ * Every field of a configuration, and which mapping has to carry it to the machinery it governs.
+ *
+ * A consumer that replays an audit offline holds a second caller of the same mapping, so a field
+ * the mapping drops is not a missing feature — it is a checked-in report produced by reading the
+ * corpus one way and verified by reading it another. The declarations below are what make that
+ * mechanical: a field must be claimed, and it must reach exactly the mappings it claims.
+ */
+const MAPPED_FIELDS = [
+  {
+    field: 'referenceHeadingTerms',
+    override: { referenceHeadingTerms: ['Bibliography'] },
+    reaches: ['extraction'],
+  },
+  {
+    field: 'noteFrontmatter',
+    override: {
+      noteFrontmatter: { descriptionField: 'citation', identifierFields: ['doi'] },
+    },
+    reaches: ['extraction'],
+  },
+  {
+    field: 'scholarlyPageHosts',
+    override: { scholarlyPageHosts: ['proceedings.mlr.press'] },
+    reaches: ['extraction', 'resolver'],
+  },
+  { field: 'userAgent', override: { userAgent: 'example-audit/1.0' }, reaches: ['resolver'] },
+  { field: 'requestTimeoutMs', override: { requestTimeoutMs: 5000 }, reaches: ['resolver'] },
+] as const satisfies readonly {
+  field: string;
+  override: Partial<CitationAuditConfig>;
+  reaches: readonly ('extraction' | 'resolver')[];
+}[];
+
+/** Fields that govern which files are read, or the wire format — not how a document is read. */
+const CORPUS_FIELDS = ['schemaVersion', 'sources', 'trackedOnly'] as const;
+
+const MAPPINGS = {
+  extraction: citationExtractionOptions,
+  resolver: scholarlyResolverOptions,
+} as const satisfies Record<string, (config: CitationAuditConfig) => unknown>;
+
+describe('configuration to options mappings', () => {
+  it('claims every configuration field', () => {
+    const claimed = [...MAPPED_FIELDS.map(({ field }) => field), ...CORPUS_FIELDS];
+    expect([...claimed].sort()).toEqual(Object.keys(citationAuditConfigSchema.shape).sort());
+  });
+
+  it.each(MAPPED_FIELDS)(
+    'carries $field to exactly the options it governs',
+    ({ override, reaches }) => {
+      const base = config();
+      const set = config(override);
+      for (const [name, map] of Object.entries(MAPPINGS)) {
+        if ((reaches as readonly string[]).includes(name)) {
+          expect(map(set), `${name} ignored the field`).not.toEqual(map(base));
+        } else {
+          expect(map(set), `${name} read a field it does not govern`).toEqual(map(base));
+        }
+      }
+    },
+  );
+
+  it('builds extraction options a caller would otherwise hand-write', () => {
+    const options = citationExtractionOptions(
+      config({
+        referenceHeadingTerms: ['Bibliography'],
+        scholarlyPageHosts: ['proceedings.mlr.press'],
+        noteFrontmatter: { descriptionField: 'citation', identifierFields: ['doi', 'pmid'] },
+      }),
+    );
+    expect(options.referenceHeadingPattern?.test('## Bibliography')).toBe(true);
+    expect(options.scholarlyPageHosts).toEqual(['proceedings.mlr.press']);
+    expect(options.noteFrontmatter).toEqual({
+      descriptionField: 'citation',
+      identifierFields: ['doi', 'pmid'],
+    });
+  });
+
+  /**
+   * An unset field is absent, never present and `undefined`. The extractor and the resolver both
+   * choose their default by asking whether the key was supplied.
+   */
+  it('omits an unset option rather than supplying it as undefined', () => {
+    expect(citationExtractionOptions(config())).toEqual({ scholarlyPageHosts: [] });
+    expect(scholarlyResolverOptions(config())).toEqual({ scholarlyPageHosts: [] });
+  });
+
+  it('builds resolver options a caller would otherwise hand-write', () => {
+    expect(
+      scholarlyResolverOptions(
+        config({
+          scholarlyPageHosts: ['proceedings.mlr.press'],
+          userAgent: 'example-audit/1.0 (https://example.org/contact)',
+          requestTimeoutMs: 5000,
+        }),
+      ),
+    ).toEqual({
+      scholarlyPageHosts: ['proceedings.mlr.press'],
+      userAgent: 'example-audit/1.0 (https://example.org/contact)',
+      requestTimeoutMs: 5000,
+    });
   });
 });
