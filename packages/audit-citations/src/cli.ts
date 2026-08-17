@@ -9,9 +9,10 @@ import { promisify } from 'node:util';
 
 import { buildCitationAuditRun } from './audit.js';
 import {
+  citationExtractionOptions,
   loadCitationAuditConfig,
   loadConfiguredDocuments,
-  referenceHeadingPattern,
+  scholarlyResolverOptions,
 } from './config.js';
 import { collectEvidence } from './evidence.js';
 import { extractCitations } from './extract.js';
@@ -45,14 +46,12 @@ export async function runCitationCli(arguments_: readonly string[]): Promise<voi
   const root = path.resolve(argumentsParsed.root);
   const configPath = path.resolve(root, argumentsParsed.config);
   const config = await loadCitationAuditConfig(configPath);
-  const headingPattern = referenceHeadingPattern(config);
   const scan = argumentsParsed.candidateSource
     ? parseCitationScan(await readJson(path.resolve(root, argumentsParsed.candidateSource)))
-    : extractCitations(await loadConfiguredDocuments(root, config), {
-        ...(headingPattern ? { referenceHeadingPattern: headingPattern } : {}),
-        scholarlyPageHosts: config.scholarlyPageHosts ?? [],
-        ...(config.noteFrontmatter ? { noteFrontmatter: config.noteFrontmatter } : {}),
-      });
+    : extractCitations(
+        await loadConfiguredDocuments(root, config),
+        citationExtractionOptions(config),
+      );
 
   if (argumentsParsed.command === 'scan') {
     await writeJsonAtomic(path.resolve(root, argumentsParsed.output), scan);
@@ -66,13 +65,7 @@ export async function runCitationCli(arguments_: readonly string[]): Promise<voi
   const evidencePath = path.resolve(root, argumentsParsed.evidence);
   const existing = await readEvidence(evidencePath);
   const resolver = argumentsParsed.refresh
-    ? new ScholarlyResolver({
-        scholarlyPageHosts: config.scholarlyPageHosts ?? [],
-        ...(config.userAgent ? { userAgent: config.userAgent } : {}),
-        ...(config.requestTimeoutMs !== undefined
-          ? { requestTimeoutMs: config.requestTimeoutMs }
-          : {}),
-      })
+    ? new ScholarlyResolver(scholarlyResolverOptions(config))
     : undefined;
   const collected = await collectEvidence(scan.candidates, existing, {
     refresh: argumentsParsed.refresh,

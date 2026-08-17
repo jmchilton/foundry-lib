@@ -8,7 +8,8 @@ import { z } from 'zod';
 
 import { compareCodePoints } from './digest.js';
 import { normalizeArtifactPath } from './extract.js';
-import type { SourceDocument } from './extract.js';
+import type { CitationExtractionOptions, SourceDocument } from './extract.js';
+import type { ScholarlyResolverOptions } from './resolve.js';
 
 const execFileAsync = promisify(execFile);
 const GIT_LS_FILES_MAX_BUFFER = 64 * 1024 * 1024;
@@ -97,6 +98,40 @@ export function referenceHeadingPattern(config: CitationAuditConfig): RegExp | u
   return terms && terms.length > 0
     ? new RegExp(terms.map(escapeRegExp).join('|'), 'iu')
     : undefined;
+}
+
+/**
+ * How a configuration says a document should be read.
+ *
+ * This mapping belongs to the package rather than to each caller because there is always more than
+ * one caller. A consumer that verifies a committed report replays the audit itself, so it holds a
+ * second copy of whatever the CLI does here; when the copies disagree the report was produced by
+ * reading the corpus one way and checked by reading it another, and both runs pass. Declaring a
+ * field in the schema now reaches every caller by construction.
+ */
+export function citationExtractionOptions(config: CitationAuditConfig): CitationExtractionOptions {
+  const headingPattern = referenceHeadingPattern(config);
+  return {
+    ...(headingPattern ? { referenceHeadingPattern: headingPattern } : {}),
+    scholarlyPageHosts: config.scholarlyPageHosts ?? [],
+    ...(config.noteFrontmatter ? { noteFrontmatter: config.noteFrontmatter } : {}),
+  };
+}
+
+/**
+ * How a configuration says a provider should be asked.
+ *
+ * The lesser half of the same duplication: a refresh runs with network access and a person
+ * watching, so a dropped `userAgent` is noticed. It is mapped here anyway so that neither half of
+ * a configuration is the one callers are expected to translate themselves. Fields the config does
+ * not carry — a test `fetch`, a fixed clock — stay the caller's to supply.
+ */
+export function scholarlyResolverOptions(config: CitationAuditConfig): ScholarlyResolverOptions {
+  return {
+    scholarlyPageHosts: config.scholarlyPageHosts ?? [],
+    ...(config.userAgent ? { userAgent: config.userAgent } : {}),
+    ...(config.requestTimeoutMs !== undefined ? { requestTimeoutMs: config.requestTimeoutMs } : {}),
+  };
 }
 
 /**
