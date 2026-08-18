@@ -6,7 +6,7 @@ import type {
   CitationFinding,
   CitationIdentifier,
 } from './schema.js';
-import { compareCodePoints } from './digest.js';
+import { compareCodePoints } from '@galaxy-foundry/audit-base';
 import { evidenceSnapshotDigest } from './identity.js';
 import {
   citationVerdicts,
@@ -25,7 +25,7 @@ export function renderCitationAuditMarkdown(
   }
   const candidates = new Map(run.candidates.map((candidate) => [candidate.id, candidate]));
   const evidence = new Map(snapshot.evidence.map((record) => [record.id, record]));
-  const reviews = new Map(run.adjudications.map((review) => [review.candidateId, review]));
+  const reviews = new Map(run.adjudications.map((review) => [review.claimId, review]));
   const lines = [
     '# Citation-integrity audit',
     '',

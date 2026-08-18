@@ -75,4 +75,7 @@ export type { BuildAuditRunOptions, CorpusProvenance } from './audit.js';
 
 export { renderCitationAuditMarkdown } from './report.js';
 
-export { candidateCorpusDigest, sourceTextDigest } from './identity.js';
+export { candidateCorpusDigest } from './identity.js';
+
+// Re-exported so a caller building a candidate span reaches one package, not two.
+export { sourceTextDigest } from '@galaxy-foundry/audit-base';

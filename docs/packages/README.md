@@ -1,5 +1,13 @@
 # Choose a package
 
+## `@galaxy-foundry/audit-base`
+
+Choose `audit-base` when building a checker that extracts claims from text, checks them against an
+authority, and lets a reviewer overrule it. It ships the lifecycle two checkers converged on —
+a span bound to the digest of the text it covers, a corpus identity, and a reviewed decision that
+retires itself when its subject changes — and none of the vocabulary a checker uses to say what it
+found. Read [The audit lifecycle](architecture/audit-base.md).
+
 ## Experimental: `@galaxy-foundry/audit-citations`
 
 Choose `audit-citations` to extract scholarly citations from explicit text artifacts, resolve them
@@ -18,7 +26,8 @@ the status column distinguishes converged substrate from the two explicitly docu
 
 | Package              | Status             | Question answered                                             | Ships                                        | Key dependency                     |
 | -------------------- | ------------------ | ------------------------------------------------------------- | -------------------------------------------- | ---------------------------------- |
-| `audit-citations`    | experimental N=1   | Does a scholarly citation match replayable provider evidence? | citation schemas and audit behavior          | peer `zod@^4`, plus `fast-glob`    |
+| `audit-base`         | admitted           | Where does this claim live, and who reviewed the verdict?     | the audit lifecycle, no checker vocabulary   | peer `zod@^4`                      |
+| `audit-citations`    | experimental N=1   | Does a scholarly citation match replayable provider evidence? | citation schemas and audit behavior          | `audit-base` and `fast-glob`       |
 | `cast`               | early-adoption N=1 | Is this cast bundle placed, licensed, and current?            | deterministic casting mechanics              | `license-policy` and `js-yaml`     |
 | `kind-manifest`      | admitted           | What kinds does this instance publish?                        | manifest format, validation, and derivation  | peer `zod@^4`                      |
 | `kind-schema`        | admitted           | How are local kind definitions assembled and routed?          | schema machinery, not kind definitions       | peer `zod@^4` and `kind-manifest`  |

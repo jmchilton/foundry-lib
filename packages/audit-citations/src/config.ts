@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import fg from 'fast-glob';
 import { z } from 'zod';
 
-import { compareCodePoints } from './digest.js';
+import { compareCodePoints } from '@galaxy-foundry/audit-base';
 import { normalizeArtifactPath } from './extract.js';
 import type { CitationExtractionOptions, SourceDocument } from './extract.js';
 import type { ScholarlyResolverOptions } from './resolve.js';

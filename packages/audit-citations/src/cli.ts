@@ -16,7 +16,7 @@ import {
 } from './config.js';
 import { collectEvidence } from './evidence.js';
 import { extractCitations } from './extract.js';
-import { isMissingFile, writeJsonAtomic, writeTextAtomic } from './files.js';
+import { isMissingFile, writeJsonAtomic, writeTextAtomic } from '@galaxy-foundry/audit-base';
 import { renderCitationAuditMarkdown } from './report.js';
 import { ScholarlyResolver } from './resolve.js';
 import {

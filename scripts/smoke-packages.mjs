@@ -29,6 +29,49 @@ const packagesDir = path.join(root, 'packages');
 // Each entry names an export the unpacked tarball must actually produce. A tarball
 // that imports but exposes nothing is not a working package.
 const SMOKE = {
+  '@galaxy-foundry/audit-base': async (mod, peer) => {
+    // zod is a peer, resolved from beside the unpacked package the way a consumer's install does.
+    // The adjudication schema is built from the consumer's verdict vocabulary, so it must be built
+    // through the consumer's zod instance or a caller gets two zods and a schema neither trusts.
+    await peer('zod');
+
+    const sourceText = 'gudhi comes from conda-forge';
+    const span = {
+      artifactKind: 'environment-manifest',
+      artifactPath: 'content/environments/example/pixi.toml',
+      startLine: 4,
+      endLine: 4,
+      sourceText,
+      sourceDigest: mod.sourceTextDigest(sourceText),
+    };
+    if (!mod.artifactSpanSchema.safeParse(span).success) {
+      throw new Error('packed span schema rejected a span it had just digested');
+    }
+
+    const schema = mod.adjudicationSchema(['holds', 'contradicted']);
+    const review = {
+      claimId: 'a1b2c3',
+      sourceDigest: span.sourceDigest,
+      classification: 'checker-false-positive',
+      assertedVerdict: 'holds',
+      note: 'the lock agrees',
+    };
+    if (!schema.safeParse(review).success) {
+      throw new Error('packed adjudication schema rejected a review in its own vocabulary');
+    }
+    if (schema.safeParse({ ...review, assertedVerdict: 'resolved' }).success) {
+      throw new Error('packed adjudication schema accepted a verdict from another checker');
+    }
+
+    const problems = mod.adjudicationProblems(
+      [{ id: 'other', span: { sourceDigest: 'x' } }],
+      [review],
+    );
+    if (problems[0]?.kind !== 'unknown-claim') {
+      throw new Error('packed adjudication check did not report a decision naming no live claim');
+    }
+  },
+
   '@galaxy-foundry/audit-citations': async (mod, peer, unpacked) => {
     const { z } = await peer('zod');
 

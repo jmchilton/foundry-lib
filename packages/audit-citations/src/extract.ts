@@ -1,7 +1,7 @@
 import path from 'node:path';
 
-import { sha256 } from './digest.js';
-import { sourceTextDigest } from './identity.js';
+import { sha256, sourceTextDigest } from '@galaxy-foundry/audit-base';
+
 import type {
   CitationCandidate,
   CitationIdentifier,

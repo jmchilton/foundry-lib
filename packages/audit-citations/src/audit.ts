@@ -1,3 +1,5 @@
+import { adjudicationProblems } from '@galaxy-foundry/audit-base';
+
 import { evidenceQueries } from './evidence.js';
 import { candidateCorpusDigest, evidenceId, evidenceSnapshotDigest } from './identity.js';
 import { evaluateCitation } from './match.js';
@@ -40,7 +42,7 @@ export function buildCitationAuditRun(
   const evidenceById = new Map(snapshot.evidence.map((record) => [record.id, record]));
   const reviews = options.adjudications?.reviews ?? [];
   validateAdjudications(scan, reviews);
-  const reviewByCandidate = new Map(reviews.map((review) => [review.candidateId, review]));
+  const reviewByCandidate = new Map(reviews.map((review) => [review.claimId, review]));
 
   const rawFindings = scan.candidates.map((candidate) => {
     const evidence = evidenceForCandidate(candidate.id, evidenceById, scan);
@@ -54,7 +56,7 @@ export function buildCitationAuditRun(
       .filter((finding) => finding.verdict !== 'resolved')
       .map((finding) => finding.candidateId),
   );
-  const completed = reviews.filter((review) => required.has(review.candidateId)).length;
+  const completed = reviews.filter((review) => required.has(review.claimId)).length;
   const manualReviewStatus =
     required.size === 0
       ? 'not-required'
@@ -109,21 +111,21 @@ function evidenceForCandidate(
   });
 }
 
+/**
+ * Every adjudication problem is fatal here, retired included. `audit-base` detects them and ranks
+ * none, because the checkers sharing it disagree about `retired`; this audit will not build a run
+ * from a review file that no longer describes the corpus.
+ */
 function validateAdjudications(scan: CitationScan, reviews: readonly CitationAdjudication[]): void {
-  const candidates = new Map(scan.candidates.map((candidate) => [candidate.id, candidate]));
-  const seen = new Set<string>();
-  for (const review of reviews) {
-    if (seen.has(review.candidateId)) {
-      throw new Error(`duplicate adjudication for candidate ${review.candidateId}`);
-    }
-    seen.add(review.candidateId);
-    const candidate = candidates.get(review.candidateId);
-    if (!candidate)
-      throw new Error(`adjudication references unknown candidate ${review.candidateId}`);
-    if (candidate.span.sourceDigest !== review.sourceDigest) {
-      throw new Error(`adjudication for ${review.candidateId} has a stale source digest`);
-    }
+  const [problem] = adjudicationProblems(scan.candidates, reviews);
+  if (problem === undefined) return;
+  if (problem.kind === 'duplicate-claim') {
+    throw new Error(`duplicate adjudication for candidate ${problem.claimId}`);
   }
+  if (problem.kind === 'unknown-claim') {
+    throw new Error(`adjudication references unknown candidate ${problem.claimId}`);
+  }
+  throw new Error(`adjudication for ${problem.claimId} has a stale source digest`);
 }
 
 function applyAdjudication(
@@ -134,11 +136,11 @@ function applyAdjudication(
   if (review.classification === 'extractor-false-positive') {
     return { ...finding, excludedFromDenominator: true };
   }
-  if (review.classification === 'resolver-false-positive') {
-    if (!review.adjudicatedVerdict) {
-      throw new Error(`resolver false positive ${review.candidateId} needs adjudicatedVerdict`);
+  if (review.classification === 'checker-false-positive') {
+    if (!review.assertedVerdict) {
+      throw new Error(`checker false positive ${review.claimId} needs assertedVerdict`);
     }
-    return { ...finding, effectiveVerdict: review.adjudicatedVerdict };
+    return { ...finding, effectiveVerdict: review.assertedVerdict };
   }
   return finding;
 }

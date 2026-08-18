@@ -13,6 +13,10 @@ existing byte-stable bundle corpus can test the boundary before a second caster 
 
 <div class="doc-index">
   <div>
+    <strong>@galaxy-foundry/audit-base</strong>
+    <p>Digest-bound spans, corpus identity, and reviewed decisions, with no checker's vocabulary in them.</p>
+  </div>
+  <div>
     <strong>@galaxy-foundry/audit-citations</strong>
     <p>Extract and resolve scholarly citations, replay normalized evidence, and review exact-span findings.</p>
   </div>
@@ -103,6 +107,7 @@ extraction.
 
 | Package                                                                                                  | Use it when you need to…                                            |
 | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [`@galaxy-foundry/audit-base`](https://www.npmjs.com/package/@galaxy-foundry/audit-base)                 | share the audit lifecycle without sharing a checker's vocabulary    |
 | [`@galaxy-foundry/audit-citations`](https://www.npmjs.com/package/@galaxy-foundry/audit-citations)       | verify scholarly citation identity with replayable evidence         |
 | [`@galaxy-foundry/cast`](https://www.npmjs.com/package/@galaxy-foundry/cast)                             | place and reconcile reproducible cast bundles                       |
 | [`@galaxy-foundry/kind-manifest`](https://www.npmjs.com/package/@galaxy-foundry/kind-manifest)           | publish or consume a validated description of an instance's kinds   |

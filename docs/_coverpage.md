@@ -10,6 +10,6 @@ independently proven they share.
 [Read the pattern](https://galaxyproject.github.io/foundry-pattern/)
 
 <div class="cover-facts">
-  <div><strong>11</strong><span>focused packages</span></div>
+  <div><strong>12</strong><span>focused packages</span></div>
   <div><strong>Node 20+</strong><span>ES modules</span></div>
 </div>

@@ -1,6 +1,16 @@
+import {
+  adjudicationProblems,
+  adjudicationSchema,
+  artifactSpanSchema,
+  claimSeverities,
+  corpusIdentitySchema,
+} from '@galaxy-foundry/audit-base';
 import { z } from 'zod';
 
-import { candidateCorpusDigest, evidenceId, sourceTextDigest } from './identity.js';
+import { candidateCorpusDigest, evidenceId } from './identity.js';
+
+// Re-exported so a consumer reads one audit contract rather than assembling it from two packages.
+export { artifactSpanSchema, corpusIdentitySchema };
 
 export const CITATION_AUDIT_SCHEMA_VERSION = 1 as const;
 
@@ -17,8 +27,11 @@ export const evidenceStates = ['resolved', 'unresolved', 'unavailable'] as const
  * A mismatch is an `error` when it disputes the identity of the cited work, and a `warning` when it
  * reflects ordinary publication drift. Only errors make a citation a finding, so a preprint that
  * later acquired a journal year does not enter the manual-review queue alongside a wrong author.
+ *
+ * The split itself is shared: `audit-base` owns the pair because every checker so far needed to
+ * separate an identity dispute from ordinary drift. What an identity dispute *is* stays here.
  */
-export const mismatchSeverities = ['error', 'warning'] as const;
+export const mismatchSeverities = claimSeverities;
 
 export const mismatchCodes = [
   'title',
@@ -42,25 +55,6 @@ export const citationIdentifierSchema = z
     value: z.string().min(1),
   })
   .strict();
-
-export const artifactSpanSchema = z
-  .object({
-    artifactKind: z.string().min(1),
-    artifactPath: z.string().min(1),
-    startLine: z.number().int().positive(),
-    endLine: z.number().int().positive(),
-    sourceText: z.string(),
-    sourceDigest: z.string().regex(/^[a-f0-9]{64}$/u),
-  })
-  .strict()
-  .refine((span) => span.endLine >= span.startLine, {
-    message: 'endLine must not precede startLine',
-    path: ['endLine'],
-  })
-  .refine((span) => span.sourceDigest === sourceTextDigest(span.sourceText), {
-    message: 'source digest does not match sourceText',
-    path: ['sourceDigest'],
-  });
 
 export const describedCitationSchema = z
   .object({
@@ -219,33 +213,14 @@ export const citationFindingSchema = z
     },
   );
 
-export const citationAdjudicationSchema = z
-  .object({
-    candidateId: z.string().min(1),
-    sourceDigest: z.string().regex(/^[a-f0-9]{64}$/u),
-    classification: z.enum([
-      'confirmed-finding',
-      'extractor-false-positive',
-      'resolver-false-positive',
-    ]),
-    adjudicatedVerdict: z.enum(citationVerdicts).optional(),
-    note: z.string().min(1),
-    reviewer: z.string().optional(),
-    reviewedAt: z.string().datetime({ offset: true }).optional(),
-  })
-  .strict()
-  .superRefine((review, context) => {
-    if (
-      review.classification === 'resolver-false-positive' &&
-      review.adjudicatedVerdict === undefined
-    ) {
-      context.addIssue({
-        code: 'custom',
-        message: 'resolver-false-positive requires adjudicatedVerdict',
-        path: ['adjudicatedVerdict'],
-      });
-    }
-  });
+/**
+ * A reviewed decision about one finding, in the shared shape.
+ *
+ * `claimId` names a candidate here. The field is not called `candidateId` because the shape is
+ * `audit-base`'s and a candidate is this checker's noun; the vocabulary that stays local is the
+ * verdict the reviewer may assert, which is supplied as the parameter.
+ */
+export const citationAdjudicationSchema = adjudicationSchema(citationVerdicts);
 
 export const citationAdjudicationsSchema = z
   .object({
@@ -268,14 +243,6 @@ const verdictCountsSchema = z
      */
     resolvedUnverified: z.number().int().nonnegative(),
     extractorFalsePositives: z.number().int().nonnegative(),
-  })
-  .strict();
-
-export const corpusIdentitySchema = z
-  .object({
-    digest: z.string().regex(/^[a-f0-9]{64}$/u),
-    headRevision: z.string().optional(),
-    workingTreeDirty: z.boolean().optional(),
   })
   .strict();
 
@@ -348,7 +315,7 @@ export function parseCitationEvidenceSnapshot(value: unknown): CitationEvidenceS
 export function parseCitationAdjudications(value: unknown): CitationAdjudications {
   const adjudications = citationAdjudicationsSchema.parse(value);
   assertUnique(
-    adjudications.reviews.map((review) => review.candidateId),
+    adjudications.reviews.map((review) => review.claimId),
     'adjudicated candidate ID',
   );
   return adjudications;
@@ -374,18 +341,7 @@ export function parseCitationAuditRun(value: unknown): CitationAuditRun {
       `audit run has ${run.candidates.length} candidates but ${run.findings.length} findings`,
     );
   }
-  assertUnique(
-    run.adjudications.map((review) => review.candidateId),
-    'adjudicated candidate ID',
-  );
-  for (const review of run.adjudications) {
-    const candidate = run.candidates.find((item) => item.id === review.candidateId);
-    if (!candidate)
-      throw new Error(`adjudication references unknown candidate ${review.candidateId}`);
-    if (candidate.span.sourceDigest !== review.sourceDigest) {
-      throw new Error(`adjudication for ${review.candidateId} has a stale source digest`);
-    }
-  }
+  assertReviewsApply(run.candidates, run.adjudications);
   const included = run.findings.filter((finding) => !finding.excludedFromDenominator);
   const expectedTotal = included.length;
   if (run.summary.total !== expectedTotal) {
@@ -414,7 +370,7 @@ export function parseCitationAuditRun(value: unknown): CitationAuditRun {
       .filter((finding) => finding.verdict !== 'resolved')
       .map((finding) => finding.candidateId),
   );
-  const completed = run.adjudications.filter((review) => required.has(review.candidateId)).length;
+  const completed = run.adjudications.filter((review) => required.has(review.claimId)).length;
   if (run.manualReview.required !== required.size || run.manualReview.completed !== completed) {
     throw new Error('audit manual-review counts do not match findings and adjudications');
   }
@@ -430,6 +386,30 @@ export function parseCitationAuditRun(value: unknown): CitationAuditRun {
     throw new Error('audit manual-review status does not match findings and adjudications');
   }
   return run;
+}
+
+/**
+ * This audit treats every adjudication problem as fatal, including a retired one.
+ *
+ * `audit-base` detects the three and ranks none of them, because the checkers that share it
+ * disagree here: a runtime-claim audit reports a retired decision and carries on, and this one
+ * refuses to publish a run whose review file no longer describes it. Detection is shared; which
+ * problems stop a run is the consumer's, and this is where that answer lives.
+ */
+function assertReviewsApply(
+  candidates: readonly CitationCandidate[],
+  reviews: readonly CitationAdjudication[],
+): void {
+  const problems = adjudicationProblems(candidates, reviews);
+  const [problem] = problems;
+  if (problem === undefined) return;
+  if (problem.kind === 'duplicate-claim') {
+    throw new Error(`duplicate adjudicated candidate ID: ${problem.claimId}`);
+  }
+  if (problem.kind === 'unknown-claim') {
+    throw new Error(`adjudication references unknown candidate ${problem.claimId}`);
+  }
+  throw new Error(`adjudication for ${problem.claimId} has a stale source digest`);
 }
 
 function assertUnique(values: readonly string[], label: string): void {
