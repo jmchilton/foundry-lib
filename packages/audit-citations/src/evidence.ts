@@ -1,4 +1,4 @@
-import { compareCodePoints } from './digest.js';
+import { compareCodePoints } from '@galaxy-foundry/audit-base';
 import { evidenceId } from './identity.js';
 import type {
   CitationCandidate,

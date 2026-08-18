@@ -48,7 +48,7 @@
   <text class="field" x="305" y="444">findings[]</text>
   <text class="type" x="430" y="444">candidateId · evidenceIds[] · verdict</text>
   <text class="field" x="305" y="474">adjudications[]</text>
-  <text class="type" x="430" y="474">candidateId · sourceDigest · decision</text>
+  <text class="type" x="430" y="474">claimId · sourceDigest · decision</text>
   <text class="field" x="305" y="504">corpus/evidence digests · partitions · diagnostics</text>
 
   <path class="edge" d="M 172 255 V 302 H 405 V 324"/>

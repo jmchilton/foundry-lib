@@ -1,6 +1,7 @@
 {
   "$schema": "https://typedoc.org/schema.json",
   "entryPoints": [
+    "packages/audit-base",
     "packages/audit-citations",
     "packages/cast",
     "packages/kind-manifest",

@@ -39,7 +39,30 @@ itself the instrument used to understand a prospective contract. That exception 
 S2 tool checks or S3 threshold checks share a base schema. Any `audit-base` or `audit-schemas`
 package must still pass the normal admission test after another checker exists.
 
+That condition has since been met, and `audit-base` was admitted under the normal test rather than
+this exception — see [Audit lifecycle](#audit-lifecycle) below. `audit-citations` itself remains
+experimental: sharing a lifecycle with a second checker says nothing about whether its citation
+types are right.
+
 ## What is shared today
+
+### Audit lifecycle
+
+Two independently written checkers — the citation audit and the Bio Topology Foundry's environment
+runtime-claim audit — arrived at the same lifecycle: a span carrying the digest of the text it
+covers, a corpus identity, an evidence state kept out of the verdict, a severity split between an
+identity dispute and ordinary drift, and a reviewed decision that retires itself when its text
+changes. Two of the files were byte-identical before extraction.
+
+The package ships that lifecycle and none of the vocabulary either checker uses to say what it
+found. Verdicts and evidence states share exactly one value between the two implementations, so the
+verdict vocabulary is a parameter rather than a union, and extraction — where all the risk in a
+prose checker lives — stays entirely with the checker.
+
+Where the two disagree, the package detects and the consumer decides. A decision whose reviewed text
+has changed stops a citation run and is benign in a runtime-claim run; `adjudicationProblems`
+reports it either way and ranks nothing. That is what kept the extraction from requiring a new
+common policy.
 
 ### Redistribution policy
 
@@ -129,6 +152,8 @@ Library functions accept the information only the instance can know:
 - Cast reconciliation accepts paths and expected bytes but does not choose what to render or when to
   exit.
 - `extractCitations` accepts explicit source documents and carries artifact kinds opaquely.
+- `adjudicationSchema` accepts the checker's verdict vocabulary, and `adjudicationProblems` returns
+  problems instead of deciding which of them ends a run.
 - The producer supplies repository identity.
 - The consumer supplies the fetched revision.
 

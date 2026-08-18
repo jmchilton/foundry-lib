@@ -65,7 +65,7 @@ describe('audit runs and adjudication', () => {
       schemaVersion: CITATION_AUDIT_SCHEMA_VERSION,
       reviews: [
         {
-          candidateId: candidate.id,
+          claimId: candidate.id,
           sourceDigest: 'f'.repeat(64),
           classification: 'confirmed-finding',
           note: 'Checked manually.',
@@ -87,7 +87,7 @@ describe('audit runs and adjudication', () => {
       schemaVersion: CITATION_AUDIT_SCHEMA_VERSION,
       reviews: [
         {
-          candidateId: candidate.id,
+          claimId: candidate.id,
           sourceDigest: candidate.span.sourceDigest,
           classification: 'extractor-false-positive',
           note: 'Not a scholarly citation.',

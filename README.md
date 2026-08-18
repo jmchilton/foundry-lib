@@ -20,6 +20,7 @@ release cadences.
 
 | Package                                                             | What it carries                                                                                                |
 | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| [`@galaxy-foundry/audit-base`](packages/audit-base)                 | The audit lifecycle two checkers converged on: digest-bound spans, corpus identity, reviewed decisions         |
 | [`@galaxy-foundry/audit-citations`](packages/audit-citations)       | Experimental scholarly-citation extraction, normalized evidence, adjudication, and reporting                   |
 | [`@galaxy-foundry/cast`](packages/cast)                             | Bundle placement, drift reconciliation, license enforcement, and cast provenance                               |
 | [`@galaxy-foundry/kind-manifest`](packages/kind-manifest)           | The kind-manifest format: types, zod reader, and the zod-shape-to-fields deriver                               |

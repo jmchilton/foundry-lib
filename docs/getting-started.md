@@ -26,6 +26,7 @@ omit it when a Foundry has another reading surface.
 
 | Capability                                      | Package(s)                     | What remains with the consumer                            |
 | ----------------------------------------------- | ------------------------------ | --------------------------------------------------------- |
+| Build a claim checker of any kind               | `audit-base`                   | the grammar, the authority, and the verdict vocabulary    |
 | Audit scholarly citations                       | `audit-citations`              | source selection, trusted hosts, and acceptance policy    |
 | Reconcile and record deterministic cast bundles | `cast`                         | renderers, targets, reference resolution, and exit policy |
 | Define, assemble, and publish kinds             | `kind-schema`, `kind-manifest` | kind definitions, Zod context, docs, and collection map   |
@@ -37,9 +38,10 @@ omit it when a Foundry has another reading surface.
 | Parse and query a tag catalog                   | `tag-registry`                 | facets, values, and corpus drift checks                   |
 | Parse and rewrite `[[Target]]` links            | `wiki-links`                   | link map and unresolved-link policy                       |
 
-Two dependency relationships are intentional: `kind-schema` uses `kind-manifest` for its manifest
-bridge, and `cast` uses `license-policy` when checking redistributed references. Installing either
-top-level package brings that dependency with it; no Astro package is pulled into either path.
+Three dependency relationships are intentional: `kind-schema` uses `kind-manifest` for its manifest
+bridge, `cast` uses `license-policy` when checking redistributed references, and `audit-citations`
+uses `audit-base` for the lifecycle it shares with other checkers. Installing any of those
+top-level packages brings its dependency with it; no Astro package is pulled into any of those paths.
 
 If an implementation does not use TypeScript or Zod, use the Pattern pages above as the contract
 and implement those invariants in the chosen stack. This repository is one reusable TypeScript
@@ -54,6 +56,7 @@ substrate, not the definition of a Foundry.
 ## Install by capability
 
 ```sh
+pnpm add --save-dev @galaxy-foundry/audit-base zod@^4
 pnpm add --save-dev @galaxy-foundry/audit-citations zod@^4
 pnpm add @galaxy-foundry/cast
 pnpm add @galaxy-foundry/kind-manifest zod@^4
@@ -67,7 +70,7 @@ pnpm add @galaxy-foundry/tag-registry
 pnpm add @galaxy-foundry/wiki-links
 ```
 
-`zod@^4` is a peer of `audit-citations`, `kind-manifest`, and `kind-schema`; schema composition and
+`zod@^4` is a peer of `audit-base`, `audit-citations`, `kind-manifest`, and `kind-schema`; schema composition and
 reflection must use the consumer's instance. `site-kit` expects an existing Astro 6+ project with
 `astro-pagefind` 2+.
 

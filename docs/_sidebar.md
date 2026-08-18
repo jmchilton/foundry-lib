@@ -14,6 +14,7 @@
   - [Adopt wiki links](guides/adopting-wiki-links.md)
   - [Migrate a vendored contract](guides/migrating-vendored-contracts.md)
 - **Architecture**
+  - [The audit lifecycle](architecture/audit-base.md)
   - [Citation audits](architecture/audit-citations.md)
   - [Deterministic casting](architecture/cast.md)
   - [Content-reader boundary](architecture/content-reader-boundary.md)

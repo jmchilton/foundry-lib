@@ -1,9 +1,6 @@
-import { sha256, stableJson } from './digest.js';
-import type { CitationCandidate, CitationEvidenceSnapshot, EvidenceQuery } from './schema.js';
+import { sha256, stableJson } from '@galaxy-foundry/audit-base';
 
-export function sourceTextDigest(sourceText: string): string {
-  return sha256(sourceText);
-}
+import type { CitationCandidate, CitationEvidenceSnapshot, EvidenceQuery } from './schema.js';
 
 export function evidenceId(query: EvidenceQuery): string {
   return sha256(stableJson(query)).slice(0, 16);

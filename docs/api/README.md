@@ -5,6 +5,19 @@ TypeScript entry point and package README.
 
 [Open the TypeDoc reference](api/typedoc/index.html ':ignore')
 
+## `@galaxy-foundry/audit-base`
+
+The public surface includes:
+
+- `artifactSpanSchema` and `sourceTextDigest`, the digest-bound location of a claim;
+- `corpusIdentitySchema` and `corpusIdentityFields`, the latter for adding a local count;
+- `adjudicationSchema(verdicts)`, built against the checker's own verdict vocabulary;
+- `adjudicationProblems`, which detects decisions that name nothing live and ranks none of them;
+- `claimClassifications` and `claimSeverities`; and
+- the deterministic digest and atomic-write helpers both checkers shared byte for byte.
+
+Start with [The audit lifecycle](architecture/audit-base.md).
+
 ## `@galaxy-foundry/audit-citations`
 
 The public surface includes:
