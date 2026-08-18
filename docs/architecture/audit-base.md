@@ -79,8 +79,14 @@ it had. This is the clearest case in the extraction of a shared mechanism with a
 Nothing in the package reads a corpus, fetches, or exits a process:
 
 - schemas reject through Zod, and every object is `.strict()`;
-- `adjudicationProblems` returns findings and throws nothing; and
-- `writeJsonAtomic` and `writeTextAtomic` throw on an unwritable path and leave no partial file.
+- `adjudicationProblems` returns findings and throws nothing;
+- `writeJsonAtomic` and `writeTextAtomic` throw on an unwritable path and leave no partial file; and
+- `stableJson` throws on a value JSON cannot represent, rather than returning quietly.
+
+That last one is a deliberate exception to "returns findings". The function feeds identity — two
+values that digest alike are treated as the same claim, the same corpus, the same review target — so
+a `Map` enumerating as `{}` would hand distinct values one identity, and `JSON.stringify(undefined)`
+would make a `string` return type a lie. A `Date` goes through `toJSON`, as `JSON.stringify` does.
 
 Process exit belongs to the consumer's CLI, as it already did in both checkers.
 

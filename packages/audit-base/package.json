@@ -1,7 +1,7 @@
 {
   "name": "@galaxy-foundry/audit-base",
-  "version": "0.1.0",
-  "description": "The audit lifecycle shapes shared by Foundry checkers — digest-bound spans, corpus identity, and reviewed decisions — with no checker's vocabulary in them.",
+  "version": "0.0.0",
+  "description": "The audit lifecycle shapes shared by Foundry checkers \u2014 digest-bound spans, corpus identity, and reviewed decisions \u2014 with no checker's vocabulary in them.",
   "type": "module",
   "exports": {
     ".": {

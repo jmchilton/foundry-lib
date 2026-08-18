@@ -161,9 +161,15 @@ line, so the figure is a lower bound.
 Escalating an unresolved citation to a web search would need a language model, which would make a
 run irreproducible. That tier belongs to a consuming repository, above this package's boundary.
 
-Manual classification remains orthogonal. `extractor-false-positive` removes an occurrence from
-the citation denominator; `resolver-false-positive` supplies an explicit effective verdict; and
-`confirmed-finding` preserves the machine result with a review note.
+Manual classification remains orthogonal, and the shape is now
+[`audit-base`](architecture/audit-base.md)'s. `extractor-false-positive` removes an occurrence from the citation
+denominator; `checker-false-positive` supplies an explicit effective verdict, which that
+classification requires and the other two forbid; and `confirmed-finding` preserves the machine
+result with a review note.
+
+A review names its target as `claimId` rather than `candidateId`, and supplies `assertedVerdict`
+rather than `adjudicatedVerdict`, because the shape is shared and a candidate is this package's
+noun. `finding.candidateId` is unchanged: a finding is citation-shaped and is not shared.
 
 ## Compatibility
 

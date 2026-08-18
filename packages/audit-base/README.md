@@ -100,6 +100,11 @@ Nothing here reads a corpus, fetches, or exits a process. Schemas reject, `adjud
 returns findings, and `writeJsonAtomic` / `writeTextAtomic` throw on an unwritable path and leave no
 partial file behind. Which failures stop a run belongs to the caller.
 
+`stableJson` throws rather than returning quietly on anything JSON cannot represent — `undefined`, a
+function, a `Map`, a `Set`. It feeds identity, so two values that digest alike are treated as the
+same claim, and a silent `{}` for a `Map` would give distinct values one identity. A `Date` is
+serialized through `toJSON`, as `JSON.stringify` would.
+
 ## Compatibility
 
 These schemas describe persisted documents: a review file written against one version is read by the

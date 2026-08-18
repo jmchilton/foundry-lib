@@ -9,8 +9,9 @@ npm install @galaxy-foundry/audit-citations zod@^4
 
 > **Experimental contract:** this package is an intentional N=1 design extraction from the Bio
 > Topology Foundry reference-audit spike. Its `0.x` schemas may change when a structurally different
-> Foundry or skill repository becomes the second adopter. It does not establish a generic audit
-> substrate, and S2/S3 checkers must not depend on citation-shaped types.
+> Foundry or skill repository becomes the second adopter. Its citation types establish no generic
+> audit substrate, and S2/S3 checkers must not depend on them — the lifecycle they may share is
+> `@galaxy-foundry/audit-base`, which this package consumes.
 
 ## The boundary
 
@@ -302,7 +303,8 @@ All persisted documents are strict, versioned JSON contracts. Unknown fields are
 
 - `CitationScan` contains normalized candidates and extractor diagnostics.
 - `CitationEvidenceSnapshot` contains each normalized provider query once.
-- `CitationAdjudications` binds review decisions to both candidate ID and exact source digest.
+- `CitationAdjudications` binds review decisions to both candidate ID (`claimId`, in the shared
+  shape) and exact source digest.
 - `CitationAuditRun` contains candidates and lightweight findings that reference evidence IDs; it
   does not duplicate provider metadata inside every finding.
 
@@ -322,8 +324,9 @@ for entity relationships, ownership, and compatibility rules.
 - It does not contain Foundry-specific source paths or artifact kinds.
 - It does not escalate an unresolved citation to a language model or a web search. That tier cannot
   be replayed, so it belongs to a consuming repository rather than to this package.
-- It does not create `audit-base` or `audit-schemas`; those boundaries must be earned by another
-  checker rather than inferred from citation terminology.
+- It does not own the audit lifecycle. `@galaxy-foundry/audit-base` does, and it was admitted only
+  once a second checker existed — earned by that checker rather than inferred from citation
+  terminology.
 
 ## License
 
