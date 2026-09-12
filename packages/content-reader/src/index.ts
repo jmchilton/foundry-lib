@@ -42,6 +42,21 @@ export interface ContentNoteRecord<
   meta: Frontmatter | undefined;
 }
 
+/**
+ * One wiki-link address more than one note asked for.
+ *
+ * The address is a note's collection-relative id, flattened and slugified, so two notes reach the
+ * same one without sharing a path. `notes` lists every claimant in routing order; the LAST holds
+ * the address, and the rest are routed pages that no `[[...]]` can reach.
+ */
+export interface DuplicateAddress<
+  Collection extends string = string,
+  Target extends ContentTarget = ContentTarget,
+> {
+  address: string;
+  notes: readonly ContentNoteRecord<Collection, Target>[];
+}
+
 /** One content-tree walk, exposed before consumers project it into routes or cast inputs. */
 export interface ContentIndex<
   Collection extends string = string,
@@ -51,6 +66,8 @@ export interface ContentIndex<
   notes: readonly ContentNoteRecord<Collection, Target>[];
   /** Primary and alias wiki-link addresses pointing back to those same note records. */
   notesByAddress: ReadonlyMap<string, ContentNoteRecord<Collection, Target>>;
+  /** Addresses more than one note claimed. Empty when every note is reachable by its own id. */
+  duplicateAddresses: readonly DuplicateAddress<Collection, Target>[];
 }
 
 /** Extra wiki-link addresses derived from an instance's own note vocabulary. */
@@ -201,6 +218,11 @@ export function createContentReader<
   Target extends ContentTarget = ContentTarget,
 >(options: ContentReaderOptions<Collections, Target>): ContentReader<Collections, Target> {
   const { aliases, collections, contentPath, readFrontmatter = false, targetOf } = options;
+
+  type AddressIndex<Collection extends string, T extends ContentTarget> = Pick<
+    ContentIndex<Collection, T>,
+    'notesByAddress' | 'duplicateAddresses'
+  >;
   type Name = keyof Collections & string;
   type Note = ContentNoteRecord<Name, Target>;
 
@@ -248,13 +270,31 @@ export function createContentReader<
     return notes;
   };
 
-  const notesByAddress = (notes: readonly Note[]): Map<string, Note> => {
+  const addressIndex = (notes: readonly Note[]): AddressIndex<Name, Target> => {
     const map = new Map<string, Note>();
+    // Every note that asked for an address, not just the one holding it — a collision is only
+    // legible if the notes that lost are still named.
+    const claims = new Map<string, Note[]>();
 
     // Object property order is the collection-precedence contract. Keep primary registration in
     // this first pass so no alias can take an address that belongs to a routed note. Within a
     // collection noteFiles is sorted, making the full precedence deterministic.
-    for (const note of notes) map.set(slugify(note.id.replace(/\//g, '-')), note);
+    //
+    // Two notes reaching the same primary address is not a precedence question. An address is an
+    // id flattened and slugified, so distinct paths meet — `a/b.md` and `a-b.md`, or a flat note
+    // and a directory note of the same name in another collection. Later-collection-wins still
+    // decides it, and both notes stay routed, so the corpus keeps two pages and one address.
+    //
+    // Reported rather than refused. Whether a corpus may contain an unaddressable note is the
+    // instance's policy, the same way `targetOf` and `aliases` are the instance's vocabulary —
+    // this package's job is that the answer stop being silent.
+    for (const note of notes) {
+      const address = slugify(note.id.replace(/\//g, '-'));
+      const claimed = claims.get(address);
+      if (claimed) claimed.push(note);
+      else claims.set(address, [note]);
+      map.set(address, note);
+    }
 
     // Aliases fill empty addresses only. In an alias/alias collision, the first routed note wins;
     // in an alias/primary collision, the primary wins regardless of collection order.
@@ -266,12 +306,17 @@ export function createContentReader<
         }
       }
     }
-    return map;
+    return {
+      notesByAddress: map,
+      duplicateAddresses: [...claims]
+        .filter(([, claimants]) => claimants.length > 1)
+        .map(([address, claimants]) => ({ address, notes: claimants })),
+    };
   };
 
   const contentIndex = (): ContentIndex<Name, Target> => {
     const notes = notesFor(Object.keys(collections) as Name[]);
-    return { notes, notesByAddress: notesByAddress(notes) };
+    return { notes, ...addressIndex(notes) };
   };
 
   const noteTargets = <CollectionName extends Name = Name>(

@@ -350,3 +350,58 @@ describe('wiki-link address precedence', () => {
     });
   });
 });
+
+// Two notes can reach the same primary address without sharing a path: the address is the
+// collection-relative id flattened and slugified, so `alpha/beta.md` and `alpha-beta.md` meet at
+// `alpha-beta`, and a flat note in one collection meets a directory note of the same name in
+// another. Which one keeps the address is settled above — later collection wins, and both stay
+// routed. What was missing is that it happened at all: the loser is a published page no `[[...]]`
+// can reach, and nothing said so.
+describe('two notes claiming one primary address', () => {
+  const duplicateRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'foundry-content-reader-dup-'));
+  afterAll(() => fs.rmSync(duplicateRoot, { recursive: true, force: true }));
+
+  const write = (relativePath: string, body: string) => {
+    fs.mkdirSync(path.join(duplicateRoot, path.dirname(relativePath)), { recursive: true });
+    fs.writeFileSync(path.join(duplicateRoot, relativePath), body);
+  };
+
+  write('molds/shared/index.md', '---\ntype: mold\n---\n# Mold\n');
+  write('molds/solo.md', '---\ntype: mold\n---\n# Solo\n');
+  write('patterns/shared.md', '---\ntype: pattern\n---\n# Pattern\n');
+
+  const duplicateReader = createContentReader({
+    collections: {
+      molds: { base: 'molds', pattern: ['**/*.md'], kind: 'mold' },
+      patterns: { base: 'patterns', pattern: ['**/*.md'], kind: 'pattern' },
+    } as const satisfies Record<string, CollectionRoute>,
+    contentPath: (relativePath) => path.join(duplicateRoot, relativePath),
+    targetOf: (collection, id) => ({ path: `${collection}/${id}` }),
+  });
+
+  it('names the address and every note that asked for it', () => {
+    const [duplicate, ...rest] = duplicateReader.contentIndex().duplicateAddresses;
+    expect(rest).toEqual([]);
+    expect(duplicate?.address).toBe('shared');
+    // Both files, because either one could be the one to rename, and in routing order, because
+    // that is what decided the winner.
+    expect(duplicate?.notes.map((note) => note.file)).toEqual([
+      'molds/shared/index.md',
+      'patterns/shared.md',
+    ]);
+  });
+
+  it('reports nothing for a corpus where every note holds its own address', () => {
+    expect(
+      duplicateReader
+        .contentIndex()
+        .duplicateAddresses.flatMap(({ notes }) => notes.map((note) => note.file)),
+    ).not.toContain('molds/solo.md');
+  });
+
+  it('still resolves the address, and still routes the note that lost it', () => {
+    const index = duplicateReader.contentIndex();
+    expect(index.notesByAddress.get('shared')?.file).toBe('patterns/shared.md');
+    expect(index.notes.map((note) => note.file)).toContain('molds/shared/index.md');
+  });
+});
