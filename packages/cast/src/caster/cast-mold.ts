@@ -195,6 +195,35 @@ function comparableProvenance(text: string): string | null {
   return JSON.stringify(doc);
 }
 
+/**
+ * The new record wearing the committed run's `cast_at` and `mold.commit`.
+ *
+ * A renderer is required to be deterministic — "the clock, the network and the environment are
+ * not" — and then the one file the caster writes for itself reached for all three: a fresh
+ * timestamp and wherever HEAD happened to be, on every run, whether or not anything changed.
+ * The drift gate compensates by normalizing both away, so the two fields were already understood
+ * to carry no verdict; what remained was that a corpus-wide re-cast rewrote every record on disk
+ * and buried the few that had actually moved among the many that had not.
+ *
+ * Carrying them forward closes that gap in the direction the gate already points: when a re-cast
+ * records nothing else, the file says so by not changing. Re-serialized from the new record
+ * rather than reusing the committed bytes, so formatting stays whatever this version emits, and
+ * key order survives because `JSON.parse` preserves it and reassigning an existing key does not
+ * move it.
+ */
+function withCommittedStamps(nextText: string, committedText: string): string {
+  const next = JSON.parse(nextText) as { cast_at?: unknown; mold?: { commit?: unknown } | null };
+  const committed = JSON.parse(committedText) as typeof next;
+  next.cast_at = committed.cast_at;
+  if (typeof next.mold === 'object' && next.mold !== null) {
+    next.mold.commit =
+      typeof committed.mold === 'object' && committed.mold !== null
+        ? committed.mold.commit
+        : next.mold.commit;
+  }
+  return JSON.stringify(next, null, 2) + '\n';
+}
+
 export async function castMold<Ext extends object = Record<string, never>>(
   request: CastRequest<Ext>,
 ): Promise<CastOutcome> {
@@ -387,20 +416,29 @@ export async function castMold<Ext extends object = Record<string, never>>(
     // exception — written straight out, never compared — which made the file that IS the cast's
     // contract the only one a `--check` could not see drift in.
     const stagedProvenance = path.join(stagedBundleRoot, '_provenance.json');
-    const committed = existsSync(stagedProvenance)
-      ? comparableProvenance(readFileSync(stagedProvenance, 'utf8'))
+    const committedText = existsSync(stagedProvenance)
+      ? readFileSync(stagedProvenance, 'utf8')
       : undefined;
+    const committed = committedText === undefined ? undefined : comparableProvenance(committedText);
+    const unchanged = committed !== undefined && committed === comparableProvenance(provenanceText);
     if (committed === undefined) {
       drift.push({ file: '_provenance.json', reason: 'missing (this Mold has not been cast)' });
     } else if (committed === null) {
       drift.push({ file: '_provenance.json', reason: 'unreadable as JSON' });
-    } else if (committed !== comparableProvenance(provenanceText)) {
+    } else if (!unchanged) {
       drift.push({
         file: '_provenance.json',
         reason: 'changed (a re-cast records something else)',
       });
     }
-    writeFileSync(stagedProvenance, provenanceText);
+    // Same verdict the drift gate just reached, now applied to the bytes: a record the gate
+    // considers unchanged is left saying what it already said.
+    writeFileSync(
+      stagedProvenance,
+      unchanged && committedText !== undefined
+        ? withCommittedStamps(provenanceText, committedText)
+        : provenanceText,
+    );
     staged.add('_provenance.json');
 
     // Checks this instance runs over the finished staged bundle.
