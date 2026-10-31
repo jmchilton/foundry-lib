@@ -156,8 +156,8 @@ export type PackageLoader = (spec: string) => Promise<Record<string, unknown>>;
 
 /** What a ref expander is given: one ref the Mold declared, and the corpus it resolved against. */
 export interface RefExpansionContext {
-  /** The declared ref, already resolved. `src` is the note it resolved to. */
-  readonly ref: ProvenanceRefEntry;
+  /** The declared ref, resolved but not yet cast. `src` is the note it resolved to. */
+  readonly ref: Omit<ProvenanceRefEntry, 'src_hash' | 'dst_hash' | 'source'>;
   /** That note's frontmatter. */
   readonly meta: Frontmatter;
   /** Every note in the corpus, by repo-relative path. */
@@ -174,7 +174,9 @@ export interface RefExpansionContext {
  * resolution as an authored one, so kind, mode and target checks all still apply. Must be pure:
  * the same corpus has to expand to the same refs on every run.
  */
-export type RefExpander = (context: RefExpansionContext) => readonly unknown[];
+export type RefExpander = (
+  context: RefExpansionContext,
+) => readonly Readonly<Record<string, unknown>>[];
 
 export interface CastHooks {
   /**
@@ -207,7 +209,7 @@ export interface CastHooks {
    */
   readonly packageLoader?: PackageLoader;
   /**
-   * Further refs implied by each ref a Mold declares. See {@link RefExpander}.
+   * Further refs implied by each note-resolved ref a Mold declares. See {@link RefExpander}.
    *
    * Optional, because most kinds stand alone. Expansion is one level deep — an expanded ref is not
    * expanded again — and a ref the Mold already declares, or an earlier expansion already brought

@@ -298,11 +298,12 @@ export function expandLinkedRefs(
   const errors: string[] = [];
   const claimed = new Set(resolved.map((r) => r.dst));
   for (const parent of resolved) {
-    if (parent.package_source) continue;
+    // Only a note-resolved ref has a note to read; a payload or package export does not.
+    if (ctx.castContract[parent.kind]?.resolve !== 'note') continue;
     const meta = ctx.metaByPath.get(parent.src);
     if (!meta) continue;
     const raws = expand({
-      ref: { ...skeleton(parent), src_hash: null, dst_hash: null, source: 'deterministic' },
+      ref: skeleton(parent),
       meta,
       metaByPath: ctx.metaByPath,
       slugMap: ctx.slugMap,

@@ -630,12 +630,14 @@ describe('a hub note expands into the notes it routes to, when the instance says
     ['other-hub', 'content/patterns/other-hub.md'],
     ['leaf-a', 'content/patterns/leaf-a.md'],
     ['leaf-b', 'content/patterns/leaf-b.md'],
+    ['leaf-c', 'content/patterns/leaf-c.md'],
   ]);
   const hubMeta = new Map<string, Record<string, unknown>>([
     ['content/patterns/hub.md', { type: 'pattern', links: ['[[leaf-a]]', '[[leaf-b]]'] }],
     ['content/patterns/other-hub.md', { type: 'pattern', links: ['[[leaf-b]]', '[[hub]]'] }],
-    ['content/patterns/leaf-a.md', { type: 'pattern', links: ['[[leaf-b]]'] }],
+    ['content/patterns/leaf-a.md', { type: 'pattern', links: ['[[leaf-c]]'] }],
     ['content/patterns/leaf-b.md', { type: 'pattern' }],
+    ['content/patterns/leaf-c.md', { type: 'pattern' }],
   ]);
   const flatLayouts = { ...kindLayouts, pattern: { shape: 'file' as const, companions: [] } };
   const linkHooks: CastHooks = {
@@ -667,19 +669,46 @@ describe('a hub note expands into the notes it routes to, when the instance says
     ]);
   });
 
-  it('expands one level only, so a leaf linking a sibling adds nothing further', () => {
-    const out = expandLinkedRefs(declare(['[[leaf-a]]']), hubCtx());
-    expect(out.refs.map((r) => r.dst)).toEqual([
-      'references/patterns/leaf-a.md',
-      'references/patterns/leaf-b.md',
-    ]);
+  it('expands one level only, so a leaf linked only from another leaf stays out', () => {
+    const out = expandLinkedRefs(declare(['[[hub]]']), hubCtx());
+    expect(out.refs.map((r) => r.dst)).not.toContain('references/patterns/leaf-c.md');
+  });
+
+  it("carries an expanded note's companions, marked with both parents", () => {
+    const repoRoot = mkdtempSync(path.join(tmpdir(), 'cast-expanded-companion-'));
+    try {
+      const dir = path.join(repoRoot, 'content/patterns/double-dipping');
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(path.join(dir, 'table.csv'), 'a,b\n');
+      const slugs = new Map([
+        ...hubSlugs,
+        ['double-dipping', 'content/patterns/double-dipping/index.md'],
+      ]);
+      const meta = new Map([
+        ...hubMeta,
+        ['content/patterns/hub.md', { type: 'pattern', links: ['[[double-dipping]]'] }],
+        ['content/patterns/double-dipping/index.md', { type: 'pattern' }],
+      ]);
+      const c = ctx({ repoRoot, slugMap: slugs, metaByPath: meta, hooks: linkHooks });
+      const hub = resolveMoldRef({ kind: 'pattern', ref: '[[hub]]' }, 0, c).resolved!;
+      // The hub itself is file-shaped in this corpus; only the leaf is a directory note.
+      const leafOnly = expandLinkedRefs([hub], c).refs.filter((r) => r.expanded_from);
+      const out = expandCompanions(leafOnly, c);
+      expect(out.errors).toEqual([]);
+      const companion = out.refs.find((r) => r.dst === 'references/patterns/table.csv');
+      expect(companion?.companion_of).toBe('references/patterns/double-dipping.md');
+      expect(companion?.expanded_from).toBe('references/patterns/hub.md');
+    } finally {
+      rmSync(repoRoot, { recursive: true, force: true });
+    }
   });
 
   it('keeps a destination once, preferring the Mold declaration, then the first expansion', () => {
     const out = expandLinkedRefs(declare(['[[hub]]', '[[other-hub]]', '[[leaf-a]]']), hubCtx());
     expect(out.errors).toEqual([]);
     const byDst = new Map(out.refs.map((r) => [r.dst, r]));
-    expect(out.refs).toHaveLength(4);
+    // hub, other-hub, leaf-a declared; leaf-b from hub; leaf-c from the declared leaf-a.
+    expect(out.refs).toHaveLength(5);
     expect(byDst.get('references/patterns/leaf-a.md')?.expanded_from).toBeUndefined();
     expect(byDst.get('references/patterns/leaf-b.md')?.expanded_from).toBe(
       'references/patterns/hub.md',
