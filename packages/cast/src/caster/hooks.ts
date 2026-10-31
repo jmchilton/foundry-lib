@@ -154,6 +154,28 @@ export type BundleCheck = (context: BundleCheckContext) => readonly string[];
  */
 export type PackageLoader = (spec: string) => Promise<Record<string, unknown>>;
 
+/** What a ref expander is given: one ref the Mold declared, and the corpus it resolved against. */
+export interface RefExpansionContext {
+  /** The declared ref, already resolved. `src` is the note it resolved to. */
+  readonly ref: ProvenanceRefEntry;
+  /** That note's frontmatter. */
+  readonly meta: Frontmatter;
+  /** Every note in the corpus, by repo-relative path. */
+  readonly metaByPath: ReadonlyMap<string, Frontmatter>;
+  /** Wiki-link slug to repo-relative path. */
+  readonly slugMap: ReadonlyMap<string, string>;
+}
+
+/**
+ * The further refs one declared ref implies, written as a Mold would write them.
+ *
+ * For notes whose job is to point at other notes — a map of content — where the declared note is
+ * useless in a bundle without the ones it routes to. Each returned ref goes through the same
+ * resolution as an authored one, so kind, mode and target checks all still apply. Must be pure:
+ * the same corpus has to expand to the same refs on every run.
+ */
+export type RefExpander = (context: RefExpansionContext) => readonly unknown[];
+
 export interface CastHooks {
   /**
    * Renderers for every non-verbatim mode this instance admits.
@@ -184,6 +206,14 @@ export interface CastHooks {
    * TO — the bytes exist only inside a package this package cannot reach.
    */
   readonly packageLoader?: PackageLoader;
+  /**
+   * Further refs implied by each ref a Mold declares. See {@link RefExpander}.
+   *
+   * Optional, because most kinds stand alone. Expansion is one level deep — an expanded ref is not
+   * expanded again — and a ref the Mold already declares, or an earlier expansion already brought
+   * in, is kept once.
+   */
+  readonly expandRefs?: RefExpander;
   /**
    * Checks over the finished bundle, run before the error gate.
    *

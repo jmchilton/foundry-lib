@@ -14,6 +14,7 @@ import {
   castOneRef,
   duplicateDestinations,
   expandCompanions,
+  expandLinkedRefs,
   resolveMoldRef,
   type RefResolution,
   type ResolvedRef,
@@ -620,5 +621,85 @@ describe('two refs cannot claim the same place in the bundle', () => {
     expect(
       duplicateDestinations([at('references/patterns/a.md'), at('references/patterns/b.md')]),
     ).toEqual([]);
+  });
+});
+
+describe('a hub note expands into the notes it routes to, when the instance says so', () => {
+  const hubSlugs = new Map([
+    ['hub', 'content/patterns/hub.md'],
+    ['other-hub', 'content/patterns/other-hub.md'],
+    ['leaf-a', 'content/patterns/leaf-a.md'],
+    ['leaf-b', 'content/patterns/leaf-b.md'],
+  ]);
+  const hubMeta = new Map<string, Record<string, unknown>>([
+    ['content/patterns/hub.md', { type: 'pattern', links: ['[[leaf-a]]', '[[leaf-b]]'] }],
+    ['content/patterns/other-hub.md', { type: 'pattern', links: ['[[leaf-b]]', '[[hub]]'] }],
+    ['content/patterns/leaf-a.md', { type: 'pattern', links: ['[[leaf-b]]'] }],
+    ['content/patterns/leaf-b.md', { type: 'pattern' }],
+  ]);
+  const flatLayouts = { ...kindLayouts, pattern: { shape: 'file' as const, companions: [] } };
+  const linkHooks: CastHooks = {
+    ...bareHooks,
+    expandRefs: ({ meta, ref }) =>
+      Array.isArray(meta.links)
+        ? meta.links.map((link) => ({
+            kind: 'pattern',
+            ref: link,
+            load: 'on-demand',
+            used_at: ref.used_at,
+          }))
+        : [],
+  };
+  const hubCtx = (hooks: CastHooks = linkHooks) =>
+    ctx({ slugMap: hubSlugs, metaByPath: hubMeta, kindLayouts: flatLayouts, hooks });
+  const declare = (refs: string[], c = hubCtx()) =>
+    refs.map(
+      (r, i) => resolveMoldRef({ kind: 'pattern', ref: r, load: 'upfront' }, i, c).resolved!,
+    );
+
+  it('adds each implied note, and records which declared ref brought it in', () => {
+    const out = expandLinkedRefs(declare(['[[hub]]']), hubCtx());
+    expect(out.errors).toEqual([]);
+    expect(out.refs.map((r) => [r.dst, r.expanded_from, r.load])).toEqual([
+      ['references/patterns/hub.md', undefined, 'upfront'],
+      ['references/patterns/leaf-a.md', 'references/patterns/hub.md', 'on-demand'],
+      ['references/patterns/leaf-b.md', 'references/patterns/hub.md', 'on-demand'],
+    ]);
+  });
+
+  it('expands one level only, so a leaf linking a sibling adds nothing further', () => {
+    const out = expandLinkedRefs(declare(['[[leaf-a]]']), hubCtx());
+    expect(out.refs.map((r) => r.dst)).toEqual([
+      'references/patterns/leaf-a.md',
+      'references/patterns/leaf-b.md',
+    ]);
+  });
+
+  it('keeps a destination once, preferring the Mold declaration, then the first expansion', () => {
+    const out = expandLinkedRefs(declare(['[[hub]]', '[[other-hub]]', '[[leaf-a]]']), hubCtx());
+    expect(out.errors).toEqual([]);
+    const byDst = new Map(out.refs.map((r) => [r.dst, r]));
+    expect(out.refs).toHaveLength(4);
+    expect(byDst.get('references/patterns/leaf-a.md')?.expanded_from).toBeUndefined();
+    expect(byDst.get('references/patterns/leaf-b.md')?.expanded_from).toBe(
+      'references/patterns/hub.md',
+    );
+    expect(byDst.get('references/patterns/hub.md')?.expanded_from).toBeUndefined();
+    expect(duplicateDestinations(out.refs)).toEqual([]);
+  });
+
+  it('reports an implied ref that does not resolve against the ref that implied it', () => {
+    const broken: CastHooks = {
+      ...bareHooks,
+      expandRefs: () => [{ kind: 'pattern', ref: '[[missing]]' }],
+    };
+    const out = expandLinkedRefs(declare(['[[hub]]']), hubCtx(broken));
+    expect(out.errors).toEqual(['[[hub]] expansion[0]: pattern ref [[missing]] did not resolve']);
+    expect(out.refs).toHaveLength(1);
+  });
+
+  it('leaves the refs alone when the instance registers no expander', () => {
+    const declared = declare(['[[hub]]'], hubCtx(bareHooks));
+    expect(expandLinkedRefs(declared, hubCtx(bareHooks)).refs).toEqual(declared);
   });
 });

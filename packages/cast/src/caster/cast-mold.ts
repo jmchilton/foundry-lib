@@ -43,6 +43,7 @@ import {
   castOneRef,
   duplicateDestinations,
   expandCompanions,
+  expandLinkedRefs,
   resolveMoldRef,
   type ResolvedRef,
 } from './refs.js';
@@ -241,8 +242,12 @@ export async function castMold<Ext extends object = Record<string, never>>(
     if (out.resolved) resolved.push(out.resolved);
   });
 
+  // Add what the instance says each declared ref implies, before companions, so an expanded
+  // note's own companions travel with it.
+  const linked = expandLinkedRefs(resolved, request);
+  errors.push(...linked.errors);
   // Expand multi-file notes' declared companion files into sibling verbatim refs.
-  const expanded = expandCompanions(resolved, request);
+  const expanded = expandCompanions(linked.refs, request);
   errors.push(...expanded.errors);
   resolved.length = 0;
   resolved.push(...expanded.refs);

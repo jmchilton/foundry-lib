@@ -55,6 +55,8 @@ export interface ProvenanceRefEntry {
    */
   source: 'deterministic';
   companion_of?: string | undefined;
+  /** Bundle-relative dst of the declared ref whose expansion brought this one in. */
+  expanded_from?: string | undefined;
   /**
    * License lineage of the upstream work this ref draws on.
    *

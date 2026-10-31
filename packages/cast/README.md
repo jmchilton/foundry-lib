@@ -66,6 +66,10 @@ has no artifacts, no tools and no commands, and should still cast. `packageLoade
 `package-export` strategy, and a contract that declares it while registering nothing gets an
 error naming the reference that asked rather than a fallback.
 
+`expandRefs` is optional too. It lets a declared ref imply further refs, for a hub note whose
+bundle copy is useless without the notes it links. It returns refs in authored form, they resolve
+like authored ones, and provenance marks each with `expanded_from`.
+
 `payload-companion` needs no hook. Which file a note ships in its own place is the note's Kind
 saying `disposition: bundled` on exactly one companion — the same layout that expands companions
 for every other kind. An instance answering separately would be answering from that declaration

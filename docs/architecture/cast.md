@@ -58,6 +58,14 @@ nothing: a Foundry whose corpus is research notes has no artifacts, no tools and
 should still cast. `packageLoader` is optional for that reason — it answers a resolve strategy a
 contract need never declare.
 
+`expandRefs` is optional for the same reason. Which declared refs imply further ones is the
+instance's call: Galaxy's pattern maps of content are useless in a bundle without the pattern
+pages they route to, and a corpus without hub notes registers nothing. The hook returns refs
+written as a Mold would write them, so each goes through the same resolution as an authored one.
+Expansion runs before companions, so an expanded note's companions travel too. It is one level
+deep, the Mold's own declaration wins a shared destination, and each expanded entry records
+`expanded_from`, the destination of the ref that implied it.
+
 ## Composition flow
 
 `castMold` is the entry point: it takes a `CastRequest` — everything found by the instance and
