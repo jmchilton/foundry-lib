@@ -9,7 +9,7 @@
 // unchanged file, and a changed one still records when and from what it was cast.
 
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -173,5 +173,90 @@ describe('provenance across repeated casts', () => {
     const outcome = await castMold(request({ check: true }));
     expect(outcome.wrote).toBeNull();
     expect(record()).toBe(first);
+  });
+});
+
+// A declared hub note brings its leaves with it, and they are refs like any other: hashed,
+// recorded, and swept when the hub stops naming them.
+describe('refs an instance expands from a declared one', () => {
+  let repoRoot: string;
+  let bundleRoot: string;
+  const patternTarget: TargetConfig = {
+    ...target,
+    kinds: {
+      pattern: { dst_dir: 'references/patterns/', dst_extension: '.md', modes: ['verbatim'] },
+    },
+  };
+  const slugMap = new Map([
+    ['hub', 'content/patterns/hub.md'],
+    ['leaf', 'content/patterns/leaf.md'],
+  ]);
+  const expanding = (links: string[]): CastHooks => ({
+    ...hooks,
+    expandRefs: ({ ref }) =>
+      ref.src === 'content/patterns/hub.md'
+        ? links.map((link) => ({ kind: 'pattern', ref: link, load: 'on-demand' }))
+        : [],
+  });
+  const request = (hookSet: CastHooks): CastRequest => ({
+    repoRoot,
+    bundleRoot,
+    targetName: 'test',
+    target: patternTarget,
+    mold: {
+      name: 'example-mold',
+      path: 'content/molds/example-mold/index.md',
+      meta: { summary: 'Routes through a hub.', references: [{ kind: 'pattern', ref: '[[hub]]' }] },
+      body: 'Read the hub.',
+      contentHash: 'sha256:aaa',
+    },
+    castContract: { pattern: { resolve: 'note', default_mode: 'verbatim' } },
+    refKinds: { pattern: { label: 'Pattern', description: '', ref_shape: 'wiki-link' } },
+    slugMap,
+    metaByPath: new Map([
+      ['content/patterns/hub.md', { type: 'pattern' }],
+      ['content/patterns/leaf.md', { type: 'pattern' }],
+    ]),
+    kindLayouts: { pattern: { shape: 'file', companions: [] } },
+    hooks: hookSet,
+    check: false,
+    note: null,
+  });
+
+  beforeEach(() => {
+    repoRoot = mkdtempSync(path.join(os.tmpdir(), 'foundry-cast-expand-'));
+    bundleRoot = path.join(repoRoot, 'casts', 'test', 'example-mold');
+    mkdirSync(path.join(repoRoot, 'content/patterns'), { recursive: true });
+    writeFileSync(
+      path.join(repoRoot, 'content/patterns/hub.md'),
+      '---\ntype: pattern\n---\nSee [[leaf]].\n',
+    );
+    writeFileSync(
+      path.join(repoRoot, 'content/patterns/leaf.md'),
+      '---\ntype: pattern\n---\nThe recipe.\n',
+    );
+  });
+
+  it('packages and records the expanded note', async () => {
+    const outcome = await castMold(request(expanding(['[[leaf]]'])));
+    expect(outcome.errors).toEqual([]);
+    expect(readFileSync(path.join(bundleRoot, 'references/patterns/leaf.md'), 'utf8')).toContain(
+      'The recipe.',
+    );
+    const refs = (
+      JSON.parse(readFileSync(path.join(bundleRoot, '_provenance.json'), 'utf8')) as {
+        refs: { dst: string; expanded_from?: string; src_hash: string; dst_hash: string }[];
+      }
+    ).refs;
+    const leaf = refs.find((r) => r.dst === 'references/patterns/leaf.md');
+    expect(leaf?.expanded_from).toBe('references/patterns/hub.md');
+    expect(leaf?.dst_hash).toBe(leaf?.src_hash);
+  });
+
+  it('sweeps an expanded note once the expansion stops naming it', async () => {
+    await castMold(request(expanding(['[[leaf]]'])));
+    const outcome = await castMold(request(expanding([])));
+    expect(outcome.errors).toEqual([]);
+    expect(existsSync(path.join(bundleRoot, 'references/patterns/leaf.md'))).toBe(false);
   });
 });

@@ -64,6 +64,8 @@ export interface ResolvedRef {
   package_source?: { spec: string; exportName: string } | undefined;
   /** Bundle-relative dst of the parent note when this ref is a copied companion file. */
   companion_of?: string | undefined;
+  /** Bundle-relative dst of the declared ref whose expansion brought this one in. */
+  expanded_from?: string | undefined;
   /** License of the upstream work this ref draws on, from the source note's frontmatter. */
   license?: string | undefined;
   /** How an authored note relates to the licensed work it cites. Absent for raw payloads. */
@@ -92,10 +94,11 @@ export function resolveMoldRef(
   raw: unknown,
   index: number,
   ctx: RefResolution,
+  label = `references[${index}]`,
 ): { resolved?: ResolvedRef; error?: string } {
   const { slugMap, metaByPath, targetName, target, castContract, refKinds } = ctx;
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
-    return { error: `references[${index}]: not an object` };
+    return { error: `${label}: not an object` };
   }
   const ref = raw as Record<string, unknown>;
   const kind = typeof ref.kind === 'string' ? ref.kind : '';
@@ -108,13 +111,13 @@ export function resolveMoldRef(
     // authored vocabulary the caster has no support for yet.
     return {
       error: refKinds[kind]
-        ? `references[${index}]: kind=${kind} is not castable — reference_contract.yml declares it with no \`cast:\` block (the first Mold to need one defines the contract)`
-        : `references[${index}]: unknown kind=${kind}`,
+        ? `${label}: kind=${kind} is not castable — reference_contract.yml declares it with no \`cast:\` block (the first Mold to need one defines the contract)`
+        : `${label}: unknown kind=${kind}`,
     };
   }
   const kindCfg = target.kinds[kind];
   if (!kindCfg) {
-    return { error: `references[${index}]: target=${targetName} does not declare kind=${kind}` };
+    return { error: `${label}: target=${targetName} does not declare kind=${kind}` };
   }
 
   const mode = (
@@ -124,7 +127,7 @@ export function resolveMoldRef(
   // target may refuse a mode the kind allows, and can never permit one the kind does not.
   if (!kindCfg.modes.includes(mode)) {
     return {
-      error: `references[${index}]: kind=${kind} does not support mode=${mode} (allowed: ${kindCfg.modes.join(', ')})`,
+      error: `${label}: kind=${kind} does not support mode=${mode} (allowed: ${kindCfg.modes.join(', ')})`,
     };
   }
 
@@ -147,11 +150,11 @@ export function resolveMoldRef(
   // or space-padded one is refused.
   if (refKinds[kind]?.ref_shape === 'wiki-link' && !WIKI_LINK_RE.test(refStr)) {
     return {
-      error: `references[${index}]: ${kind} ref must be a [[wiki-link]] to a ${kind} note (got ${refStr})`,
+      error: `${label}: ${kind} ref must be a [[wiki-link]] to a ${kind} note (got ${refStr})`,
     };
   }
   const tp = resolveWikiLink(refStr, slugMap);
-  if (!tp) return { error: `references[${index}]: ${kind} ref ${refStr} did not resolve` };
+  if (!tp) return { error: `${label}: ${kind} ref ${refStr} did not resolve` };
   // Frontmatter of the note this ref resolves to; source of its license fields.
   const noteMeta: Frontmatter | undefined = metaByPath.get(tp);
   // Which note types satisfy this kind is the KIND's to declare. It defaults to the kind's own
@@ -160,7 +163,7 @@ export function resolveMoldRef(
   const accepted = castDecl.note_types ?? [kind];
   if (typeof noteMeta?.type !== 'string' || !accepted.includes(noteMeta.type)) {
     return {
-      error: `references[${index}]: ${kind} ref ${refStr} resolves to type=${noteMeta?.type ?? '(none)'}, expected ${accepted.join(' | ')}`,
+      error: `${label}: ${kind} ref ${refStr} resolves to type=${noteMeta?.type ?? '(none)'}, expected ${accepted.join(' | ')}`,
     };
   }
 
@@ -177,7 +180,7 @@ export function resolveMoldRef(
     const declaredSlug = noteMeta[castDecl.slug_field];
     if (typeof declaredSlug !== 'string' || !declaredSlug) {
       return {
-        error: `references[${index}]: ${kind} ref ${refStr} resolves to a note with no \`${castDecl.slug_field}\`, which its kind declares as slug_field`,
+        error: `${label}: ${kind} ref ${refStr} resolves to a note with no \`${castDecl.slug_field}\`, which its kind declares as slug_field`,
       };
     }
     slug = declaredSlug;
@@ -192,7 +195,7 @@ export function resolveMoldRef(
       const exp = typeof noteMeta.package_export === 'string' ? noteMeta.package_export : null;
       if (!pkg || !exp) {
         return {
-          error: `references[${index}]: ${kind} ref ${refStr} resolves to a note missing 'package' and/or 'package_export' frontmatter`,
+          error: `${label}: ${kind} ref ${refStr} resolves to a note missing 'package' and/or 'package_export' frontmatter`,
         };
       }
       src = `package://${pkg}#${exp}`;
@@ -211,7 +214,7 @@ export function resolveMoldRef(
       const layout = ctx.kindLayouts[noteMeta.type];
       if (!layout) {
         return {
-          error: `references[${index}]: ${kind} ref ${refStr} resolves to type=${noteMeta.type}, but the caster received no Kind layout for it`,
+          error: `${label}: ${kind} ref ${refStr} resolves to type=${noteMeta.type}, but the caster received no Kind layout for it`,
         };
       }
       const bundled = layout.companions.filter((companion) => companion.disposition === 'bundled');
@@ -221,13 +224,13 @@ export function resolveMoldRef(
       // names no reference.
       if (bundled.length !== 1) {
         return {
-          error: `references[${index}]: ${kind} resolves via payload-companion, and type=${noteMeta.type} declares ${bundled.length} bundled companions — the strategy packages exactly one`,
+          error: `${label}: ${kind} resolves via payload-companion, and type=${noteMeta.type} declares ${bundled.length} bundled companions — the strategy packages exactly one`,
         };
       }
       const payload = bundled[0]!.file;
       if (payload.endsWith('/')) {
         return {
-          error: `references[${index}]: ${kind} resolves via payload-companion, and type=${noteMeta.type} declares its bundled companion as the directory ${payload} — a payload is one file`,
+          error: `${label}: ${kind} resolves via payload-companion, and type=${noteMeta.type} declares its bundled companion as the directory ${payload} — a payload is one file`,
         };
       }
       src = path.posix.join(path.posix.dirname(tp), payload);
@@ -275,6 +278,45 @@ export function resolveMoldRef(
       license_file: typeof noteMeta?.license_file === 'string' ? noteMeta.license_file : undefined,
     },
   };
+}
+
+/**
+ * Add the refs an instance's `expandRefs` hook says each declared ref implies.
+ *
+ * One level deep: what an expansion brings in is not itself expanded, so a hub note that links
+ * another hub ships the second hub and not everything behind it. A destination the Mold already
+ * declares, or an earlier expansion already claimed, is kept once — the Mold's own declaration
+ * wins, and among expansions the first in Mold order does.
+ */
+export function expandLinkedRefs(
+  resolved: readonly ResolvedRef[],
+  ctx: RefResolution,
+): CompanionExpansion {
+  const expand = ctx.hooks.expandRefs;
+  if (!expand) return { refs: [...resolved], errors: [] };
+  const out: ResolvedRef[] = [...resolved];
+  const errors: string[] = [];
+  const claimed = new Set(resolved.map((r) => r.dst));
+  for (const parent of resolved) {
+    // Only a note-resolved ref has a note to read; a payload or package export does not.
+    if (ctx.castContract[parent.kind]?.resolve !== 'note') continue;
+    const meta = ctx.metaByPath.get(parent.src);
+    if (!meta) continue;
+    const raws = expand({
+      ref: skeleton(parent),
+      meta,
+      metaByPath: ctx.metaByPath,
+      slugMap: ctx.slugMap,
+    });
+    raws.forEach((raw, i) => {
+      const result = resolveMoldRef(raw, i, ctx, `${parent.ref} expansion[${i}]`);
+      if (result.error) errors.push(result.error);
+      if (!result.resolved || claimed.has(result.resolved.dst)) return;
+      claimed.add(result.resolved.dst);
+      out.push({ ...result.resolved, expanded_from: parent.dst });
+    });
+  }
+  return { refs: out, errors };
 }
 
 // Expand a note Kind's `bundled` companions into sibling refs. Fixed membership and disposition
@@ -376,6 +418,7 @@ export function expandCompanions(resolved: ResolvedRef[], ctx: RefResolution): C
           purpose: r.purpose,
           trigger: r.trigger,
           companion_of: r.dst,
+          expanded_from: r.expanded_from,
           license: r.license,
           license_file: r.license_file,
         });
@@ -577,6 +620,7 @@ function skeleton(r: ResolvedRef): Omit<ProvenanceRefEntry, 'src_hash' | 'dst_ha
     trigger: r.trigger,
     verification: r.verification,
     companion_of: r.companion_of,
+    expanded_from: r.expanded_from,
     license: r.license,
     derived: r.derived,
     license_file: r.license_file,
