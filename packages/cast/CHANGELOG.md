@@ -1,5 +1,11 @@
 # @galaxy-foundry/cast
 
+## 0.13.0
+
+### Minor Changes
+
+- [#139](https://github.com/jmchilton/foundry-lib/pull/139) [`21802b9`](https://github.com/jmchilton/foundry-lib/commit/21802b9b40fd2b51664ae57da2769fcb3d51b11d) Thanks [@jmchilton](https://github.com/jmchilton)! - Add an optional `expandRefs` hook. It lets an instance say that a declared ref implies further refs, such as a map-of-content note implying the pages it links. Expanded refs resolve like authored ones, run before companion expansion, go one level deep, and are kept once per destination with the Mold's own declaration winning. Provenance records each with the new optional `expanded_from` field.
+
 ## 0.12.3
 
 ### Patch Changes
