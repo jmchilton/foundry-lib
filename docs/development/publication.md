@@ -28,6 +28,12 @@ with repository-write and OIDC permissions. It installs locked dependencies so
 Changesets can either update the release PR or publish, but it never runs repository
 build or test scripts while holding privileged credentials.
 
+The workflow uses Changesets action v2 with Changesets CLI v3 and the matching GitHub
+changelog plugin; upgrade the action, CLI and plugin majors together. CLI v3 requires
+Node.js `^22.11 || ^24 || >=26`; CI runs Node.js 24. The action's `github-token` input
+authenticates the action; `GITHUB_TOKEN` is also passed to the changelog plugin during
+versioning.
+
 ## Publishing a package for the first time
 
 Trusted publishing is configured on a package's npm settings page, and that page does

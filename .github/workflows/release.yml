@@ -88,13 +88,15 @@ jobs:
           path: packages
 
       - name: Create release PR or publish
-        uses: changesets/action@v2
+        uses: changesets/action@v2.1.2
         with:
-          version: pnpm run version-packages
-          publish: pnpm changeset publish
-          title: 'chore(release): version packages'
-          commit: 'chore(release): version packages'
-          createGithubReleases: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version-script: pnpm run version-packages
+          publish-script: pnpm changeset publish
+          pr-title: 'chore(release): version packages'
+          commit-message: 'chore(release): version packages'
+          create-github-releases: true
         env:
+          # Used by @changesets/changelog-github during versioning.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
